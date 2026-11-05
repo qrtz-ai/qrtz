@@ -2630,3 +2630,89 @@ remaining helper side. P5's p50 / p95 budget still waits on `node scripts/echo-t
    the comma stays tight against the closing quote — never `Friday, ” then`.
 4. Unchanged: `He said, “hello”` still gets the space before the _opening_ quote; `1,000` and ASCII `"done,"` stay.
 5. If anything reads worse, `git revert 96f55a88` (talk-only) and tell Echo the dictation.
+
+## 58. Cycle 86: P5 Mac p50/p95 baseline; timing report gains p95 (ADR 0239, `5f1e60d0`)
+
+P5's other half (cycle 74 landed bench-compare; the Mac budget still needed numbers). The Mac was online this
+cycle; `node scripts/echo-timing-report.mjs` on `~/Library/Logs/qrtz/qrtz.log` (through 2026-10-23) is the
+baseline. The report now prints **p95** next to p50/p90/max so the key-up → inserted-text budget is checkable
+without a one-off script. No cleanup, capture, segmenting, decode, drain, insert, pill or model-config change.
+
+### ADR 0239
+
+Add p95 to `scripts/echo-timing-report.mjs` stage tables (nearest-rank, same `pct()` as p50/p90). Record Jared's
+Mac p50/p95 for talk `inserted_ms` as the P5 regression baseline. Do not change runtime dictation behaviour.
+
+### P5 baseline (log, Parakeet TDT v2)
+
+Helper `asr=parakeet-tdt-v2` (448 dictations):
+
+| field | n | p50 | p90 | p95 | max |
+| --- | --- | --- | --- | --- | --- |
+| release_to_stopped_ms | 448 | 202 | 365 | 414 | 937 |
+| first_partial_ms | 107 | 4235 | 14695 | 14762 | 14830 |
+| finalize_ms | 448 | 202 | 365 | 414 | 937 |
+| tail_decode_ms | 404 | 140.2 | 296.6 | 349.1 | 883.7 |
+| backlog_wait_ms | 448 | 0 | 0 | 0 | 255.6 |
+| audio_ms | 448 | 2492 | 15100 | 20861 | 123900 |
+
+Talk `engine=on-device` (382 dictations):
+
+| field | n | p50 | p90 | p95 | max |
+| --- | --- | --- | --- | --- | --- |
+| final_ms | 382 | 214 | 377 | 423 | 939 |
+| **inserted_ms** (key-up → text) | 381 | **250** | 455 | **527** | 962 |
+| first_partial_ms | 380 | 3231 | 8444 | 11733 | 15048 |
+| cleanup_ms | 371 | 0 | 3 | 4 | 47 |
+| level_p90_dbfs | 371 | -34 | -27 | -25 | -21 |
+
+Insert: Paste 321, AxValue 40, AxSelectedText 2, none/None 19. Quiet mic 39 / 382. gate=`off-no-grant` on all 448.
+tail_conf: 39 / 356 under the 0.6 floor; 0 dropped. **P5 budget to hold:** `inserted_ms` p50 ≤ 250 ms and p95 ≤ 527 ms
+on a comparable log slice (or not worse beyond noise on `echo-bench` before/after via the cycle-74 compare script).
+
+Notes from the report: `tail_decode_ms` p90 296.6 ms is over the 150 ms §18 limit (helper / VAD floor — proposal to
+Bobs); speaker gate never ran (`off-no-grant`).
+
+### P7 idle snapshot (measure only; no unload)
+
+2026-11-05 ~10:38 AM PT, qrtz-app + qrtz-echo idle (echo up ~21 h, model previously resident):
+
+| process | RSS | CPU | Physical footprint (vmmap) |
+| --- | --- | --- | --- |
+| qrtz-echo | ~11–11.5 MB | 0.0 % | 61.6 M (peak 82.7 M) |
+| qrtz-app | ~20.8 MB | ~0.1 % | — |
+
+Unload is **not** proposed this cycle: most of the footprint is already unresident/swapped, and P7 forbids unload
+without a Mac measurement that first-press reload adds no latency (warm on fn-down). Needs a cold-vs-warm first-press
+bench before any helper change.
+
+### Polish re-check
+
+cleanup.rs / cleanup.ts / polish vectors unchanged since cycle 85 (`96f55a88`). Score still **208 / 212**, edit
+distance 58 chars, regressions 0, keep set 0 hits.
+
+- **Still failing (4):** p15 spoken "comma" / "period" (Mac online; 453 talk.json history entries scanned — **zero**
+  contain the spoken words "comma" or "period" as punctuation commands; still needs Jared to say the section 36 step 5
+  phrase, or a controlled Parakeet clip), p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Rejected this cycle:** year ITN `"twenty twenty six"` → `"2026"` (keep vector k350 pins the spoken form after a
+  date day; converting the year alone leaves `"October fifth, 2026"`, which fails the strict bar without also converting
+  the day). N203 (spelled-out free-relative "?") — no matching dictation in history; left open.
+- **Dictation path review since cycle 85:** origin/main moved by CI fmt / fixture / 0.4.4 bump for the curly-quote fix
+  only on the talk side; no press-path behaviour change besides this report script.
+
+### Production-readiness backlog after this cycle
+
+P5 Mac p50/p95 **recorded** (`5f1e60d0` + this section); future releases compare against the table above. P7 still
+needs the first-press reload measurement before any unload. P6 remaining helper side and N195/N196 stay with Bobs.
+N197 still needs the Mac device-switch gap.
+
+Next: p15 after the spoken-comma Mac check; N203 if real dictations show it; P7 first-press cold/warm on the Mac;
+then P6's remaining helper side.
+
+### Test on Jared's Mac (cycle 86)
+
+1. `cd ~/code/qrtz && git pull` (main at or after `5f1e60d0`).
+2. `node scripts/echo-timing-report.mjs`: tables show a **p95** column; on the current log, talk `inserted_ms` should
+   read about p50 250 / p95 527.
+3. No dictation behaviour change to try. Optional: hold fn once and confirm `talk latency` still lands in the log.
+4. If the report looks wrong: `git revert 5f1e60d0` (script-only).
