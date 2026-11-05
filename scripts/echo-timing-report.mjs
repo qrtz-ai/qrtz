@@ -7,6 +7,7 @@
 //
 // Usage: node scripts/echo-timing-report.mjs [--json] [--since YYYY-MM-DD] [log files or dirs …]
 //        (default: ~/Library/Logs/qrtz, every qrtz.log* file in it)
+// Stage tables include p50 / p90 / p95 / max (p95 is the P5 key-up→text budget percentile, ADR 0239).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -82,6 +83,7 @@ function dist(rows, key, opts) {
     n: xs.length,
     p50: pct(xs, 50),
     p90: pct(xs, 90),
+    p95: pct(xs, 95),
     max: xs.length ? Math.max(...xs) : undefined,
   };
 }
@@ -264,12 +266,12 @@ export function render(s) {
     out.push(
       `## helper, asr=${asr} (${a.dictations})`,
       '',
-      '| field | n | p50 | p90 | max |',
-      '| --- | --- | --- | --- | --- |',
+      '| field | n | p50 | p90 | p95 | max |',
+      '| --- | --- | --- | --- | --- | --- |',
     );
     for (const [k, d] of Object.entries(a.times))
       if (d.n)
-        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.max)} |`);
+        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`);
     out.push(
       '',
       'Flags: ' +
@@ -311,16 +313,16 @@ export function render(s) {
     out.push(
       `## talk, engine=${engine} (${e.dictations})`,
       '',
-      '| field | n | p50 | p90 | max |',
-      '| --- | --- | --- | --- | --- |',
+      '| field | n | p50 | p90 | p95 | max |',
+      '| --- | --- | --- | --- | --- | --- |',
     );
     for (const [k, d] of Object.entries(e.times))
       if (d.n)
-        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.max)} |`);
+        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`);
     const l = e.level_p90_dbfs;
     if (l.n)
       out.push(
-        `| level_p90_dbfs | ${l.n} | ${f(l.p50)} | ${f(l.p90)} | ${f(l.max)} |`,
+        `| level_p90_dbfs | ${l.n} | ${f(l.p50)} | ${f(l.p90)} | ${f(l.p95)} | ${f(l.max)} |`,
       );
     out.push(
       '',

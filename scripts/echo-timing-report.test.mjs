@@ -53,6 +53,7 @@ describe('echo-timing-report', () => {
   it('uses nearest-rank percentiles', () => {
     expect(pct([5, 1, 3, 2, 4], 50)).toBe(3);
     expect(pct([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 90)).toBe(9);
+    expect(pct([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95)).toBe(10);
     expect(pct([], 50)).toBeUndefined();
   });
 
@@ -65,6 +66,7 @@ describe('echo-timing-report', () => {
       n: 3,
       p50: 147,
       p90: 310,
+      p95: 310,
       max: 310,
     });
     expect(p.times.first_partial_ms.n).toBe(0); // Parakeet sends no partials
@@ -73,6 +75,7 @@ describe('echo-timing-report', () => {
       n: 2,
       p50: 84.2,
       p90: 210,
+      p95: 210,
       max: 210,
     });
     expect(p.flags).toMatchObject({
@@ -90,7 +93,7 @@ describe('echo-timing-report', () => {
       p50: 0.41,
     });
     const t = s.byEngine['on-device'];
-    expect(t.times.final_ms).toEqual({ n: 2, p50: 160, p90: 320, max: 320 });
+    expect(t.times.final_ms).toEqual({ n: 2, p50: 160, p90: 320, p95: 320, max: 320 });
     expect(t.times.first_partial_ms.n).toBe(1);
     expect(t.level_p90_dbfs.p50).toBe(-48);
     expect(t.quiet).toBe(1);
@@ -112,7 +115,7 @@ describe('echo-timing-report', () => {
 
   it('renders Markdown, and says so when there is nothing', () => {
     const md = render(summarize(parse(LOG)));
-    expect(md).toContain('| release_to_stopped_ms | 3 | 147 | 310 | 310 |');
+    expect(md).toContain('| release_to_stopped_ms | 3 | 147 | 310 | 310 | 310 |');
     expect(md).toContain('## release tail confidence');
     expect(render(summarize(parse('')))).toContain(
       'No dictation timing lines found.',
