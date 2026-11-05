@@ -28,6 +28,7 @@
 pub mod error;
 pub mod fetch;
 pub mod fsutil;
+pub mod grants;
 pub mod index;
 pub mod install;
 pub mod ipc;
@@ -63,26 +64,9 @@ pub const EXTENSION_NAMES: &[&str] = &["echo", "nano", "ctrl", "snap", "demo", "
 /// pins the designated requirement the launcher checks. Since ADR 0237 every first-party extension is bundled; the
 /// marketplace carries only models and third-party modules, and refuses any package named like one of these.
 pub const BUNDLED_EXTENSIONS: &[&str] = &["echo", "nano", "ctrl", "snap"];
-/// ADR 0237: the bundled extensions whose models still install as read-only `model.*` packages their process is
-/// granted (ADR 0212): ctrl's `model.laya`, which the host hands to the helper per question. echo's and nano's
-/// models are pinned speech sets under `<data>/models/<set>/` (local_models.json).
-/// QRT-367: bundled echo too, for its opt-in experimental Phonon-2.5 model only ([`bundled_read_allowed`]).
-pub const BUNDLED_PACKAGE_READS: &[&str] = &["ctrl", "echo"];
-
-/// The bundled extensions whose package reads reach the helper in a host message (echo's `echo.phonon` carries the
-/// verified Phonon path), never as `QRTZ_READ_MODELS`: that env makes the helper use no other dir, and echo still
-/// loads Parakeet from its speech set in `<data>/models/`.
-pub const BUNDLED_READS_BY_MESSAGE: &[&str] = &["echo"];
-
-/// Which of a bundled extension's declared reads it is granted as a package: ctrl all of its own (`model.laya`); echo
-/// only `model.phonon-2.5-en` (its Parakeet stays a pinned speech set, never a package read).
-pub fn bundled_read_allowed(extension: &str, model: &str) -> bool {
-    match extension {
-        "ctrl" => true,
-        "echo" => model == "model.phonon-2.5-en",
-        _ => false,
-    }
-}
+/// ADR 0237 / QRT-367: whether a bundled extension installs read-only `model.*` packages its process is granted
+/// (ADR 0212). Derived from each module's `extension.packageReads` in `qrtz.json` — see [`grants`].
+pub use grants::{bundled_has_package_reads, bundled_reads_via_message};
 
 /// True if `name` ships inside qrtz.app ([`BUNDLED_EXTENSIONS`]).
 pub fn is_bundled_extension(name: &str) -> bool {
@@ -112,24 +96,24 @@ pub mod bundled {
         ]
     }
 
-    /// ADR 0212: `(extension, its extension.reads)` from this build's manifests of the downloadable modules and of
-    /// the bundled ones in [`crate::BUNDLED_PACKAGE_READS`] (ADR 0237: ctrl keeps `model.laya` as a read-only
-    /// package; echo's and nano's pinned speech sets load from `<data>/models/<set>/` instead). Data, not an allowlist: what a
-    /// module declares in its qrtz.json is what is read here, for a model that arrives before its module's lock
-    /// entry does (the installed lock and the signed index are the other sources).
+    /// ADR 0212 / QRT-367: `(extension, its package reads)` from this build's manifests. For a bundled extension
+    /// that is `extension.packageReads` (speech-set names may still sit in `extension.reads` for the orphan check);
+    /// for a downloadable extension it is `extension.reads`. Data, not an allowlist: what a module declares in its
+    /// qrtz.json is what is read here, for a model that arrives before its module's lock entry does (the installed
+    /// lock and the signed index are the other sources).
     pub fn declared_reads() -> Vec<(String, Vec<String>)> {
         package_manifests()
             .iter()
-            .filter(|(id, _)| !crate::is_bundled_extension(id) || crate::BUNDLED_PACKAGE_READS.contains(id))
             .filter_map(|(_, t)| crate::qrtz_json::PackageManifest::parse(t.as_bytes()).ok())
-            .filter_map(|m| m.extension.map(|e| (m.name, e.reads)))
-            .map(|(n, mut r)| {
-                if crate::is_bundled_extension(&n) {
-                    r.retain(|m| crate::bundled_read_allowed(&n, m));
-                }
-                (n, r)
+            .filter_map(|m| {
+                let e = m.extension?;
+                let reads = if crate::is_bundled_extension(&m.name) {
+                    e.package_reads
+                } else {
+                    e.reads
+                };
+                (!reads.is_empty()).then_some((m.name, reads))
             })
-            .filter(|(_, r)| !r.is_empty())
             .collect()
     }
 }

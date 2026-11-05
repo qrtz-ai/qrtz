@@ -14,8 +14,8 @@
 //!   revocation list like Laya.
 //! - Hash before use: [`EchoPhononModel::ready_path`] hands the helper a path only after every file in the store-linked
 //!   package dir re-hashed to its pinned sha256 (once per process and dir; modes and sizes at every call).
-//! - echo's process is granted that one package read-only (`extension.reads`, scoped by
-//!   [`qrtz_modules::bundled_read_allowed`]); it gets no `config.write` for it and never fetches anything itself.
+//! - echo's process is granted that one package read-only (`extension.packageReads` in qrtz.json); it gets no
+//!   `config.write` for it and never fetches anything itself.
 use crate::local_models::{DownloadControl, LocalModels, Manifest, Progress};
 use qrtz_speech::{fsx, SpeechError};
 use serde::{Deserialize, Serialize};

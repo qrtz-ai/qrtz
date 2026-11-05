@@ -113,17 +113,15 @@ fn it_is_never_in_echos_required_downloads() {
     let lm =
         qrtz_app::local_models::LocalModels::new(d.path().join("models"), None).for_extensions(&["echo"]);
     assert!(lm.packages().iter().all(|p| p.name != PACKAGE));
-    // echo's process may read it (scoped), and nothing else as a package.
-    assert!(qrtz_modules::bundled_read_allowed("echo", PACKAGE));
-    assert!(!qrtz_modules::bundled_read_allowed(
-        "echo",
-        "model.parakeet-tdt-v2-en"
-    ));
-    assert!(!qrtz_modules::bundled_read_allowed("echo", "model.laya"));
+    // echo's packageReads are Phonon only (Parakeet stays a speech set); delivered via message, not QRTZ_READ_MODELS.
+    assert!(qrtz_modules::bundled_has_package_reads("echo"));
+    assert!(qrtz_modules::bundled_reads_via_message("echo"));
     let reads = qrtz_modules::bundled::declared_reads();
     let echo = reads.iter().find(|(e, _)| e == "echo").map(|(_, r)| r.clone());
     assert_eq!(echo, Some(vec![PACKAGE.to_owned()]));
-    // Bundled echo still gets no QRTZ_READ_MODELS (its Parakeet set stays reachable).
+    assert!(!reads
+        .iter()
+        .any(|(e, r)| e == "echo" && r.iter().any(|m| m == "model.parakeet-tdt-v2-en")));
     assert_eq!(qrtz_app::installed::read_models_env(d.path(), "echo"), None);
 }
 

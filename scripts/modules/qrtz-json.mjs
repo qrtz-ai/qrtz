@@ -36,7 +36,7 @@ export function generate(module, description, packages = modelPackages()) {
       const name = packages.get(d.id);
       if (!name)
         throw new Error(`${module.id}: ${d.id} is no pinned model set`);
-      return [name, `^${d.version}`];
+      return [name, `^${d.version}`, !!d.optional];
     })
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   const l = module.launch;
@@ -50,14 +50,25 @@ export function generate(module, description, packages = modelPackages()) {
     permissions: module.permissions,
     settings: module.settings,
   };
+  // ADR 0212: every model dependency is listed in reads (orphan check). QRT-367: optional model deps are the
+  // package reads a bundled helper is granted; required ones stay speech sets under <data>/models/.
   if (deps.length) extension.reads = deps.map(([n]) => n);
+  const packageReads = deps
+    .filter(([, , optional]) => optional)
+    .map(([n]) => n);
+  if (packageReads.length) extension.packageReads = packageReads;
+  // When a bundled helper also keeps required speech-set deps, package reads go by host message so
+  // QRTZ_READ_MODELS does not cut those sets off.
+  const hasRequired = deps.some(([, , optional]) => !optional);
+  if (packageReads.length && hasRequired) extension.readsViaMessage = true;
   const q = {
     name: module.name,
     version: module.version,
     kind: 'extension',
     description,
   };
-  if (deps.length) q.dependencies = Object.fromEntries(deps);
+  if (deps.length)
+    q.dependencies = Object.fromEntries(deps.map(([n, v]) => [n, v]));
   q.extension = extension;
   return q;
 }

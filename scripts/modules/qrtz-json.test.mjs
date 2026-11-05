@@ -28,11 +28,21 @@ describe('qrtz.json is generated from module.json', () => {
     expect(p.get('model:nemotron-560ms')).toBe('model.nemotron');
     expect(p.get('model:laya')).toBe('model.laya');
     expect(p.get('model:phonon25-en')).toBe('model.phonon-2.5-en');
-    // QRT-367: Phonon is optional in module.json (never downloaded with echo), but echo may read it.
-    expect(read('modules/echo/qrtz.json').dependencies).toEqual({
+    // QRT-367: Phonon is optional in module.json (never downloaded with echo); packageReads is Phonon only,
+    // and readsViaMessage keeps Parakeet reachable as a speech set.
+    const echo = read('modules/echo/qrtz.json');
+    expect(echo.dependencies).toEqual({
       'model.parakeet-tdt-v2-en': '^1.0.0',
       'model.phonon-2.5-en': '^1.0.0',
     });
+    expect(echo.extension.packageReads).toEqual(['model.phonon-2.5-en']);
+    expect(echo.extension.readsViaMessage).toBe(true);
+    expect(read('modules/ctrl/qrtz.json').extension.packageReads).toEqual([
+      'model.laya',
+    ]);
+    expect(
+      read('modules/nano/qrtz.json').extension.packageReads,
+    ).toBeUndefined();
   });
   it('fails on drift: a minApp, channel or model changed in module.json alone', () => {
     const mod = read('modules/echo/module.json');

@@ -1,7 +1,6 @@
 //! ADR 0212, at launch: a downloaded module's helper gets `QRTZ_READ_MODELS` with exactly its granted read-only
 //! store dirs (empty when it has none, so it never falls back to a writable view). ADR 0237: echo, nano and snap
-//! are bundled and get none; ctrl is bundled but keeps its laya grant (`BUNDLED_PACKAGE_READS`), so it still gets
-//! the var.
+//! are bundled and get none; ctrl is bundled and declares `packageReads` (laya), so it still gets the var.
 use qrtz_app::installed::read_models_env;
 
 #[test]
