@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  COLD_LOAD_MS,
   fields,
   logFiles,
   num,
@@ -29,6 +30,10 @@ const LOG = [
   '2026-10-18T20:01:02.100Z  INFO qrtz_talk::service: talk latency engine="on-device" audio_ms=4210.0 head_ms=0.0 first_partial_ms=Some(890.4) final_ms=Some(160.0) cleanup_ms=Some(1.0) inserted_ms=Some(175.0) insert=AxSelectedText cleanup=Rules raw_chars=58 inserted_chars=59 level_blocks=49 level_p10_dbfs=-61 level_p90_dbfs=-24',
   '2026-10-18T20:02:00.000Z  INFO qrtz_talk::service: talk latency engine="on-device" audio_ms=1200.0 head_ms=0.0 final_ms=320 inserted_ms=330 insert=Clipboard cleanup=Rules raw_chars=5 inserted_chars=5 level_blocks=12 level_p10_dbfs=-70 level_p90_dbfs=-48 tail_conf=0.41 tail_dropped=true',
   '2026-10-17T09:00:00.000Z  INFO qrtz_app: unrelated line',
+  '2026-10-18T19:59:00.000Z  INFO helper: [qrtz-echo] parakeet: loaded in 524 ms (specialization cached) stream="stderr"',
+  '2026-10-18T19:59:00.200Z  INFO helper: [qrtz-echo] parakeet: warm-up decode 177 ms stream="stderr"',
+  '2026-10-18T20:00:00.000Z  INFO helper: [qrtz-echo] parakeet: loaded in 30338 ms (specialization cached) stream="stderr"',
+  '2026-10-18T20:00:00.150Z  INFO helper: [qrtz-echo] parakeet: warm-up decode 119 ms stream="stderr"',
 ].join('\n');
 
 describe('echo-timing-report', () => {
@@ -93,7 +98,13 @@ describe('echo-timing-report', () => {
       p50: 0.41,
     });
     const t = s.byEngine['on-device'];
-    expect(t.times.final_ms).toEqual({ n: 2, p50: 160, p90: 320, p95: 320, max: 320 });
+    expect(t.times.final_ms).toEqual({
+      n: 2,
+      p50: 160,
+      p90: 320,
+      p95: 320,
+      max: 320,
+    });
     expect(t.times.first_partial_ms.n).toBe(1);
     expect(t.level_p90_dbfs.p50).toBe(-48);
     expect(t.quiet).toBe(1);
@@ -115,7 +126,9 @@ describe('echo-timing-report', () => {
 
   it('renders Markdown, and says so when there is nothing', () => {
     const md = render(summarize(parse(LOG)));
-    expect(md).toContain('| release_to_stopped_ms | 3 | 147 | 310 | 310 | 310 |');
+    expect(md).toContain(
+      '| release_to_stopped_ms | 3 | 147 | 310 | 310 | 310 |',
+    );
     expect(md).toContain('## release tail confidence');
     expect(render(summarize(parse('')))).toContain(
       'No dictation timing lines found.',
@@ -131,5 +144,45 @@ describe('echo-timing-report', () => {
       'qrtz.log',
       'qrtz.log.2026-10-17',
     ]);
+  });
+
+  it('summarizes Parakeet load / warm-up for P7 (ADR 0240)', () => {
+    expect(COLD_LOAD_MS).toBe(5000);
+    const s = summarize(parse(LOG));
+    expect(s.modelLoad.load).toEqual({
+      n: 2,
+      p50: 524,
+      p90: 30338,
+      p95: 30338,
+      max: 30338,
+    });
+    expect(s.modelLoad.loadCached).toEqual({
+      n: 1,
+      p50: 524,
+      p90: 524,
+      p95: 524,
+      max: 524,
+    });
+    expect(s.modelLoad.loadCold).toEqual({
+      n: 1,
+      p50: 30338,
+      p90: 30338,
+      p95: 30338,
+      max: 30338,
+    });
+    expect(s.modelLoad.warm).toEqual({
+      n: 2,
+      p50: 119,
+      p90: 177,
+      p95: 177,
+      max: 177,
+    });
+    expect(s.notes.join('\n')).toMatch(/1 of 2 loads were cold/);
+    expect(s.notes.join('\n')).toMatch(/warm-up decode: n=2/);
+    const md = render(s);
+    expect(md).toContain('## parakeet load / warm-up (P7)');
+    expect(md).toContain(
+      '| load_ms (cold) | 1 | 30338 | 30338 | 30338 | 30338 |',
+    );
   });
 });

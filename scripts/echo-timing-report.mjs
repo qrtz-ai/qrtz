@@ -8,6 +8,7 @@
 // Usage: node scripts/echo-timing-report.mjs [--json] [--since YYYY-MM-DD] [log files or dirs …]
 //        (default: ~/Library/Logs/qrtz, every qrtz.log* file in it)
 // Stage tables include p50 / p90 / p95 / max (p95 is the P5 key-up→text budget percentile, ADR 0239).
+// Also reports Parakeet load / warm-up decode times from the same log (P7 cold vs warm, ADR 0240).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -18,6 +19,8 @@ export const TAIL_FLOOR = 0.6;
 export const TAIL_DECODE_P90_LIMIT_MS = 150;
 /** §10: below this speech level (p90 dBFS) a dictation counts as a quiet mic (rank 7). */
 export const QUIET_P90_DBFS = -40;
+/** P7: loads at or above this are a cold specialization (not the cached ~0.3–1.5 s path). */
+export const COLD_LOAD_MS = 5000;
 
 /** key=value tokens after `marker`. Quoted values (talk's engine="on-device") lose their quotes. */
 export function fields(line, marker) {
@@ -46,10 +49,13 @@ export function num(v, { negativeIsMissing = true } = {}) {
 
 const DATE = /^(\d{4}-\d{2}-\d{2})/;
 
-/** The two kinds of record in a log text. `since` drops lines dated before it (lines without a date are kept). */
+/** Dictation timing lines plus Parakeet load / warm-up lines (P7 cold vs warm, ADR 0240).
+ * `since` drops lines dated before it (lines without a date are kept). */
 export function parse(text, { since } = {}) {
   const helper = [];
   const talk = [];
+  const loads = [];
+  const warms = [];
   for (const line of text.split(/\r?\n/)) {
     if (since) {
       const d = DATE.exec(line);
@@ -61,9 +67,23 @@ export function parse(text, { since } = {}) {
       continue;
     }
     const t = fields(line, 'talk latency');
-    if (t) talk.push(t);
+    if (t) {
+      talk.push(t);
+      continue;
+    }
+    // Helper stderr mirrored into the host log: "[qrtz-echo] parakeet: loaded in N ms …"
+    const load = /parakeet: loaded in (\d+) ms/.exec(line);
+    if (load) {
+      loads.push({ load_ms: load[1] });
+      continue;
+    }
+    const warm = /parakeet: warm-up decode (\d+) ms/.exec(line);
+    if (warm) {
+      warms.push({ warm_ms: warm[1] });
+      continue;
+    }
   }
-  return { helper, talk };
+  return { helper, talk, loads, warms };
 }
 
 /** Nearest-rank percentile of a list (undefined when empty). */
@@ -120,7 +140,7 @@ const TALK_TIMES = [
 ];
 
 /** The report as data (what `--json` prints). */
-export function summarize({ helper, talk }) {
+export function summarize({ helper, talk, loads = [], warms = [] }) {
   const byAsr = {};
   for (const [asr, rows] of groupBy(helper, 'asr', 'none')) {
     const times = {};
@@ -235,6 +255,38 @@ export function summarize({ helper, talk }) {
         `${engine}: ${e.quiet} of ${e.dictations} dictations were a quiet mic (speech under ${QUIET_P90_DBFS} dBFS; rank 7).`,
       );
 
+  const loadRows = loads;
+  const warmRows = warms;
+  const loadAll = dist(loadRows, 'load_ms');
+  const loadCached = dist(
+    loadRows.filter((r) => (num(r.load_ms) ?? Infinity) < COLD_LOAD_MS),
+    'load_ms',
+  );
+  const loadCold = dist(
+    loadRows.filter((r) => (num(r.load_ms) ?? 0) >= COLD_LOAD_MS),
+    'load_ms',
+  );
+  const warmAll = dist(warmRows, 'warm_ms');
+  const modelLoad = {
+    load: loadAll,
+    loadCached,
+    loadCold,
+    warm: warmAll,
+    coldThresholdMs: COLD_LOAD_MS,
+  };
+  if (loadCold.n)
+    notes.push(
+      `parakeet load: ${loadCold.n} of ${loadAll.n} loads were cold (>= ${COLD_LOAD_MS} ms; p50 ${loadCold.p50} ms, max ${loadCold.max} ms). P7 unload would expose first-press to this.`,
+    );
+  else if (loadAll.n)
+    notes.push(
+      `parakeet load: ${loadAll.n} loads, all under ${COLD_LOAD_MS} ms (cached path; p50 ${loadAll.p50} ms).`,
+    );
+  if (warmAll.n)
+    notes.push(
+      `parakeet warm-up decode: n=${warmAll.n} p50 ${warmAll.p50} ms p95 ${warmAll.p95} ms (runs after each load).`,
+    );
+
   return {
     dictations: { helper: helper.length, talk: talk.length },
     byAsr,
@@ -242,6 +294,7 @@ export function summarize({ helper, talk }) {
     gateDucked: { ducked, blocks },
     tailConf,
     byEngine,
+    modelLoad,
     notes,
   };
 }
@@ -271,7 +324,9 @@ export function render(s) {
     );
     for (const [k, d] of Object.entries(a.times))
       if (d.n)
-        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`);
+        out.push(
+          `| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`,
+        );
     out.push(
       '',
       'Flags: ' +
@@ -318,7 +373,9 @@ export function render(s) {
     );
     for (const [k, d] of Object.entries(e.times))
       if (d.n)
-        out.push(`| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`);
+        out.push(
+          `| ${k} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`,
+        );
     const l = e.level_p90_dbfs;
     if (l.n)
       out.push(
@@ -333,6 +390,28 @@ export function render(s) {
         )}. Quiet mic ${e.quiet}, saturated ${e.saturated}, tail dropped ${e.tail_dropped}.`,
       '',
     );
+  }
+  const ml = s.modelLoad;
+  if (ml && (ml.load.n || ml.warm.n)) {
+    out.push(
+      '## parakeet load / warm-up (P7)',
+      '',
+      `Cold threshold ${ml.coldThresholdMs} ms. Cached = under that; cold = specialization miss.`,
+      '',
+      '| field | n | p50 | p90 | p95 | max |',
+      '| --- | --- | --- | --- | --- | --- |',
+    );
+    for (const [label, d] of [
+      ['load_ms (all)', ml.load],
+      ['load_ms (cached)', ml.loadCached],
+      ['load_ms (cold)', ml.loadCold],
+      ['warm-up decode_ms', ml.warm],
+    ])
+      if (d.n)
+        out.push(
+          `| ${label} | ${d.n} | ${f(d.p50)} | ${f(d.p90)} | ${f(d.p95)} | ${f(d.max)} |`,
+        );
+    out.push('');
   }
   if (s.notes.length)
     out.push('## notes', '', ...s.notes.map((n) => `- ${n}`), '');
@@ -364,11 +443,13 @@ function main(argv) {
   const args = rest.length
     ? rest
     : [path.join(os.homedir(), 'Library', 'Logs', 'qrtz')];
-  const all = { helper: [], talk: [] };
+  const all = { helper: [], talk: [], loads: [], warms: [] };
   for (const file of logFiles(args)) {
     const p = parse(fs.readFileSync(file, 'utf8'), { since });
     all.helper.push(...p.helper);
     all.talk.push(...p.talk);
+    all.loads.push(...p.loads);
+    all.warms.push(...p.warms);
   }
   const s = summarize(all);
   process.stdout.write(json ? JSON.stringify(s, null, 2) + '\n' : render(s));
