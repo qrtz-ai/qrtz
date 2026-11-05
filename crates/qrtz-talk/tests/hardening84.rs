@@ -164,7 +164,7 @@ fn a_comma_run_reads_as_one_comma() {
     }
 }
 
-/// Left exactly as before: a run before a digit ("1, ,000"), a ";" or a mark, before "(" or a quote with no space, at
+/// Left exactly as before: a run before a digit ("1, ,000"), a ";", before "(" or a quote with no space, at
 /// a line end, after a character outside ASCII and Latin letters, a dictionary term that holds ", ,", and plain
 /// commas.
 #[test]
@@ -184,7 +184,6 @@ fn the_refusals_are_unchanged() {
             false,
             "The plan, ; but nobody read it.",
         ),
-        ("Okay, , . Next", false, "Okay, , . Next."),
         (
             "We tried it,, (twice) and it failed",
             false,

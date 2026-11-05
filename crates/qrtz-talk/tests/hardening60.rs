@@ -61,7 +61,9 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
             c59::rule_cleanup(&without_filler_marks(&with_layout(raw)), dict),
             c59::rule_cleanup(&without_filler_marks(raw), dict),
         ]
-        .map(|c| without_space_before_curly_close(&without_comma_runs(&c, dict)));
+        .map(|c| {
+            without_dangling_comma_marks(&without_space_before_curly_close(&without_comma_runs(&c, dict)))
+        });
         candidates
             .iter()
             .find(|c| **c == new)
@@ -89,9 +91,12 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     // ADR 0236 (cycle 84): a run of commas between a word and a word types as one comma (taken first here so the
     // title edit below sees the same words).
     // ADR 0238 (cycle 85): no space before a curly closing quote after "," / ";".
+    // ADR 0241 (cycle 88): a comma before a sentence mark is dropped (after comma runs).
     let old = without_comma_runs(&old, dict);
     // ADR 0238 (cycle 85): drop the space cycle 59 put before a curly closing quote.
     let old = without_space_before_curly_close(&old);
+    // ADR 0241 (cycle 88): a comma that sits only before a sentence mark is dropped.
+    let old = without_dangling_comma_marks(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
         new.clone()
@@ -312,6 +317,22 @@ fn without_space_before_curly_close(old: &str) -> String {
         .replace("; \u{201D}", ";\u{201D}")
         .replace(", \u{2019}", ",\u{2019}")
         .replace("; \u{2019}", ";\u{2019}")
+}
+
+/// ADR 0241's one allowed edit (written independently of cleanup.rs, with the `regex` crate): a comma, optional
+/// " ," pieces, optional spaces, then "." / "!" / "?" and a blank or the end, becomes just the marks (blank kept).
+fn without_dangling_comma_marks(old: &str) -> String {
+    use std::sync::LazyLock;
+    static DANGLING: LazyLock<regex::Regex> =
+        LazyLock::new(|| regex::Regex::new(r",(?: ,)*[ \t]*([.!?]+)([ \t\n\r]|$)").unwrap());
+    let mut out = old.to_owned();
+    loop {
+        let next = DANGLING.replace_all(&out, "$1$2").into_owned();
+        if next == out {
+            return out;
+        }
+        out = next;
+    }
 }
 
 /// ADR 0234's one allowed edit (written independently of cleanup.rs): where `new` has "Mr." / "Mrs." in the place of

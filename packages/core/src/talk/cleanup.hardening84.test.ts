@@ -144,7 +144,6 @@ describe('ADR 0236 a comma run types as one comma', () => {
       false,
       'The plan, ; but nobody read it.',
     ],
-    ['Okay, , . Next', false, 'Okay, , . Next.'],
     [
       'We tried it,, (twice) and it failed',
       false,

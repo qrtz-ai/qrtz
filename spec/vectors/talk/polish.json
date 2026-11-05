@@ -1301,6 +1301,54 @@
       "category": "curly-close-comma",
       "raw": "I told Priya “ship tonight,” before the freeze",
       "ideal": "I told Priya “ship tonight,” before the freeze."
+    },
+    {
+      "id": "p213",
+      "category": "dangling-comma-mark",
+      "raw": "Yeah, also, uh.",
+      "ideal": "Yeah, also."
+    },
+    {
+      "id": "p214",
+      "category": "dangling-comma-mark",
+      "raw": "So, um. Next we go",
+      "ideal": "So. Next we go."
+    },
+    {
+      "id": "p215",
+      "category": "dangling-comma-mark",
+      "raw": "Okay, , . Next",
+      "ideal": "Okay. Next."
+    },
+    {
+      "id": "p216",
+      "category": "dangling-comma-mark",
+      "raw": "On the notch thing, um. Make that a component",
+      "ideal": "On the notch thing. Make that a component."
+    },
+    {
+      "id": "p217",
+      "category": "dangling-comma-mark",
+      "raw": "Wait, uh! Are you ready",
+      "ideal": "Wait! Are you ready?"
+    },
+    {
+      "id": "p218",
+      "category": "dangling-comma-mark",
+      "raw": "Really, hmm? I doubt it",
+      "ideal": "Really? I doubt it."
+    },
+    {
+      "id": "p219",
+      "category": "dangling-comma-mark",
+      "raw": "Done, uh... Then we ship",
+      "ideal": "Done... Then we ship."
+    },
+    {
+      "id": "p220",
+      "category": "dangling-comma-mark",
+      "raw": "Thanks. So, um. Can you send it",
+      "ideal": "Thanks. So. Can you send it?"
     }
   ],
   "keep": [
@@ -4260,6 +4308,78 @@
       "rule": "curly-close-comma",
       "raw": "The total came to 1,000 dollars.",
       "expect": "The total came to 1,000 dollars."
+    },
+    {
+      "id": "k489",
+      "category": "dangling-comma-mark",
+      "raw": "Yes, .NET rocks on the server",
+      "expect": "Yes, .NET rocks on the server."
+    },
+    {
+      "id": "k490",
+      "category": "dangling-comma-mark",
+      "raw": "The bump is 1, .5 more than last time",
+      "expect": "The bump is 1, .5 more than last time."
+    },
+    {
+      "id": "k491",
+      "category": "dangling-comma-mark",
+      "raw": "Ship file, .pdf later today",
+      "expect": "Ship file, .pdf later today."
+    },
+    {
+      "id": "k492",
+      "category": "dangling-comma-mark",
+      "raw": "Call it version 2, .0 for now",
+      "expect": "Call it version 2, .0 for now."
+    },
+    {
+      "id": "k493",
+      "category": "dangling-comma-mark",
+      "raw": "Well, well, look who it is.",
+      "expect": "Well, well, look who it is."
+    },
+    {
+      "id": "k494",
+      "category": "dangling-comma-mark",
+      "raw": "Over 1,000 people signed up last week.",
+      "expect": "Over 1,000 people signed up last week."
+    },
+    {
+      "id": "k495",
+      "category": "dangling-comma-mark",
+      "raw": "The demo is, um, basically done.",
+      "expect": "The demo is basically done."
+    },
+    {
+      "id": "k496",
+      "category": "dangling-comma-mark",
+      "raw": "Thanks. Um, can you send it",
+      "expect": "Thanks can you send it."
+    },
+    {
+      "id": "k497",
+      "category": "dangling-comma-mark",
+      "raw": "So , um , we should wait until Monday",
+      "expect": "So, we should wait until Monday."
+    },
+    {
+      "id": "k498",
+      "category": "dangling-comma-mark",
+      "raw": "Hello, world, and everyone here.",
+      "expect": "Hello, world, and everyone here."
+    },
+    {
+      "id": "k499",
+      "category": "dangling-comma-mark",
+      "raw": "See page 4, then leave.",
+      "expect": "See page 4, then leave."
+    },
+    {
+      "id": "k500",
+      "category": "dangling-comma-mark",
+      "raw": "We need A, B, and C.",
+      "expect": "We need A, B, and C."
     }
   ]
 }

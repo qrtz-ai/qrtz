@@ -132,11 +132,11 @@ fn the_refusals_are_unchanged() {
             "Visit qrtz.ai. The docs are there.",
             "Visit qrtz.ai. The docs are there.",
         ),
-        // A lowercase word after the filler sentence, a filler after a comma or with a comma after it: as before this
-        // change (ADR 0235, rejected).
+        // A lowercase word after the filler sentence, or a filler with a comma after it: as before ADR 0235.
+        // "So, um. Next" is now cleaned by ADR 0241 (dangling comma before the mark).
         ("so... um. next we go", "So.... Next we go."),
         ("Thanks. Um. can you send it", "Thanks.. Can you send it?"),
-        ("So, um. Next we go", "So, . Next we go."),
+        ("So, um. Next we go", "So. Next we go."),
         ("Thanks. Um, can you send it", "Thanks can you send it."),
         (
             "Over 1,000 people signed up last week.",

@@ -1982,6 +1982,21 @@ function commaRuns(t: string, dict: readonly DictionaryEntry[]): string {
   return t.replace(COMMA_RUN, ',');
 }
 
+/** ADR 0241: a comma that sits only before a sentence mark ("Yeah, also, ." → "Yeah, also."; "So, . Next" →
+ * "So. Next") is dropped with any spaces and extra commas before the mark. Only when the mark is followed by
+ * whitespace or the end (so "Yes, .NET" and "1, .5" stay). Same rule as cleanup.rs `dangling_comma_marks`; runs
+ * last, after commaRuns. */
+const DANGLING_COMMA_MARK = /,(?: ,)*[ \t]*([.!?]+)(?=[ \t\n\r]|$)/g;
+function danglingCommaMarks(t: string): string {
+  if (!(t.includes(',') && /[.!?]/.test(t))) return t;
+  let out = t;
+  for (;;) {
+    const next = out.replace(DANGLING_COMMA_MARK, '$1');
+    if (next === out) return out;
+    out = next;
+  }
+}
+
 /** ADR 0234: a spoken title before a name written as its abbreviation ("Mister Hopkins" → "Mr. Hopkins"). Same
  * rule as cleanup.rs `spoken_titles`; runs last, after the dates. */
 function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
@@ -2094,11 +2109,13 @@ export function ruleCleanup(
   // "i" before a dot only at a sentence end, not the "i" of "i.e." (ADR 0101, N160).
   t = t.replace(/\bi\b(?=[\s,!?']|\.(?![A-Za-z])|$)/g, 'I');
   t = applyDictionary(t, dict);
-  return commaRuns(
-    spokenTitles(
-      spokenDates(spokenAmounts(terminalPunctuation(t, dict)), dict),
+  return danglingCommaMarks(
+    commaRuns(
+      spokenTitles(
+        spokenDates(spokenAmounts(terminalPunctuation(t, dict)), dict),
+        dict,
+      ),
       dict,
     ),
-    dict,
   );
 }

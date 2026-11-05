@@ -1542,6 +1542,62 @@ fn comma_runs_at(t: String, dict: &[DictionaryEntry]) -> String {
     out
 }
 
+/// ADR 0241: a comma that sits only before a sentence mark ("also, uh." -> "also,", then this -> "also."; "So, . Next" ->
+/// "So. Next") is dropped with any spaces and extra commas before the mark. The filler steps leave that shape when they
+/// take the filler and leave a mark the recogniser put on it, or when a spaced comma run sits before "." / "!" / "?".
+/// Only when the mark is followed by whitespace or the end (so "Yes, .NET" and "1, .5" stay). Runs last, after
+/// [`comma_runs`]. The pattern `,(?: ,)*[ \t]*([.!?]+)(?=[ \t\n\r]|$)` in cleanup.ts.
+fn dangling_comma_marks(t: String) -> String {
+    if !(t.contains(',') && (t.contains('.') || t.contains('!') || t.contains('?'))) {
+        return t;
+    }
+    let mut t = t;
+    loop {
+        let next = dangling_comma_marks_once(&t);
+        if next == t {
+            return t;
+        }
+        t = next;
+    }
+}
+
+/// One left-to-right pass of [`dangling_comma_marks`].
+#[inline(never)]
+fn dangling_comma_marks_once(t: &str) -> String {
+    let b = t.as_bytes();
+    let mut out = String::new();
+    let (mut last, mut p) = (0, 0);
+    while let Some(off) = t[p..].find(',') {
+        let i = p + off;
+        let mut k = i + 1;
+        // Optional " ," pieces (comma_runs left a mark-bound run alone).
+        while b.get(k) == Some(&b' ') && b.get(k + 1) == Some(&b',') {
+            k += 2;
+        }
+        let spaces = k + run_len(&t[k..], |c| c == ' ' || c == '\t');
+        let marks = spaces + run_len(&t[spaces..], |c| matches!(c, '.' | '!' | '?'));
+        let after_ok = marks > spaces
+            && b.get(marks)
+                .is_none_or(|&c| matches!(c, b' ' | b'\t' | b'\n' | b'\r'));
+        if after_ok {
+            if out.is_empty() {
+                out.reserve(t.len());
+            }
+            out.push_str(&t[last..i]);
+            out.push_str(&t[spaces..marks]);
+            last = marks;
+            p = marks;
+        } else {
+            p = i + 1;
+        }
+    }
+    if last == 0 {
+        return t.to_owned();
+    }
+    out.push_str(&t[last..]);
+    out
+}
+
 /// ADR 0101: immediate repeats of a whole word, collapsed where [`collapses`] says so. ADR 0199: a scan for the pattern
 /// `(?i)(?<![\w'])(\w+)(?:[\s,]+\1(?![\w']))+` (ASCII `\w`). The apostrophe is part of a word on both sides, so
 /// "you, you're" and "it, it's" are not repeats. The word is a whole run of word characters (a shorter one would be
@@ -2683,7 +2739,7 @@ fn opening_filler_marks(s: &str) -> String {
 /// nor on a list of short lines; ADR 0201: whose line commas go; ADR 0206: "Hey <dictionary name>, <question>?"; ADR
 /// 0227: "..., isn't it?"), then
 /// spoken amounts as figures (ADR 0193: "$25", "15%", "3:30 p.m."), a spoken date's day as a figure (ADR 0230:
-/// "on October 21st"), a spoken title as its abbreviation (ADR 0234) and, last, a run of commas as one (ADR 0236).
+/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), a run of commas as one (ADR 0236) and, last, a comma before a sentence mark dropped (ADR 0241).
 pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     let mut t = format!(" {raw} ");
     t = layout_command(NEW_PARAGRAPH, &t, "\n\n");
@@ -2707,13 +2763,13 @@ pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     t = sentence_starts(&t);
     t = lone_i(&t);
     t = apply_dictionary(&t, dict);
-    comma_runs(
+    dangling_comma_marks(comma_runs(
         spoken_titles(
             spoken_dates(spoken_amounts(terminal_punctuation(t, dict)), dict),
             dict,
         ),
         dict,
-    )
+    ))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

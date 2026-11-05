@@ -4835,7 +4835,7 @@
     {
       "raw": "Okay, , . Next",
       "dict": false,
-      "expect": "Okay, , . Next."
+      "expect": "Okay. Next."
     },
     {
       "raw": "Pick one,\n, then the other",
@@ -4917,6 +4917,61 @@
     {
       "raw": "Dit-il,»oui«",
       "expect": "Dit-il, »oui«"
+    },
+    {
+      "raw": "Yeah, also, uh.",
+      "dict": false,
+      "expect": "Yeah, also."
+    },
+    {
+      "raw": "Yeah, also, um.",
+      "dict": false,
+      "expect": "Yeah, also."
+    },
+    {
+      "raw": "So, um. Next we go",
+      "dict": false,
+      "expect": "So. Next we go."
+    },
+    {
+      "raw": "On the notch thing, um. Make that a component",
+      "dict": false,
+      "expect": "On the notch thing. Make that a component."
+    },
+    {
+      "raw": "Wait, uh!",
+      "dict": false,
+      "expect": "Wait!"
+    },
+    {
+      "raw": "Really, hmm?",
+      "dict": false,
+      "expect": "Really?"
+    },
+    {
+      "raw": "Done, uh...",
+      "dict": false,
+      "expect": "Done..."
+    },
+    {
+      "raw": "Yes, .NET rocks on the server",
+      "dict": false,
+      "expect": "Yes, .NET rocks on the server."
+    },
+    {
+      "raw": "The bump is 1, .5 more than last time",
+      "dict": false,
+      "expect": "The bump is 1, .5 more than last time."
+    },
+    {
+      "raw": "Ship file, .pdf later today",
+      "dict": false,
+      "expect": "Ship file, .pdf later today."
+    },
+    {
+      "raw": "Call it version 2, .0 for now",
+      "dict": false,
+      "expect": "Call it version 2, .0 for now."
     }
   ],
   "dictionaryOnly": [

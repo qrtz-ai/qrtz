@@ -219,4 +219,25 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     );
     assert!(out.ends_with("The plan was \u{201C}ship it Friday,\u{201D} then cut the release."));
     assert_fits_budget(&text, " with curly closing quotes after commas");
+    // ADR 0241: many ", uh." / ", um." / ", ." shapes so dangling_comma_marks fires repeatedly.
+    let mut body = String::new();
+    for (i, part) in long_dictation().split(". ").enumerate() {
+        if i > 0 {
+            body.push_str(". ");
+        }
+        body.push_str(part);
+        if i % 2 == 0 {
+            body.push_str(", uh.");
+        } else {
+            body.push_str(", um. Next");
+        }
+    }
+    let text = format!("{body} Yeah, also, uh. So, um. Next we go");
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        !out.contains(", .") && !out.contains(",!") && !out.ends_with(", ."),
+        "{out}"
+    );
+    assert!(out.contains("Yeah, also.") && out.contains("So. Next we go."));
+    assert_fits_budget(&text, " with dangling commas before sentence marks");
 }
