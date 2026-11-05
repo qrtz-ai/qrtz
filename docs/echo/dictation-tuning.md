@@ -2795,3 +2795,67 @@ dictations show it; N197 device-switch gap when a quiet window allows; then P6's
    `qrtz-helper --echo-bench /tmp/echo87-p15-clips --engines parakeet-whole --variants shipped --speed 4` (clips may
    need re-`say` if `/tmp` was cleared).
 4. If the report looks wrong: revert the timing-report commit only (script + docs; no talk crate change).
+
+## 60. Cycle 88: a comma that sits only before a sentence mark is dropped (ADR 0241)
+
+Polish first. Two real prod dictations typed a dangling comma before a leftover mark after fillers went:
+`"Yeah, also, uh."` → `"Yeah, also, ."` and `"…notch thing, um. Make that…"` → `"…notch thing, . Make that…"`.
+ADR 0235 had left `"So, um. Next"` as `"So, . Next"` on purpose (filler after a comma); the dangling `, .` itself is
+never correct English. No LLM, no network, no Parakeet schedule change.
+
+### ADR 0241
+
+`dangling_comma_marks` runs **last**, after `comma_runs`, and loops to a fixed point:
+
+- A `,`, then optional `" ,"` pieces, then ASCII spaces/tabs, then a run of `.` / `!` / `?`, then an ASCII blank or
+  the end, becomes just the marks (the blank stays).
+- `"Yes, .NET"` / `"1, .5"` / `"file, .pdf"` stay (mark stuck to a word).
+- Ideographic / other Unicode blanks after the mark do **not** match (Rust = TS, ASCII-only).
+- Prefilter: needs both a comma and a mark; one pass is out of line; never on partials.
+
+| Recogniser text                               | Typed before         | Typed now          |
+| --------------------------------------------- | -------------------- | ------------------ |
+| Yeah, also, uh.                               | Yeah, also, .        | Yeah, also.        |
+| So, um. Next we go                            | So, . Next we go.    | So. Next we go.    |
+| Okay, , . Next                                | Okay, , . Next.      | Okay. Next.        |
+| On the notch thing, um. Make that a component | …thing, . Make that… | …thing. Make that… |
+
+### Polish re-check
+
+cleanup.rs / cleanup.ts / polish vectors updated. Score **216 / 220**, edit distance 58 chars (0.74 % of 7859),
+regressions 0, keep set 0 / 499.
+
+- **Still failing (4):** p15 spoken "comma" / "period" (still 0 spoken punct commands in 453 prod + 258 dev history;
+  TTS clips at `/tmp/echo87-p15-clips` still need a DIAG `echo-bench`; tauri dev + vitest still up, disk ~7.8 GB free —
+  skipped DIAG rebuild), p19 / p20 email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Rejected this cycle:** collapsing a comma before a mark stuck to a word; Unicode-whitespace after the mark;
+  year ITN (k350); email/URL ITN; p41 list retry; unload / idle-evict; speculative spoken-comma without Parakeet
+  emission evidence. N203: still no free-relative false "?" in history; left open.
+- **Dictation path review since cycle 87:** origin/main moved only by `8af7f915` (oxfmt timing-report scripts). Press
+  path, capture, segmenting, decode schedule, insert and pill unchanged besides this cleanup step.
+
+### Latency (release `cleanup_budget`, box)
+
+| text                                                                                                        | median         | max                        | ceiling |
+| ----------------------------------------------------------------------------------------------------------- | -------------- | -------------------------- | ------- |
+| 495 words                                                                                                   | 0.120 ms       | 0.132 ms                   | 2 ms    |
+| question / vocative / tag / imperative / date / contractions / titles / fillers / comma runs / curly closes | 0.123–0.147 ms | ≤ 4.733 ms (one tag spike) | 2 ms    |
+| 595 words with dangling commas before marks                                                                 | **0.174 ms**   | 0.181 ms                   | 2 ms    |
+
+Well under the 2 ms chain budget.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with Bobs. N197 still
+needs the Mac device-switch gap. p15 still waits on spoken-comma evidence.
+
+Next: p15 after Jared's §36 step 5 phrase or a DIAG echo-bench; N203 if real dictations show it; N197 when a quiet
+window allows; then P6's remaining helper side.
+
+### Test on Jared's Mac (cycle 88)
+
+1. `cd ~/code/qrtz && git pull` (main at or after the cycle 88 SHA).
+2. Hold fn and say "Yeah, also, uh" — typed text should end `Yeah, also.` (not `Yeah, also, .`).
+3. Optional: "So, um. Next we go" → `So. Next we go.`
+4. No other dictation behaviour change. Optional p15 evidence still as in §59 step 3.
+5. If wrong: revert the talk cleanup commit (Rust + TS twin + vectors + tests).
