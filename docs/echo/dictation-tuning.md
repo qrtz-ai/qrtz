@@ -2647,24 +2647,24 @@ Mac p50/p95 for talk `inserted_ms` as the P5 regression baseline. Do not change 
 
 Helper `asr=parakeet-tdt-v2` (448 dictations):
 
-| field | n | p50 | p90 | p95 | max |
-| --- | --- | --- | --- | --- | --- |
-| release_to_stopped_ms | 448 | 202 | 365 | 414 | 937 |
-| first_partial_ms | 107 | 4235 | 14695 | 14762 | 14830 |
-| finalize_ms | 448 | 202 | 365 | 414 | 937 |
-| tail_decode_ms | 404 | 140.2 | 296.6 | 349.1 | 883.7 |
-| backlog_wait_ms | 448 | 0 | 0 | 0 | 255.6 |
-| audio_ms | 448 | 2492 | 15100 | 20861 | 123900 |
+| field                 | n   | p50   | p90   | p95   | max    |
+| --------------------- | --- | ----- | ----- | ----- | ------ |
+| release_to_stopped_ms | 448 | 202   | 365   | 414   | 937    |
+| first_partial_ms      | 107 | 4235  | 14695 | 14762 | 14830  |
+| finalize_ms           | 448 | 202   | 365   | 414   | 937    |
+| tail_decode_ms        | 404 | 140.2 | 296.6 | 349.1 | 883.7  |
+| backlog_wait_ms       | 448 | 0     | 0     | 0     | 255.6  |
+| audio_ms              | 448 | 2492  | 15100 | 20861 | 123900 |
 
 Talk `engine=on-device` (382 dictations):
 
-| field | n | p50 | p90 | p95 | max |
-| --- | --- | --- | --- | --- | --- |
-| final_ms | 382 | 214 | 377 | 423 | 939 |
-| **inserted_ms** (key-up → text) | 381 | **250** | 455 | **527** | 962 |
-| first_partial_ms | 380 | 3231 | 8444 | 11733 | 15048 |
-| cleanup_ms | 371 | 0 | 3 | 4 | 47 |
-| level_p90_dbfs | 371 | -34 | -27 | -25 | -21 |
+| field                           | n   | p50     | p90  | p95     | max   |
+| ------------------------------- | --- | ------- | ---- | ------- | ----- |
+| final_ms                        | 382 | 214     | 377  | 423     | 939   |
+| **inserted_ms** (key-up → text) | 381 | **250** | 455  | **527** | 962   |
+| first_partial_ms                | 380 | 3231    | 8444 | 11733   | 15048 |
+| cleanup_ms                      | 371 | 0       | 3    | 4       | 47    |
+| level_p90_dbfs                  | 371 | -34     | -27  | -25     | -21   |
 
 Insert: Paste 321, AxValue 40, AxSelectedText 2, none/None 19. Quiet mic 39 / 382. gate=`off-no-grant` on all 448.
 tail_conf: 39 / 356 under the 0.6 floor; 0 dropped. **P5 budget to hold:** `inserted_ms` p50 ≤ 250 ms and p95 ≤ 527 ms
@@ -2677,10 +2677,10 @@ Bobs); speaker gate never ran (`off-no-grant`).
 
 2026-11-05 ~10:38 AM PT, qrtz-app + qrtz-echo idle (echo up ~21 h, model previously resident):
 
-| process | RSS | CPU | Physical footprint (vmmap) |
-| --- | --- | --- | --- |
-| qrtz-echo | ~11–11.5 MB | 0.0 % | 61.6 M (peak 82.7 M) |
-| qrtz-app | ~20.8 MB | ~0.1 % | — |
+| process   | RSS         | CPU    | Physical footprint (vmmap) |
+| --------- | ----------- | ------ | -------------------------- |
+| qrtz-echo | ~11–11.5 MB | 0.0 %  | 61.6 M (peak 82.7 M)       |
+| qrtz-app  | ~20.8 MB    | ~0.1 % | —                          |
 
 Unload is **not** proposed this cycle: most of the footprint is already unresident/swapped, and P7 forbids unload
 without a Mac measurement that first-press reload adds no latency (warm on fn-down). Needs a cold-vs-warm first-press
@@ -2740,12 +2740,12 @@ RSS ~10.6–12 MB, physical footprint **61.5 M** (peak 82.7 M), CPU 0.0 %, up ~2
 Parakeet load / warm-up from the same log (50 loads, 26 warm-ups; specialization often marked "cached" even on slow
 loads):
 
-| field | n | p50 | p90 | p95 | max |
-| --- | --- | --- | --- | --- | --- |
-| load_ms (all) | 50 | 620 | 31263 | 40682 | 72241 |
-| load_ms (cached, &lt; 5 s) | 39 | 524 | 958 | 990 | 1526 |
-| load_ms (cold, ≥ 5 s) | 11 | 31263 | 47162 | 72241 | 72241 |
-| warm-up decode_ms | 26 | 177 | 337 | 353 | 384 |
+| field                      | n   | p50   | p90   | p95   | max   |
+| -------------------------- | --- | ----- | ----- | ----- | ----- |
+| load_ms (all)              | 50  | 620   | 31263 | 40682 | 72241 |
+| load_ms (cached, &lt; 5 s) | 39  | 524   | 958   | 990   | 1526  |
+| load_ms (cold, ≥ 5 s)      | 11  | 31263 | 47162 | 72241 | 72241 |
+| warm-up decode_ms          | 26  | 177   | 337   | 353   | 384   |
 
 Thirteen talks that started within 30 s after a load (model already finished loading before the press) still sat in
 the warm `inserted_ms` band (~217–436 ms). A reload that is still in flight on key-down is the failure mode unload
