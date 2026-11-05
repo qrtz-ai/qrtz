@@ -2716,3 +2716,82 @@ then P6's remaining helper side.
    read about p50 250 / p95 527.
 3. No dictation behaviour change to try. Optional: hold fn once and confirm `talk latency` still lands in the log.
 4. If the report looks wrong: `git revert 5f1e60d0` (script-only).
+
+## 59. Cycle 87: P7 cold vs warm first-press; timing report gains load/warm-up (ADR 0240)
+
+P7's first-press measurement (cycle 86 recorded idle footprint only; unload still forbidden without this). The Mac
+was online; no helper unload and no dictation-path change. `scripts/echo-timing-report.mjs` now also reads the
+helper's `parakeet: loaded in N ms` and `parakeet: warm-up decode N ms` lines (already in `qrtz.log`) and prints a
+**parakeet load / warm-up (P7)** table with cached vs cold split at 5000 ms. Polish untouched.
+
+### ADR 0240
+
+Add Parakeet load / warm-up decode percentiles to `echo-timing-report.mjs` so P7 can compare cold reload cost to
+the warm key-up→text budget without a one-off script. Record Jared's Mac numbers below. Do **not** unload the
+model: cold loads are often tens of seconds, and even a cached reload is hundreds of milliseconds before the first
+decode can start.
+
+### P7 cold vs warm (prod log `~/Library/Logs/qrtz/qrtz.log`, through 2026-10-23)
+
+Warm first-press (model already resident — the normal path after launch warm-up): same as the P5 baseline in §58 —
+talk `inserted_ms` **p50 250 / p95 527** on 381 lines. Idle footprint re-checked 2026-11-05 ~11:00 AM PT: qrtz-echo
+RSS ~10.6–12 MB, physical footprint **61.5 M** (peak 82.7 M), CPU 0.0 %, up ~21 h; qrtz-app RSS ~19 MB.
+
+Parakeet load / warm-up from the same log (50 loads, 26 warm-ups; specialization often marked "cached" even on slow
+loads):
+
+| field | n | p50 | p90 | p95 | max |
+| --- | --- | --- | --- | --- | --- |
+| load_ms (all) | 50 | 620 | 31263 | 40682 | 72241 |
+| load_ms (cached, &lt; 5 s) | 39 | 524 | 958 | 990 | 1526 |
+| load_ms (cold, ≥ 5 s) | 11 | 31263 | 47162 | 72241 | 72241 |
+| warm-up decode_ms | 26 | 177 | 337 | 353 | 384 |
+
+Thirteen talks that started within 30 s after a load (model already finished loading before the press) still sat in
+the warm `inserted_ms` band (~217–436 ms). A reload that is still in flight on key-down is the failure mode unload
+would create: short dictations (often &lt; 1 s of audio) finish before a cached ~0.5–1.5 s load + ~0.2 s warm-up, and
+cold specialization is **30–72 s**.
+
+Dev log (`ai.qrtz.desktop-dev/logs/qrtz.log`) is worse on cold (14 / 29 loads ≥ 5 s, max **125961** ms; one warm-up
+max 5145 ms) and is not the P5/P7 baseline.
+
+**P7 decision this cycle:** unload remains **not** proposed. Any future unload design must prove (a) fn-down starts
+reload immediately, (b) first-press `inserted_ms` stays within the §58 budget on short clips, (c) cold specialization
+never blocks a press — helper-side, Bobs.
+
+### Polish re-check
+
+cleanup.rs / cleanup.ts / polish vectors unchanged since cycle 85 (`96f55a88`). Score still **208 / 212**, edit
+distance 58 chars, regressions 0, keep set 0 / 487.
+
+- **Still failing (4):** p15 spoken "comma" / "period", p19 / p20 email and URL (ADR 0223), p41 (ADR 0188's "don't
+  retry").
+- **p15 evidence this cycle:** re-scanned prod talk history (453) **and** dev history (256) — still **zero** spoken
+  "comma" / "period" as punct commands. Prepared TTS clips on the Mac (`/tmp/echo87-p15-clips/`: p15 phrase + keep
+  "trial period" / "Add a comma…") but the installed `qrtz-helper` is a non-`QRTZ_DIAG` build (QRT-299), so
+  `--echo-bench` is refused; skipped rebuilding a DIAG helper while Jared's `tauri dev` / vitest were running. Still
+  needs Jared's spoken §36 step 5 phrase, or a DIAG `echo-bench` on those clips.
+- **N203:** no free-relative false "?" (`What is … depends…?`) in either history; left open.
+- **Rejected this cycle:** speculative spoken-comma rule without Parakeet emission evidence; year ITN (still k350);
+  email/URL ITN; p41 list retry; any unload / idle-evict helper change.
+
+### Production-readiness backlog after this cycle
+
+P5 baseline (§58) and P7 cold/warm measurement (**this section**) are recorded. Unload stays blocked. P6 remaining
+helper side and N195/N196 stay with Bobs. N197 still needs the Mac device-switch gap (not measured this cycle —
+would need a disruptive mic switch while dictating).
+
+Next: p15 after spoken-comma evidence (Jared phrase or DIAG echo-bench on `/tmp/echo87-p15-clips`); N203 if real
+dictations show it; N197 device-switch gap when a quiet window allows; then P6's remaining helper side.
+
+### Test on Jared's Mac (cycle 87)
+
+1. `cd ~/code/qrtz && git pull` (main at or after the cycle 87 SHA).
+2. `node scripts/echo-timing-report.mjs`: tables still show **p95**; a new **parakeet load / warm-up (P7)** section
+   should match the table above on the current prod log (cached p50 ~524 ms, cold count 11, warm-up p50 ~177 ms).
+3. No dictation behaviour change to try. Optional p15 evidence: hold fn and say "Bring the charger comma the cable
+   comma and the adapter period"; paste what typed into the Echo thread — or, when idle, build a DIAG helper via
+   `native/qrtz-helper/scripts/echo-warmup-ci.sh` / `-DQRTZ_DIAG` and run
+   `qrtz-helper --echo-bench /tmp/echo87-p15-clips --engines parakeet-whole --variants shipped --speed 4` (clips may
+   need re-`say` if `/tmp` was cleared).
+4. If the report looks wrong: revert the timing-report commit only (script + docs; no talk crate change).
