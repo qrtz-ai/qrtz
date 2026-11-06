@@ -1,3 +1,17 @@
+## 2026-11-06 — Cycle 131 (≈10:51–11:05 PT, polish): Cap-leading two-word and three-word restart phrases (ADR 0247)
+
+- **Landed:** widen `restart_phrase` — Title-case first copy ("Can you Can you") and three-word Cap
+  restarts ("I don't know I don't know", "What are the What are the", "how I want How I want")
+  collapse (ADR 0247). Rust + TS twin, polish +10, keep +7, cleanup.json, hardening131 + hardening60
+  oracle, cleanup_budget probe.
+- **Polish:** 259/262 → **269/272** exact, edit distance **39** (0.39 % of 10047), regressions **0**,
+  keep **0/570**.
+- **Latency:** release `cleanup_budget` restart-phrase median **0.246 ms** (993-word probe; ceiling 2 ms).
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; period ", right."; inverted tags;
+  which/should openers; email/URL ITN; p41; unload; N203; N197 (Mac disk ~1.3 GB); year ITN; so/like
+  STUTTERS; lowercase-second-copy phrase stutters without Cap.
+- **SHAs:** code `a1e9ad49` (docs follow)
+
 # Hardening log
 
 ## 2026-11-06 — Cycle 130 (≈10:26–10:45 PT, polish): a mid-sentence two-word restart phrase collapses (ADR 0246)
@@ -13,7 +27,6 @@
   STUTTERS.
 - **Latency:** release `cleanup_budget` restart-phrase median **0.208 ms** (495-word baseline ~0.135 ms); ceiling 2 ms.
 - **SHA:** `0489d5b3`
-
 
 ## 2026-11-06 — Cycle 128 (≈9:25–10:10 PT, polish): a sentence-initial filler after a period keeps the sentence mark (ADR 0245)
 

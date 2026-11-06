@@ -3061,10 +3061,10 @@ dictation with its own keep set.
 
 ## 65. Cycle 130: a mid-sentence two-word restart phrase collapses (ADR 0246)
 
-| Run                                        | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
-| ------------------------------------------ | ------------- | ----------------------------- | ----------- | ------------------- |
-| cycle 128, 254 cases                       | **251 / 254** | **39 chars (0.42 % of 9293)** | 0           | 0 / 553             |
-| this cycle, 262 cases (+8 restart-phrase)  | **259 / 262** | **39 chars (0.40 % of 9682)** | 0           | 0 / 563             |
+| Run                                       | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
+| ----------------------------------------- | ------------- | ----------------------------- | ----------- | ------------------- |
+| cycle 128, 254 cases                      | **251 / 254** | **39 chars (0.42 % of 9293)** | 0           | 0 / 553             |
+| this cycle, 262 cases (+8 restart-phrase) | **259 / 262** | **39 chars (0.40 % of 9682)** | 0           | 0 / 563             |
 
 - **Examples:** "just use it as a As a mock-up" → "Just use it as a mock-up."; "can you do so in a In a way…" →
   "Can you do so in a way…"; "…and in the In the best interest…" → "…and in the best interest…"; "it doesn't It
@@ -3096,3 +3096,47 @@ dictation with its own keep set.
    should type "Just use it as a mock-up.". Then "it doesn't It doesn't quite do it" → "It doesn't quite do it.".
 3. Refuse checks: "We moved to new york New York last year." stays; "Please scratch that Scratch that and send the
    file." does not collapse the command pair.
+
+## 66. Cycle 131: Cap-leading two-word and three-word restart phrases (ADR 0247)
+
+| Run                                        | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 130, 262 cases                       | **259 / 262** | **39 chars (0.40 % of 9682)**  | 0           | 0 / 563             |
+| this cycle, 272 cases (+10 restart-phrase) | **269 / 272** | **39 chars (0.39 % of 10047)** | 0           | 0 / 570             |
+
+- **Examples:** "Can you Can you host the prototype" → "Can you host the prototype?"; "I don't I don't
+  like the two energy" → "I don't like the two energy."; "I don't know I don't know how to do that UI"
+  → "I don't know how to do that UI."; "What are the What are the deciding factors" → "What are the
+  deciding factors?"; "how I want How I want this to go" → "How I want this to go.". Kept: "new york
+  New York", "New York City New York City", "You have to you have to", "the starting deck the starting
+  deck", "scratch that Scratch that".
+- **Rejected this cycle:** ", okay" / ", yeah" / ", huh" / ", eh" / ", no" (no unmarked end-of-sentence
+  hit); period-marked ", right."; inverted tags; "which"/"should" question openers; email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203 without history;
+  N197 (Mac disk ~1.3 GB free — skipped); year ITN (k350); adding "so"/"like" to STUTTERS; collapsing
+  lowercase-second-copy phrase stutters without Cap evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: restart-phrase median **0.246 ms** (ceiling 2 ms;
+  longer Cap + three-word probe than cycle 130). Capture, VAD / segmenting, model config, drain /
+  final pass, insert unchanged.
+- **Dictation path review since cycle 130:** origin/main at `e8a76007` until this commit. Fresh Mac
+  history (prod 453, dev 270, +8 since cycle 130) surfaced Cap-leading and three-word restarts. N197
+  and N203 stay open.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs the Mac device-switch gap (quiet window + more free disk; currently ~1.3 GB).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set.
+
+### Test on Jared's Mac (cycle 131)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "Can you Can you host the prototype" (or dictate so Parakeet restarts "Can you"
+   with a capital) — it should type "Can you host the prototype?". Then "I don't know I don't know
+   how to do that" → "I don't know how to do that.".
+3. Refuse checks: "We moved to new york New York last year." stays; "New York City New York City is
+   big enough." stays; "You have to you have to change that." stays (no Cap on the second copy).
