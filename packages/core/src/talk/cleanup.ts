@@ -1501,6 +1501,174 @@ function finalMark(t: string): string {
   return t;
 }
 
+/** ADR 0242: words that make a spoken "comma" the noun. Same list in cleanup.rs. */
+const COMMA_NOUN_BEFORE = new Set([
+  'a',
+  'an',
+  'the',
+  'this',
+  'that',
+  'these',
+  'those',
+  'my',
+  'your',
+  'his',
+  'her',
+  'its',
+  'our',
+  'their',
+  'no',
+  'another',
+  'any',
+  'each',
+  'every',
+  'some',
+  'one',
+  'which',
+  'whose',
+  'what',
+  'word',
+  'words',
+  'term',
+  'terms',
+  'letter',
+  'letters',
+  'character',
+  'characters',
+  'symbol',
+  'symbols',
+  'punctuation',
+  'key',
+  'keys',
+  'button',
+  'english',
+  'means',
+  'meaning',
+  'called',
+  'named',
+  'spelled',
+  'say',
+  'says',
+  'said',
+  'type',
+  'types',
+  'typed',
+  'typing',
+  'press',
+  'presses',
+  'pressed',
+  'hit',
+  'hits',
+  'put',
+  'puts',
+  'putting',
+  'add',
+  'adds',
+  'added',
+  'adding',
+  'use',
+  'uses',
+  'used',
+  'using',
+  'insert',
+  'inserts',
+  'inserted',
+  'write',
+  'writes',
+  'wrote',
+  'writing',
+  'need',
+  'needs',
+  'needed',
+  'want',
+  'wants',
+  'with',
+  'without',
+  'of',
+  'for',
+  'to',
+  'from',
+  'by',
+  'after',
+  'before',
+  'about',
+  'plus',
+  'and',
+  'or',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'being',
+]);
+
+/**
+ * ADR 0242 (echo cycle 125): spoken "comma" / "period" in an unambiguous list dictation become "," / ".".
+ * Same rule as cleanup.rs `spoken_list_punct`. Fires after finalMark.
+ */
+function spokenListPunct(t: string): string {
+  if (!t.includes(' period')) return t;
+  const s = /[.?!]$/.test(t) ? t.slice(0, -1) : t;
+  if (!s.endsWith(' period')) return t;
+  const body = s.slice(0, -' period'.length);
+  if (!/[A-Za-z0-9]$/.test(body)) return t;
+  let start = 0;
+  for (let j = body.length - 1; j >= 1; j--) {
+    const c = body[j - 1];
+    if (
+      c === '\n' ||
+      ((c === '.' || c === '!' || c === '?') && body[j] === ' ')
+    ) {
+      start = j;
+      break;
+    }
+  }
+  const words = body
+    .slice(start)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => asciiLower(w.replace(/^,+|,+$/g, '')));
+  const last = words.at(-1);
+  if (last === undefined) return t;
+  if (
+    !/^[a-z0-9']+$/.test(last) ||
+    /^[0-9]+$/.test(last) ||
+    MARK_NOUN_BEFORE.has(last)
+  )
+    return t;
+  // Only the word right before "period" (see cleanup.rs): "and the adapter period" is a list item.
+
+  const hasSpokenOxford = body.includes(' comma and ');
+  const hasAsciiComma = body.includes(',');
+  if (!hasSpokenOxford && !hasAsciiComma) return t;
+
+  if (!hasSpokenOxford) return body + '.';
+
+  const parts = body.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return t;
+  let out = '';
+  let converted = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const w = parts[i];
+    if (w === 'comma') {
+      const prev =
+        i > 0 ? asciiLower(parts[i - 1].replace(/^[,.!?]+|[,.!?]+$/g, '')) : '';
+      if (prev && !COMMA_NOUN_BEFORE.has(prev)) {
+        // Attach "," to the previous word (no space before the mark).
+        out += ', ';
+        converted++;
+        continue;
+      }
+    }
+    if (i > 0 && !out.endsWith(', ')) out += ' ';
+    out += w;
+  }
+  if (converted === 0) return t;
+  return out.trimEnd() + '.';
+}
+
 /** Writes dictionary terms the way the user spells them ("cue arts" → "qrtz" when listed as an alias). */
 export function applyDictionary(
   text: string,
@@ -2097,6 +2265,7 @@ export function ruleCleanup(
     );
   t = scratchThat(t);
   t = finalMark(t);
+  t = spokenListPunct(t);
   t = listLineCommas(t, /[A-Z]/.test(raw));
   t = t.replace(
     // Not after a dotted abbreviation ("e.g. the", "3 p.m. today"), nor after "Mr." / "etc." (ADR 0120).

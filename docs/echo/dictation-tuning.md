@@ -2859,3 +2859,60 @@ window allows; then P6's remaining helper side.
 3. Optional: "So, um. Next we go" → `So. Next we go.`
 4. No other dictation behaviour change. Optional p15 evidence still as in §59 step 3.
 5. If wrong: revert the talk cleanup commit (Rust + TS twin + vectors + tests).
+
+## 61. Cycle 125: spoken list "comma" / "period" become marks (ADR 0242)
+
+Polish first. Mac online this cycle; Release `qrtz-helper --echo-bench` with
+`QRTZ_MODELS_DIR=~/Library/Application Support/ai.qrtz.desktop/models` on TTS clips of the spoken form finally
+answered section 36 step 5. Parakeet TDT v2 wrote:
+
+| Clip (spoken) | Hypothesis |
+| --- | --- |
+| Bring the charger comma the cable comma and the adapter period | Bring the charger, the cable, and the adapter period. |
+| We need eggs comma milk comma and bread period | We need eggs comma milk comma and bread period. |
+| Add a comma after the name / trial period / period of growth | exact (keep) |
+
+So the recogniser sometimes turns "comma" into "," and sometimes leaves both words; trailing "period" as a command is
+common. Talk-side `spoken_list_punct` (after `final_mark`) covers both Case A (Oxford " comma and " + final " period")
+and Case B (ASCII `,` already present + final " period"). Bare final "period" without a list stays rejected (grace /
+lunch / Tudor period).
+
+| Run | Exact | Edit distance | Regressions | Keep set (hits / n) |
+| --- | --- | --- | --- | --- |
+| cycle 88 (`77b4e922`), 220 cases | 216 / 220 | 58 chars (0.74 % of 7859) | 0 | 0 / 499 |
+| this cycle, 220 cases | 217 / 220 | 39 chars | 0 | 0 / 499 |
+| this cycle, 228 cases (+8 list) | **225 / 228** | **39 chars (0.48 % of 8120)** | 0 | 0 / 513 |
+
+- **Examples:** "Bring the charger comma the cable comma and the adapter period" → "Bring the charger, the cable, and
+  the adapter." (was left spoken); "Bring the charger, the cable, and the adapter period." → same ideal; "We need eggs
+  comma milk comma and bread period" → "We need eggs, milk, and bread.". Kept: "Add a comma after the name.", "Put a
+  comma and a period.", "The word comma means a pause.", "Stop at the adapter period", "Add a comma and finish period".
+- **False-positive evidence:** 14 new keep vectors against 8 new positives (plus p15), 14 refusals in
+  tests/hardening125.rs. hardening60 oracle takes the same edit independently; green on generated text.
+- **Rejected this cycle:** always-on "comma"→"," ; bare final "period" without a list; year ITN (k350); email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188 don't retry); unload; speculative N203 without history evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: 495 words 0.127 ms; spoken-list 0.146 ms; long list tail (40
+  items) 0.166 ms; ceiling 2 ms. Capture, segmenting, decode schedule, insert and the timing log unchanged.
+- **Dictation path review since cycle 88:** origin/main unchanged at `77b4e922` until this commit. N197 (Mac
+  device-switch) and N203 stay open; p15 **fixed**.
+- **Nano quick check:** vitest packages/core/src/note 130 passed in 19 files. No Note code changed.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with Bobs. N197 still
+needs the Mac device-switch gap (tauri/vitest still up this cycle; disk ~7 GB on the Mac — skipped disruptive mic
+switch).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197 when a quiet
+window allows; then P6's remaining helper side.
+
+### Test on Jared's Mac (cycle 125)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), then `scripts/dev/dev-local.sh` as usual.
+2. Hold fn and say "Bring the charger comma the cable comma and the adapter period" — typed text should be
+   "Bring the charger, the cable, and the adapter." (commas and a final period, not the words).
+3. Optional: "We need eggs comma milk comma and bread period" → "We need eggs, milk, and bread."
+4. Unchanged: "Add a comma after the name", "The trial period ends Friday", "Put a comma and a period".
+5. If anything reads worse, revert the talk cleanup commit (Rust + TS twin + vectors + tests) and tell Echo the
+   dictation.

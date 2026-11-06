@@ -803,6 +803,206 @@ fn final_mark(t: String) -> String {
     t
 }
 
+/// ADR 0242: words that make a spoken "comma" the noun ("Add a comma", "the word comma", "type comma"), so the
+/// list rule leaves them. Determiners plus naming / typing verbs; same list in cleanup.ts.
+const COMMA_NOUN_BEFORE: &[&str] = &[
+    "a",
+    "an",
+    "the",
+    "this",
+    "that",
+    "these",
+    "those",
+    "my",
+    "your",
+    "his",
+    "her",
+    "its",
+    "our",
+    "their",
+    "no",
+    "another",
+    "any",
+    "each",
+    "every",
+    "some",
+    "one",
+    "which",
+    "whose",
+    "what",
+    "word",
+    "words",
+    "term",
+    "terms",
+    "letter",
+    "letters",
+    "character",
+    "characters",
+    "symbol",
+    "symbols",
+    "punctuation",
+    "key",
+    "keys",
+    "button",
+    "english",
+    "means",
+    "meaning",
+    "called",
+    "named",
+    "spelled",
+    "say",
+    "says",
+    "said",
+    "type",
+    "types",
+    "typed",
+    "typing",
+    "press",
+    "presses",
+    "pressed",
+    "hit",
+    "hits",
+    "put",
+    "puts",
+    "putting",
+    "add",
+    "adds",
+    "added",
+    "adding",
+    "use",
+    "uses",
+    "used",
+    "using",
+    "insert",
+    "inserts",
+    "inserted",
+    "write",
+    "writes",
+    "wrote",
+    "writing",
+    "need",
+    "needs",
+    "needed",
+    "want",
+    "wants",
+    "with",
+    "without",
+    "of",
+    "for",
+    "to",
+    "from",
+    "by",
+    "after",
+    "before",
+    "about",
+    "plus",
+    "and",
+    "or",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+];
+
+/// ADR 0242 (echo cycle 125): spoken "comma" / "period" in an unambiguous list dictation become "," / ".".
+///
+/// Mac evidence (`echo-bench` on TTS of the spoken form, 2026-11-06): "Bring the charger comma the cable comma and the
+/// adapter period" came back as "Bring the charger, the cable, and the adapter period." (commas already marks,
+/// trailing "period" still a word) or, on a shorter list, "We need eggs comma milk comma and bread period." (both
+/// words left). Keep phrases ("Add a comma after the name.", "The trial period ends Friday.", "This is a period of
+/// growth.") stayed exact — they never end in a spoken list "period" after a list "comma" / ",".
+///
+/// Fires only when the dictation (a trailing `.` / `?` / `!` aside) ends in lowercase " period", the word before that
+/// passes the same noun guards as [`final_mark`], and either (A) the body holds lowercase " comma and " (Oxford spoken
+/// list) or (B) it already holds ASCII `,` (the recogniser turned the commas into marks). Case A rewrites each
+/// whole-word "comma" whose previous word is not in [`COMMA_NOUN_BEFORE`]; if none would rewrite, the text stays.
+/// Case B only drops the trailing spoken "period". No LLM, no network; one linear scan. Same rule in cleanup.ts.
+fn spoken_list_punct(t: String) -> String {
+    if !t.contains(" period") {
+        return t;
+    }
+    let s = t.strip_suffix(['.', '?', '!']).unwrap_or(&t);
+    let Some(body) = s.strip_suffix(" period") else {
+        return t;
+    };
+    if !body.ends_with(|c: char| c.is_ascii_alphanumeric()) {
+        return t;
+    }
+    // Word before "period": same noun / determiner window as final_mark (ADR 0189).
+    let bytes = body.as_bytes();
+    let mut start = 0;
+    for j in (1..bytes.len()).rev() {
+        if bytes[j - 1] == b'\n' || (matches!(bytes[j - 1], b'.' | b'!' | b'?') && bytes[j] == b' ') {
+            start = j;
+            break;
+        }
+    }
+    let words: Vec<String> = body[start..]
+        .split_whitespace()
+        .map(|w| w.trim_matches(|c: char| matches!(c, ',')).to_ascii_lowercase())
+        .collect();
+    let Some(last) = words.last() else {
+        return t;
+    };
+    if !last.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'\'')
+        || last.bytes().all(|b| b.is_ascii_digit())
+        || MARK_NOUN_BEFORE.contains(&last.as_str())
+    {
+        return t;
+    }
+    // Only the word right before "period" matters here (unlike final_mark's 3-word window): "and the adapter
+    // period" is a list item, not the noun "period". "a period" / "the period" already fail MARK_NOUN_BEFORE on `last`.
+
+    let has_spoken_oxford = body.contains(" comma and ");
+    let has_ascii_comma = body.as_bytes().contains(&b',');
+    if !has_spoken_oxford && !has_ascii_comma {
+        return t;
+    }
+
+    // Case B: the recogniser already wrote "," for the list items; only the trailing spoken "period" remains.
+    if !has_spoken_oxford {
+        return format!("{body}.");
+    }
+
+    // Case A: rewrite whole-word "comma" tokens whose previous word is not a noun-before refuse.
+    let parts: Vec<&str> = body.split_whitespace().collect();
+    if parts.is_empty() {
+        return t;
+    }
+    let mut out = String::with_capacity(t.len());
+    let mut converted = 0usize;
+    for (i, w) in parts.iter().enumerate() {
+        if *w == "comma" {
+            let prev_ok = i
+                .checked_sub(1)
+                .map(|j| {
+                    let p = parts[j]
+                        .trim_matches(|c: char| matches!(c, ',' | '.' | '!' | '?'))
+                        .to_ascii_lowercase();
+                    !COMMA_NOUN_BEFORE.contains(&p.as_str())
+                })
+                .unwrap_or(false);
+            if prev_ok {
+                // Attach "," to the previous word (no space before the mark).
+                out.push_str(", ");
+                converted += 1;
+                continue;
+            }
+        }
+        if i > 0 && !out.ends_with(", ") {
+            out.push(' ');
+        }
+        out.push_str(w);
+    }
+    if converted == 0 {
+        return t;
+    }
+    format!("{}.", out.trim_end())
+}
+
 /// ADR 0193: number words, for spoken amounts. Values 1-9, 10-19 and the tens; "hundred" and "thousand" scale.
 const NUMBER_UNITS: &[&str] = &[
     "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
@@ -2739,7 +2939,7 @@ fn opening_filler_marks(s: &str) -> String {
 /// nor on a list of short lines; ADR 0201: whose line commas go; ADR 0206: "Hey <dictionary name>, <question>?"; ADR
 /// 0227: "..., isn't it?"), then
 /// spoken amounts as figures (ADR 0193: "$25", "15%", "3:30 p.m."), a spoken date's day as a figure (ADR 0230:
-/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), a run of commas as one (ADR 0236) and, last, a comma before a sentence mark dropped (ADR 0241).
+/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236) and, last, a comma before a sentence mark dropped (ADR 0241).
 pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     let mut t = format!(" {raw} ");
     t = layout_command(NEW_PARAGRAPH, &t, "\n\n");
@@ -2759,6 +2959,7 @@ pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     }
     t = scratch_that(t);
     t = final_mark(t);
+    t = spoken_list_punct(t);
     t = list_line_commas(t, raw.chars().any(|c| c.is_ascii_uppercase()));
     t = sentence_starts(&t);
     t = lone_i(&t);

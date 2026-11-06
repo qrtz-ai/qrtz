@@ -1,5 +1,23 @@
 # Hardening log
 
+## 2026-11-06 — Cycle 125 (≈7:39–8:05 PT, polish): spoken list "comma"/"period" become marks (ADR 0242)
+
+- **Focus:** polish. origin/main still `77b4e922` (0.4.5 / cycle 88). Mac online; `echo-bench` on TTS spoken-list
+  clips (Release helper + app `QRTZ_MODELS_DIR`) finally gave Parakeet emission evidence for p15.
+- **Landed:** "Bring the charger comma the cable comma and the adapter period" → "Bring the charger, the cable, and
+  the adapter."; same for eggs/milk/bread and Case B where commas are already ",". Rust + TS twin, polish +8,
+  keep +14, cleanup.json, hardening125 + hardening60 oracle, cleanup_budget +2 texts.
+- **Scores:** polish set 216 / 220, 58 chars → **225 / 228**, 39 chars (0.48 % of 8120), regressions 0; keep set
+  0 hits of 513.
+- **Rejected:** always-on spoken comma; bare final "period" without a list; year ITN; email/URL ITN; p41; unload;
+  N203 (still no free-relative false "?" in history); N197 (device-switch not measured — tauri/vitest up, disk ~7 GB).
+- **Suites:** qrtz-talk full suite green (incl. `no_model_names_in_the_crate`); vitest talk twin 707 passed in 21
+  files; Note 130 passed in 19 files; `cargo fmt -p qrtz-talk --check` clean; `bun run lint` clean.
+- **Latency:** release cleanup_budget medians on the box: 495 words 0.127 ms; spoken-list 0.146 ms; long list tail
+  0.166 ms; all under 2 ms.
+- **Box:** shared target `/workspace/qrtz-core2/target`; worktree `/workspace/qrtz-echo-wt-125`.
+
+
 ## 2026-11-05 — Cycle 88 (≈11:25–11:40 PT, polish): a comma before a sentence mark is dropped (ADR 0241, QRT-265)
 
 - **Focus:** polish. Path review since `09a38c22` / `4f8903d5` (cycle 87): only `8af7f915` (oxfmt timing-report) landed;

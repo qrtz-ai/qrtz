@@ -62,7 +62,9 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
             c59::rule_cleanup(&without_filler_marks(raw), dict),
         ]
         .map(|c| {
-            without_dangling_comma_marks(&without_space_before_curly_close(&without_comma_runs(&c, dict)))
+            with_spoken_list_punct(&without_dangling_comma_marks(&without_space_before_curly_close(
+                &without_comma_runs(&c, dict),
+            )))
         });
         candidates
             .iter()
@@ -92,11 +94,14 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     // title edit below sees the same words).
     // ADR 0238 (cycle 85): no space before a curly closing quote after "," / ";".
     // ADR 0241 (cycle 88): a comma before a sentence mark is dropped (after comma runs).
+    // ADR 0242 (cycle 125): spoken list commas/period become ","/".".
     let old = without_comma_runs(&old, dict);
     // ADR 0238 (cycle 85): drop the space cycle 59 put before a curly closing quote.
     let old = without_space_before_curly_close(&old);
     // ADR 0241 (cycle 88): a comma that sits only before a sentence mark is dropped.
     let old = without_dangling_comma_marks(&old);
+    // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
+    let old = with_spoken_list_punct(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
         new.clone()
@@ -333,6 +338,174 @@ fn without_dangling_comma_marks(old: &str) -> String {
         }
         out = next;
     }
+}
+
+/// ADR 0242's one allowed edit (written independently of cleanup.rs): when `old` ends in " period" (optional
+/// trailing mark) after a plain word that is not a final-mark noun-before, and either holds " comma and " or an
+/// ASCII ",", rewrite list "comma" tokens (prev not a comma-noun-before) and/or drop the trailing spoken "period".
+fn with_spoken_list_punct(old: &str) -> String {
+    const COMMA_NOUN_BEFORE: &[&str] = &[
+        "a",
+        "an",
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "my",
+        "your",
+        "his",
+        "her",
+        "its",
+        "our",
+        "their",
+        "no",
+        "another",
+        "any",
+        "each",
+        "every",
+        "some",
+        "one",
+        "which",
+        "whose",
+        "what",
+        "word",
+        "words",
+        "term",
+        "terms",
+        "letter",
+        "letters",
+        "character",
+        "characters",
+        "symbol",
+        "symbols",
+        "punctuation",
+        "key",
+        "keys",
+        "button",
+        "english",
+        "means",
+        "meaning",
+        "called",
+        "named",
+        "spelled",
+        "say",
+        "says",
+        "said",
+        "type",
+        "types",
+        "typed",
+        "typing",
+        "press",
+        "presses",
+        "pressed",
+        "hit",
+        "hits",
+        "put",
+        "puts",
+        "putting",
+        "add",
+        "adds",
+        "added",
+        "adding",
+        "use",
+        "uses",
+        "used",
+        "using",
+        "insert",
+        "inserts",
+        "inserted",
+        "write",
+        "writes",
+        "wrote",
+        "writing",
+        "need",
+        "needs",
+        "needed",
+        "want",
+        "wants",
+        "with",
+        "without",
+        "of",
+        "for",
+        "to",
+        "from",
+        "by",
+        "after",
+        "before",
+        "about",
+        "plus",
+        "and",
+        "or",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+    ];
+    // Mirror of MARK_NOUN_BEFORE is large; reuse a minimal check via the same words the oracle already knows
+    // from final_mark era — call through by reimplementing the narrow end check only.
+    if !old.contains(" period") {
+        return old.to_owned();
+    }
+    let s = old.strip_suffix(['.', '?', '!']).unwrap_or(old);
+    let Some(body) = s.strip_suffix(" period") else {
+        return old.to_owned();
+    };
+    if !body.ends_with(|c: char| c.is_ascii_alphanumeric()) {
+        return old.to_owned();
+    }
+    let last = body
+        .split_whitespace()
+        .last()
+        .map(|w| w.trim_matches(|c: char| matches!(c, ',')).to_ascii_lowercase())
+        .unwrap_or_default();
+    if last.is_empty()
+        || !last.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'\'')
+        || last.bytes().all(|b| b.is_ascii_digit())
+        || qrtz_talk::cleanup::MARK_NOUN_BEFORE.contains(&last.as_str())
+    {
+        return old.to_owned();
+    }
+    let has_spoken_oxford = body.contains(" comma and ");
+    let has_ascii_comma = body.as_bytes().contains(&b',');
+    if !has_spoken_oxford && !has_ascii_comma {
+        return old.to_owned();
+    }
+    if !has_spoken_oxford {
+        return format!("{body}.");
+    }
+    let parts: Vec<&str> = body.split_whitespace().collect();
+    let mut out = String::new();
+    let mut converted = 0usize;
+    for (i, w) in parts.iter().enumerate() {
+        if *w == "comma" {
+            let prev_ok = i
+                .checked_sub(1)
+                .map(|j| {
+                    let p = parts[j]
+                        .trim_matches(|c: char| matches!(c, ',' | '.' | '!' | '?'))
+                        .to_ascii_lowercase();
+                    !COMMA_NOUN_BEFORE.contains(&p.as_str())
+                })
+                .unwrap_or(false);
+            if prev_ok {
+                out.push_str(", ");
+                converted += 1;
+                continue;
+            }
+        }
+        if i > 0 && !out.ends_with(", ") {
+            out.push(' ');
+        }
+        out.push_str(w);
+    }
+    if converted == 0 {
+        return old.to_owned();
+    }
+    format!("{}.", out.trim_end())
 }
 
 /// ADR 0234's one allowed edit (written independently of cleanup.rs): where `new` has "Mr." / "Mrs." in the place of

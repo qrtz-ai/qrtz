@@ -240,4 +240,35 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     );
     assert!(out.contains("Yeah, also.") && out.contains("So. Next we go."));
     assert_fits_budget(&text, " with dangling commas before sentence marks");
+    // ADR 0242: long dictation ending in spoken list commas/period (end-anchored rule).
+    let text = format!(
+        "{} Bring the charger comma the cable comma and the adapter period",
+        long_dictation()
+    );
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        out.ends_with("Bring the charger, the cable, and the adapter."),
+        "{out}"
+    );
+    assert!(!out.contains(" comma "), "{out}");
+    assert_fits_budget(&text, " with spoken list commas and periods");
+    // Many "comma" tokens in one final list so the scan walks a long tail once.
+    let mut items = Vec::new();
+    for i in 0..40 {
+        items.push(format!("item{i}"));
+    }
+    // item0 comma item1 comma ... comma and item39 period
+    let mut list = items[0].clone();
+    for it in &items[1..items.len() - 1] {
+        list.push_str(" comma ");
+        list.push_str(it);
+    }
+    list.push_str(" comma and ");
+    list.push_str(items.last().unwrap());
+    list.push_str(" period");
+    let text = format!("{} Bring {list}", long_dictation());
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("item0, item1,"), "{out}");
+    assert!(out.ends_with("and item39."), "{out}");
+    assert_fits_budget(&text, " with a long spoken list tail");
 }
