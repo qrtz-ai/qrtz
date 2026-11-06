@@ -309,4 +309,15 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(out.contains("Can you check the next one"), "{out}");
     assert!(out.ends_with("Also send the notes."), "{out}");
     assert_fits_budget(&text, " with sentence-initial filler clauses");
+    // ADR 0246: mid-sentence two-word restart phrases on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please keep item{i} as a As a separate row"));
+    }
+    body.push_str(". And then it doesn't It doesn't quite match");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("as a separate row"), "{out}");
+    assert!(out.contains("it doesn't quite match"), "{out}");
+    assert_fits_budget(&text, " with restart phrases");
 }

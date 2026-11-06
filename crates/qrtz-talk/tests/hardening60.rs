@@ -70,8 +70,8 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
             c59::rule_cleanup(&without_filler_clause(raw), dict),
         ]
         .map(|c| {
-            with_spoken_list_punct(&without_dangling_comma_marks(&without_space_before_curly_close(
-                &without_comma_runs(&c, dict),
+            without_restart_phrase(&with_spoken_list_punct(&without_dangling_comma_marks(
+                &without_space_before_curly_close(&without_comma_runs(&c, dict)),
             )))
         });
         candidates
@@ -110,6 +110,8 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_dangling_comma_marks(&old);
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
+    // ADR 0246 (cycle 130): mid-sentence two-word restart phrases collapse.
+    let old = without_restart_phrase(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
         new.clone()
@@ -133,6 +135,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
+        // ADR 0246 (cycle 130): mid-sentence two-word restart phrases — see without_restart_phrase on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -355,6 +358,74 @@ fn without_filler_marks(raw: &str) -> String {
     }
     out.push_str(&padded[last..]);
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
+}
+
+/// ADR 0246's restart-phrase edit, made on the text (written independently of cleanup.rs): a two-word all-lowercase
+/// phrase immediately repeated with a Title-case first word and lowercase second word collapses to one copy.
+fn without_restart_phrase(s: &str) -> String {
+    let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
+    let spans: Vec<(usize, usize, String)> = word_re
+        .find_iter(s)
+        .map(|m| (m.start(), m.end(), m.as_str().to_owned()))
+        .collect();
+    if spans.len() < 4 {
+        return s.to_owned();
+    }
+    let only_space_tab =
+        |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
+    let letters_lower = |w: &str| {
+        w.chars()
+            .filter(|c| c.is_ascii_alphabetic())
+            .all(|c| c.is_ascii_lowercase())
+    };
+    let mut drop = vec![false; spans.len()];
+    let mut i = 0;
+    while i + 3 < spans.len() {
+        let (_a0, b0, ref w0) = spans[i];
+        let (a1, b1, ref w1) = spans[i + 1];
+        let (a2, b2, ref w2) = spans[i + 2];
+        let (a3, _b3, ref w3) = spans[i + 3];
+        let ok = only_space_tab(b0, a1)
+            && only_space_tab(b1, a2)
+            && only_space_tab(b2, a3)
+            && letters_lower(w0)
+            && letters_lower(w1)
+            && w2.starts_with(|c: char| c.is_ascii_uppercase())
+            && w3.starts_with(|c: char| c.is_ascii_lowercase())
+            && w0.eq_ignore_ascii_case(w2)
+            && w1.eq_ignore_ascii_case(w3)
+            && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
+        if ok {
+            drop[i + 2] = true;
+            drop[i + 3] = true;
+            i += 4;
+        } else {
+            i += 1;
+        }
+    }
+    if drop.iter().all(|d| !*d) {
+        return s.to_owned();
+    }
+    let mut out = String::with_capacity(s.len());
+    let mut last = 0usize;
+    for (idx, &(a, b, _)) in spans.iter().enumerate() {
+        if !drop[idx] {
+            continue;
+        }
+        let mut ws = a;
+        while ws > last {
+            let ch = s[..ws].chars().next_back().unwrap();
+            if ch == ' ' || ch == '\t' {
+                ws -= ch.len_utf8();
+            } else {
+                break;
+            }
+        }
+        out.push_str(&s[last..ws]);
+        last = b;
+    }
+    out.push_str(&s[last..]);
+    out
 }
 
 /// ADR 0245's filler-clause edit, made on the raw text (written independently of cleanup.rs): a filler right after a

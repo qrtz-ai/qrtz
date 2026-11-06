@@ -2362,6 +2362,72 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
+/** ADR 0246: a mid-sentence two-word restart ("as a As a", "it doesn't It doesn't") collapses to one copy. */
+function restartPhrase(s: string): string {
+  const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
+  const spans: { start: number; end: number; text: string }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = wordRe.exec(s)) !== null) {
+    spans.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+  }
+  if (spans.length < 4) return s;
+  // Spaces/tabs only: a newline between copies is a real sentence start, not a restart.
+  const onlySpaceTab = (from: number, to: number) =>
+    from <= to && /^[ \t]*$/.test(s.slice(from, to));
+  const lettersLower = (w: string) =>
+    [...w]
+      .filter((c) => /[A-Za-z]/.test(c))
+      .every((c) => c === c.toLowerCase());
+  const drop = Array.from({ length: spans.length }, () => false);
+  let i = 0;
+  while (i + 3 < spans.length) {
+    const [w0, w1, w2, w3] = [
+      spans[i],
+      spans[i + 1],
+      spans[i + 2],
+      spans[i + 3],
+    ];
+    const ok =
+      onlySpaceTab(w0.end, w1.start) &&
+      onlySpaceTab(w1.end, w2.start) &&
+      onlySpaceTab(w2.end, w3.start) &&
+      lettersLower(w0.text) &&
+      lettersLower(w1.text) &&
+      /^[A-Z]/.test(w2.text) &&
+      /^[a-z]/.test(w3.text) &&
+      w0.text.toLowerCase() === w2.text.toLowerCase() &&
+      w1.text.toLowerCase() === w3.text.toLowerCase() &&
+      // Spoken "scratch that" (ADR 0186) is a command, not a restart stutter.
+      !(
+        w0.text.toLowerCase() === 'scratch' && w1.text.toLowerCase() === 'that'
+      );
+    if (ok) {
+      drop[i + 2] = true;
+      drop[i + 3] = true;
+      i += 4;
+    } else {
+      i += 1;
+    }
+  }
+  if (drop.every((d) => !d)) return s;
+  let out = '';
+  let last = 0;
+  for (let idx = 0; idx < spans.length; idx++) {
+    if (!drop[idx]) continue;
+    const { start, end } = spans[idx];
+    let ws = start;
+    while (ws > last) {
+      const ch = s[ws - 1];
+      if (ch === ' ' || ch === '\t') ws -= 1;
+      else break;
+    }
+    out += s.slice(last, ws);
+    last = end;
+  }
+  out += s.slice(last);
+  return out;
+}
+
 export function ruleCleanup(
   raw: string,
   dict: readonly DictionaryEntry[] = [],
@@ -2398,6 +2464,8 @@ export function ruleCleanup(
       ? w
       : all,
   );
+  // ADR 0246: mid-sentence two-word restart phrase.
+  t = restartPhrase(t);
   t = t.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n');
   t = t
     .replace(/\s+([,.!?;:])/g, '$1')

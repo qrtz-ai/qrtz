@@ -1860,6 +1860,162 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
+/// ADR 0246: a two-word phrase the recogniser restarts mid-sentence with a capital on the first word
+/// ("as a As a mock-up", "in a In a way", "in the In the best", "it doesn't It doesn't quite") collapses
+/// to one copy. The first copy is all-lowercase; the second copy's first word is capitalised and its
+/// second word is lowercase (so "new york New York" / "app store App Store" stay). Only whitespace
+/// between the four words; no punctuation. Apostrophes inside a word ("doesn't", "can't") count as
+/// part of that word. Runs after [`collapse_repeats`].
+fn restart_phrase(s: &str) -> String {
+    /// A dictation word: letters with optional internal ASCII / curly apostrophes ("doesn't", "can't").
+    fn next_word(s: &str, from: usize) -> Option<(usize, usize)> {
+        let bytes = s.as_bytes();
+        let mut p = from;
+        while p < bytes.len()
+            && (bytes[p] == b' ' || bytes[p] == b'\t' || bytes[p] == b'\n' || bytes[p] == b'\r')
+        {
+            p += 1;
+        }
+        if p >= bytes.len() || !bytes[p].is_ascii_alphabetic() {
+            return None;
+        }
+        if let Some(prev) = s[..p].chars().next_back() {
+            if is_w(prev) || prev == '\'' || prev == '\u{2019}' {
+                return None;
+            }
+        }
+        let start = p;
+        p += 1;
+        while p < bytes.len() {
+            let c = bytes[p];
+            if c.is_ascii_alphabetic() {
+                p += 1;
+                continue;
+            }
+            // ASCII apostrophe then letters.
+            if c == b'\'' && p + 1 < bytes.len() && bytes[p + 1].is_ascii_alphabetic() {
+                p += 2;
+                while p < bytes.len() && bytes[p].is_ascii_alphabetic() {
+                    p += 1;
+                }
+                continue;
+            }
+            // Curly apostrophe U+2019 (UTF-8 e2 80 99) then letters.
+            if c == 0xe2
+                && bytes.get(p + 1) == Some(&0x80)
+                && bytes.get(p + 2) == Some(&0x99)
+                && bytes.get(p + 3).is_some_and(|n| n.is_ascii_alphabetic())
+            {
+                p += 4;
+                while p < bytes.len() && bytes[p].is_ascii_alphabetic() {
+                    p += 1;
+                }
+                continue;
+            }
+            break;
+        }
+        if !bytes[p - 1].is_ascii_alphabetic() {
+            return None;
+        }
+        if s[p..]
+            .chars()
+            .next()
+            .is_some_and(|q| is_w(q) || q == '\'' || q == '\u{2019}')
+        {
+            return None;
+        }
+        Some((start, p))
+    }
+
+    let mut spans: Vec<(usize, usize)> = Vec::new();
+    let mut at = 0;
+    while at < s.len() {
+        if let Some((a, b)) = next_word(s, at) {
+            // next_word skips leading whitespace from `at`, so the word starts at `a`.
+            // Advance search from end of word; but if there was non-space junk between at and a, we must
+            // only accept when from `at` we only skipped whitespace OR at==a.
+            if at < a && !s[at..a].chars().all(char::is_whitespace) {
+                at += s[at..].chars().next().map_or(1, char::len_utf8);
+                continue;
+            }
+            spans.push((a, b));
+            at = b;
+        } else if at < s.len() {
+            at += s[at..].chars().next().map_or(1, char::len_utf8);
+        } else {
+            break;
+        }
+    }
+    if spans.len() < 4 {
+        return s.to_owned();
+    }
+
+    // Spaces and tabs only: a newline between copies is a real sentence start ("scratch that\nScratch that"), not a restart.
+    let only_space_tab =
+        |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
+    let letters_lower = |a: usize, b: usize| {
+        s[a..b]
+            .chars()
+            .filter(|c| c.is_ascii_alphabetic())
+            .all(|c| c.is_ascii_lowercase())
+    };
+
+    let mut drop = vec![false; spans.len()];
+    let mut i = 0;
+    while i + 3 < spans.len() {
+        let (a0, b0) = spans[i];
+        let (a1, b1) = spans[i + 1];
+        let (a2, b2) = spans[i + 2];
+        let (a3, b3) = spans[i + 3];
+        let ok = only_space_tab(b0, a1)
+            && only_space_tab(b1, a2)
+            && only_space_tab(b2, a3)
+            && letters_lower(a0, b0)
+            && letters_lower(a1, b1)
+            && s[a2..].starts_with(|c: char| c.is_ascii_uppercase())
+            && s[a3..].starts_with(|c: char| c.is_ascii_lowercase())
+            && s[a0..b0].eq_ignore_ascii_case(&s[a2..b2])
+            && s[a1..b1].eq_ignore_ascii_case(&s[a3..b3])
+            // Spoken "scratch that" (ADR 0186) is a command, not a restart stutter.
+            && !(s[a0..b0].eq_ignore_ascii_case("scratch")
+                && s[a1..b1].eq_ignore_ascii_case("that"));
+        if ok {
+            drop[i + 2] = true;
+            drop[i + 3] = true;
+            i += 4;
+        } else {
+            i += 1;
+        }
+    }
+    if drop.iter().all(|d| !*d) {
+        return s.to_owned();
+    }
+
+    // Build output: copy through, omitting dropped words and the whitespace immediately before each.
+    let mut out = String::with_capacity(s.len());
+    let mut last = 0usize;
+    for (idx, &(a, b)) in spans.iter().enumerate() {
+        if !drop[idx] {
+            continue;
+        }
+        // Emit up to the whitespace before this dropped word, then skip the word.
+        // Find start of whitespace run before `a` (but not before `last`).
+        let mut ws = a;
+        while ws > last {
+            let ch = s[..ws].chars().next_back().unwrap();
+            if ch == ' ' || ch == '\t' {
+                ws -= ch.len_utf8();
+            } else {
+                break;
+            }
+        }
+        out.push_str(&s[last..ws]);
+        last = b;
+    }
+    out.push_str(&s[last..]);
+    out
+}
+
 /// Runs of spaces and tabs as one space (the pattern `[ \t]+`).
 fn collapse_blanks(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
@@ -3098,7 +3254,7 @@ fn opening_filler_clause(s: &str) -> String {
 /// nor on a list of short lines; ADR 0201: whose line commas go; ADR 0206: "Hey <dictionary name>, <question>?"; ADR
 /// 0227: "..., isn't it?"), then
 /// spoken amounts as figures (ADR 0193: "$25", "15%", "3:30 p.m."), a spoken date's day as a figure (ADR 0230:
-/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236), a comma before a sentence mark dropped (ADR 0241), and a sentence-initial filler clause after a period (ADR 0245).
+/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236), a comma before a sentence mark dropped (ADR 0241), a sentence-initial filler clause after a period (ADR 0245), and a mid-sentence two-word restart phrase (ADR 0246).
 pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     let mut t = format!(" {raw} ");
     t = layout_command(NEW_PARAGRAPH, &t, "\n\n");
@@ -3107,6 +3263,7 @@ pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     t = opening_filler_clause(&t);
     t = remove_fillers(&t);
     t = collapse_repeats(&t);
+    t = restart_phrase(&t);
     t = collapse_blanks(&t);
     t = rep(&NL_SPACES, &t, "\n");
     t = rep(&SPACE_BEFORE_PUNCT, &t, "${1}");
