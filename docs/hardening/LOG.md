@@ -8,7 +8,7 @@
 - **Scores:** polish 233/236 → **241/244** exact, edit distance 39 (0.44 % of 8779), regressions 0; keep 0/540.
 - **Latency:** release `cleanup_budget` confirmation-sentence medians ≪ 2 ms (period form ~0.12–0.28 ms).
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
-- **SHA:** (filled after push)
+- **SHA:** `40ba7a02`
 
 
 ## 2026-11-06 — Cycle 126 (≈8:25–9:05 PT, polish): unmarked ", right" / ", correct" ends with "?" (ADR 0243)
