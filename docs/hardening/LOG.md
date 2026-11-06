@@ -10,7 +10,7 @@
   em-dash Cap-restart (0 hits); ", okay"/", yeah"/", huh"/", eh"/", no"; email/URL ITN; p41; unload; N203; N197;
   year ITN; five-word Cap; general triple-any-word.
 - **Latency:** release `cleanup_budget` triple on/like median **0.348 ms** (1264-word; ceiling 2 ms).
-- **SHA:** code `a8a6d784`; docs `DOCSSHA`
+- **SHA:** code `a8a6d784`; docs `3b3deceb`
 
 ## 2026-11-06 — Cycle 136 (≈1:26–1:45 PM PT, polish): Cap-restart phrases across an ellipsis collapse (ADR 0252)
 
