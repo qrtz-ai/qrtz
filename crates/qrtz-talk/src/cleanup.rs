@@ -1860,7 +1860,7 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248: a phrase the recogniser restarts mid-sentence with a capital
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: a phrase the recogniser restarts mid-sentence with a capital
 /// on the first word of the second copy collapses to one copy.
 ///
 /// Two-word (ADR 0246, widened in ADR 0247): "as a As a", "in the In the", "Can you Can you",
@@ -1880,7 +1880,11 @@ fn collapse_repeats(s: &str) -> String {
 /// "don't Don't", "can't Can't"). The first copy starts lowercase (mid-sentence); the second
 /// starts uppercase; eq_ignore_ascii_case. Plain words without an apostrophe stay with
 /// [`collapse_repeats`] / STUTTERS ("it It", "the The") or are refused ("like Like", "will Will").
-/// Both-Cap "It's It's" / "O'Brien O'Brien" stay. Runs after [`collapse_repeats`].
+/// Both-Cap "It's It's" / "O'Brien O'Brien" stay.
+///
+/// One-word (ADR 0249): bare lowercase "it" before Cap contraction "It's" / "It’s" drops the
+/// bare "it" and keeps the Cap form ("Like it It's" → "Like It's"). Both-lower "it it's" stays
+/// (missed-comma risk). Cap "It It's" stays. Runs after [`collapse_repeats`].
 fn restart_phrase(s: &str) -> String {
     /// A dictation word: letters with optional internal ASCII / curly apostrophes ("doesn't", "can't").
     fn next_word(s: &str, from: usize) -> Option<(usize, usize)> {
@@ -2038,6 +2042,7 @@ fn restart_phrase(s: &str) -> String {
             }
         }
         // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+        // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
         if i + 1 < spans.len() {
             let (a0, b0) = spans[i];
             let (a1, b1) = spans[i + 1];
@@ -2049,6 +2054,15 @@ fn restart_phrase(s: &str) -> String {
                 && eq_ci(a0, b0, a1, b1);
             if ok1 {
                 drop[i + 1] = true;
+                i += 2;
+                continue;
+            }
+            let is_bare_it = &s[a0..b0] == "it";
+            let w1 = &s[a1..b1];
+            let is_cap_its = w1 == "It's" || w1 == "It’s";
+            let ok_it = only_space_tab(b0, a1) && is_bare_it && is_cap_its;
+            if ok_it {
+                drop[i] = true;
                 i += 2;
                 continue;
             }

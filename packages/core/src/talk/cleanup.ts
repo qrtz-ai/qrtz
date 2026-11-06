@@ -2362,7 +2362,7 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
-/** ADR 0246 / ADR 0247: mid-sentence two- or three-word restart phrase collapses to one copy. */
+/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: mid-sentence restart phrase collapses to one copy. */
 function restartPhrase(s: string): string {
   const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
   const spans: { start: number; end: number; text: string }[] = [];
@@ -2444,6 +2444,7 @@ function restartPhrase(s: string): string {
       }
     }
     // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+    // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
     if (i + 1 < spans.length) {
       const w0 = spans[i];
       const w1 = spans[i + 1];
@@ -2456,6 +2457,14 @@ function restartPhrase(s: string): string {
         w0.text.toLowerCase() === w1.text.toLowerCase();
       if (ok1) {
         drop[i + 1] = true;
+        i += 2;
+        continue;
+      }
+      const isBareIt = w0.text === 'it';
+      const isCapIts = w1.text === "It's" || w1.text === 'It’s';
+      const okIt = onlySpaceTab(w0.end, w1.start) && isBareIt && isCapIts;
+      if (okIt) {
+        drop[i] = true;
         i += 2;
         continue;
       }
@@ -2517,7 +2526,7 @@ export function ruleCleanup(
       ? w
       : all,
   );
-  // ADR 0246 / ADR 0247 / ADR 0248: mid-sentence restart phrase (incl. one-word Cap contraction).
+  // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: mid-sentence restart phrase (incl. it-before-It's).
   t = restartPhrase(t);
   t = t.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n');
   t = t

@@ -110,7 +110,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_dangling_comma_marks(&old);
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
-    // ADR 0246 / ADR 0247 / ADR 0248 (cycles 130–132): restart phrases (incl. one-word Cap contraction) collapse.
+    // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 (cycles 130–133): restart phrases (incl. it-before-It's) collapse.
     let old = without_restart_phrase(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
@@ -135,7 +135,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
-        // ADR 0246 / ADR 0247 / ADR 0248 (cycles 130–132): restart phrases — see without_restart_phrase on old.
+        // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 (cycles 130–133): restart phrases — see without_restart_phrase on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -360,11 +360,12 @@ fn without_filler_marks(raw: &str) -> String {
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248's restart-phrase edit, made on the text (written independently of
-/// cleanup.rs): a two- or three-word phrase immediately repeated with a Title-case first word on the
-/// second copy and a lowercase last word collapses to one copy. The first copy's first word may be
-/// Title case (ADR 0247); a three-word middle word may be the pronoun "I" / a contracted "I".
-/// ADR 0248: a one-word Cap restart of a contraction ("it's It's") also collapses.
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249's restart-phrase edit, made on the text (written
+/// independently of cleanup.rs): a two- or three-word phrase immediately repeated with a Title-case
+/// first word on the second copy and a lowercase last word collapses to one copy. The first copy's
+/// first word may be Title case (ADR 0247); a three-word middle word may be the pronoun "I" / a
+/// contracted "I". ADR 0248: a one-word Cap restart of a contraction ("it's It's") also collapses.
+/// ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form drops "it" and keeps Cap.
 fn without_restart_phrase(s: &str) -> String {
     let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
     let spans: Vec<(usize, usize, String)> = word_re
@@ -439,6 +440,7 @@ fn without_restart_phrase(s: &str) -> String {
             }
         }
         // ADR 0248: one-word Cap restart of a contraction.
+        // ADR 0249: bare lowercase "it" before Cap "It's" — drop "it", keep Cap.
         if i + 1 < spans.len() {
             let (_a0, b0, ref w0) = spans[i];
             let (a1, _b1, ref w1) = spans[i + 1];
@@ -450,6 +452,14 @@ fn without_restart_phrase(s: &str) -> String {
                 && w0.eq_ignore_ascii_case(w1);
             if ok1 {
                 drop[i + 1] = true;
+                i += 2;
+                continue;
+            }
+            let is_bare_it = w0 == "it";
+            let is_cap_its = w1 == "It's" || w1.as_str() == "It’s";
+            let ok_it = only_space_tab(b0, a1) && is_bare_it && is_cap_its;
+            if ok_it {
+                drop[i] = true;
                 i += 2;
                 continue;
             }

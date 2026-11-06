@@ -1,3 +1,16 @@
+## 2026-11-06 — Cycle 133 (≈11:55–12:20 PT, polish): bare "it" before Cap "It's" (ADR 0249)
+
+- **Landed:** widen `restart_phrase` — mid-sentence bare lowercase "it" before Cap "It's" /
+  curly-apos form drops "it" and keeps Cap (ADR 0249). Both-lower "it it's" refused (missed-comma).
+  Rust + TS twin, polish +8, keep +12, cleanup.json, hardening133 + hardening60 oracle,
+  cleanup_budget probe.
+- **Polish:** 277/280 → **285/288** exact, edit distance **39**, regressions **0**, keep **0/592**.
+- **Latency:** release `cleanup_budget` it-before-It's median **0.225 ms** (ceiling 2 ms).
+- **Rejected:** both-lower "it it's"; ", okay"/", yeah"/", huh"/", eh"/", no"; like Like / so|like
+  STUTTERS; lowercase "like a like a"; "a An"; "why Why"; email/URL ITN; p41; unload; N203; N197;
+  year ITN.
+- **SHAs:** code pending, docs pending
+
 ## 2026-11-06 — Cycle 132 (≈11:19–11:50 PT, polish): one-word Cap contraction restart (ADR 0248)
 
 - **Landed:** widen `restart_phrase` — mid-sentence Cap restart of a contraction ("it's It's",

@@ -343,4 +343,19 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("it's It's"), "{out}");
     assert!(!out.contains("can't Can't"), "{out}");
     assert_fits_budget(&text, " with Cap contraction restarts");
+    // ADR 0249: bare "it" before Cap "It's" on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} it It's ready now"));
+    }
+    body.push_str(". And then maybe it It's too late");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("It's ready now"), "{out}");
+    assert!(
+        out.contains("maybe It's too late") || out.contains("Maybe It's too late"),
+        "{out}"
+    );
+    assert!(!out.contains("it It's"), "{out}");
+    assert_fits_budget(&text, " with it-before-It's restarts");
 }

@@ -3180,3 +3180,46 @@ from a real unmarked dictation with its own keep set.
    it should type "it's not correct.". Then "don't Don't want that" → "don't want that.".
 3. Refuse checks: "It's It's fine." stays (both Cap); "will Will smith" stays; "like Like it" stays;
    "like a like a smooth fade" stays.
+
+## 68. Cycle 133: bare "it" before Cap "It's" restart (ADR 0249)
+
+| Run                                       | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ----------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 132, 280 cases                      | **277 / 280** | **39 chars (0.38 % of 10301)** | 0           | 0 / 580             |
+| this cycle, 288 cases (+8 it-before-It's) | **285 / 288** | **39 chars (0.37 % of 10481)** | 0           | 0 / 592             |
+
+- **Examples:** "Like it It's very hit or miss" → "Like It's very hit or miss.";
+  "I think it It's broken already" → "I think It's broken already."; "yeah it It's the same bug"
+  → "Yeah It's the same bug.". Kept: both-lower "it it's", Cap "It It's", "give it its due",
+  "hit It's the limit", "it Itself", prior two-/three-word and Cap-contraction keeps.
+- **Rejected this cycle:** both-lower "it it's" (missed-comma risk); ", okay" / ", yeah" / ", huh" /
+  ", eh" / ", no"; "like Like" / adding "so"/"like" to STUTTERS; lowercase "like a like a";
+  "a An" article Cap restart (defer); "why Why" plain Cap allowlist; email/URL ITN (p19/p20,
+  ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN
+  (k350).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: it-before-It's median **0.225 ms** (ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 132:** origin/main at `89272718` until this commit. Only docs
+  SHA follow-ups since `cf0ae0ea`. Fresh Mac history (prod 453, dev 339) surfaced bare "it It's".
+  N197 and N203 stay open; p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" until Cap-lemma
+evidence is clean.
+
+### Test on Jared's Mac (cycle 133)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "it It's very hit or miss" (or dictate so Parakeet restarts bare "it" as Cap "It's") —
+   it should type "It's very hit or miss." (or "Like It's…" if you lead with Like). Then
+   "I think it It's broken" → "I think It's broken.".
+3. Refuse checks: "it it's not a big deal" stays both-lower; "It It's fine" stays (Cap It); "give it
+   its due" stays; "hit It's the limit" stays; ADR 0248 "it's It's not correct" still collapses to
+   one "it's".
