@@ -298,4 +298,15 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     let out = cleanup_dictation(&text, &dictionary(), true).text;
     assert!(out.ends_with("Right?"), "{out}");
     assert_fits_budget(&text, " with a confirmation sentence (unmarked)");
+    // ADR 0245: sentence-initial filler clauses (comma / bare) on a long dictation; capitalise next so the mark stays.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Thanks for item{i}. Um, can you check the next one"));
+    }
+    body.push_str(". Done. Uh, also send the notes");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("Can you check the next one"), "{out}");
+    assert!(out.ends_with("Also send the notes."), "{out}");
+    assert_fits_budget(&text, " with sentence-initial filler clauses");
 }

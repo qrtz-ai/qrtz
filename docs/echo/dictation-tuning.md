@@ -2980,11 +2980,11 @@ prior sentence, with the previous sentence's last word not in `CONFIRMATION_NOT_
 ("…. Right") and for a recogniser "." ("…. Right." → "…. Right?"). Mid-dictation ". Right." clauses are left alone
 (only the final sentence is marked, same as `tag_question`).
 
-| Run                                     | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
-| --------------------------------------- | ------------- | ----------------------------- | ----------- | ------------------- |
-| cycle 126 (`cc752989`), 236 cases       | 233 / 236     | 39 chars (0.46 % of 8422)     | 0           | 0 / 527             |
-| this cycle, 236 cases                   | 233 / 236     | 39 chars                      | 0           | 0 / 527             |
-| this cycle, 244 cases (+8 sentence)     | **241 / 244** | **39 chars (0.44 % of 8779)** | 0           | 0 / 540             |
+| Run                                 | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
+| ----------------------------------- | ------------- | ----------------------------- | ----------- | ------------------- |
+| cycle 126 (`cc752989`), 236 cases   | 233 / 236     | 39 chars (0.46 % of 8422)     | 0           | 0 / 527             |
+| this cycle, 236 cases               | 233 / 236     | 39 chars                      | 0           | 0 / 527             |
+| this cycle, 244 cases (+8 sentence) | **241 / 244** | **39 chars (0.44 % of 8779)** | 0           | 0 / 540             |
 
 - **Examples:** "Just to confirm, all of this will automatically update. Right" → "…. Right?" (was "…. Right.");
   "…. Right." (recogniser period) → "…. Right?"; "And then just these ones morph together. Right" → "…. Right?";
@@ -3021,3 +3021,40 @@ dictation with its own keep set.
 4. Unchanged: "Turn left. Right", "Go up. Right", "Copy that. Right away", comma-form ", right" from cycle 126.
 5. If anything reads worse, revert the talk cleanup commit (Rust + TS twin + vectors + tests) and tell Echo the
    dictation.
+
+## 64. Cycle 128: a sentence-initial filler after a period keeps the sentence mark (ADR 0245)
+
+| Run                                       | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
+| ----------------------------------------- | ------------- | ----------------------------- | ----------- | ------------------- |
+| cycle 127, 244 cases                      | **241 / 244** | **39 chars (0.44 % of 8779)** | 0           | 0 / 540             |
+| this cycle, 254 cases (+10 filler-clause) | **251 / 254** | **39 chars (0.42 % of 9293)** | 0           | 0 / 553             |
+
+- **Examples:** "Thanks. Um, can you send it" → "Thanks. Can you send it?"; "Yeah, it works, thanks. Um, next, can you
+  make it quicker" → "…. thanks. Next, can you make it quicker?"; "thanks. Uh it says loom" → "Thanks. It says loom.".
+  Kept: "Umami" / "Uhura" / "Umbrella"; "UM,"; mid-sentence "should, uh, ship"; "So, um, next"; ADR 0235's
+  "Thanks. Um. can you" lowercase-after-marks refuse.
+- **Rejected this cycle:** ", okay" / ", yeah" / ", huh" / ", eh" / ", no" (no unmarked end-of-sentence hit in
+  history); email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188 don't retry); unload; speculative N203 without history
+  evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: filler-clause median **0.216 ms** (ceiling 2 ms). Capture, VAD / segmenting,
+  model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 127:** origin/main unchanged at `52ff5304` until this commit. N197 (Mac
+  device-switch) and N203 stay open; p15 already fixed in cycle 125. Mac disk ~6.2 GB free — N197 skipped.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with Bobs. N197 still
+needs the Mac device-switch gap (quiet window + more free disk).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197 when a quiet
+window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only from a real unmarked
+dictation with its own keep set.
+
+### Test on Jared's Mac (cycle 128)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "Thanks. Um, can you send it" — it should type "Thanks. Can you send it?". Then "Yeah, it works,
+   thanks. Um, next, can you make it quicker" → "…. thanks. Next, can you make it quicker?".
+3. Refuse checks: "Done. Umami is the fifth taste." stays; "We should, uh, ship it Friday." still drops only the
+   mid-sentence filler.

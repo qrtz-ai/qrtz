@@ -935,8 +935,8 @@ const FILLERS =
  * instead of leaving "Thanks.. Can you send it?" or ". Hello.". Only at the text's start or after a sentence mark and
  * ASCII blanks, and only when the mark run ends the text or meets ASCII blanks and then, unless the filler opens the
  * text, no lowercase letter ("Done. Um. can you" stays: the recogniser's lowercase makes the sentence end unclear).
- * Same scan in cleanup.rs
- * (`opening_filler_marks`).
+ * A filler with a comma after it (or with only blanks before the next word) is ADR 0245's `openingFillerClause`.
+ * Same scan in cleanup.rs (`opening_filler_marks`).
  */
 const OPENING_FILLER_MARKS =
   /(?<=^|[.!?])([ \t\n\r]+)(u+m+|u+h+|e+r+m+|e+r|a+h+|h+m+|m+h*m+)[.!?]+(?=[ \t\n\r]|$)/gi;
@@ -950,6 +950,96 @@ function openingFillerMarks(t: string): string {
         ? all
         : blanks + word,
   );
+}
+
+/**
+ * ADR 0245: a filler right after a sentence end, with a comma after it or with only blanks before the next word
+ * ("Thanks. Um, can you send it", "thanks. Uh it says loom"), is dropped, and a lowercase letter that follows is
+ * capitalised so `continuedDot` does not eat the sentence mark. Filler sentences that already carry their own mark
+ * stay with `openingFillerMarks`. Mid-sentence fillers and fillers after a comma ("So, um, next") are unchanged.
+ * Same scan in cleanup.rs (`opening_filler_clause`).
+ */
+const OPENING_FILLER_WORD = /^(u+m+|u+h+|e+r+m+|e+r|a+h+|h+m+|m+h*m+)$/i;
+
+function openingFillerClause(t: string): string {
+  const blank = (c: string) =>
+    c === ' ' || c === '\t' || c === '\n' || c === '\r';
+  const mark = (c: string) => c === '.' || c === '!' || c === '?';
+  let out = '';
+  let last = 0;
+  let p = 0;
+  while (p < t.length) {
+    if (!blank(t[p]) || (p > 0 && !mark(t[p - 1]))) {
+      p += 1;
+      continue;
+    }
+    let i = p;
+    while (i < t.length && blank(t[i])) i += 1;
+    let j = i;
+    while (j < t.length && /[A-Za-z]/.test(t[j])) j += 1;
+    const word = t.slice(i, j);
+    if (
+      j === i ||
+      !OPENING_FILLER_WORD.test(word) ||
+      keepsFiller(word, t.slice(p, j), t.slice(0, p))
+    ) {
+      p = i;
+      continue;
+    }
+    if (p > 0 && t[p - 1] === '.') {
+      const before = t.slice(0, p);
+      const body = before.slice(0, -1);
+      const token = body.split(/[ \n\t\r]/).pop() ?? '';
+      if (
+        token.includes('.') ||
+        (token.length === 1 && /^[A-Za-z0-9]$/.test(token))
+      ) {
+        p = i;
+        continue;
+      }
+      // Listed abbreviations ("Mr.") — mirror ABBREVIATIONS in cleanup.rs.
+      const abbr = /([A-Za-z]+)\.$/.exec(before)?.[1]?.toLowerCase();
+      if (
+        abbr &&
+        /^(mr|mrs|ms|dr|prof|sr|jr|st|vs|etc|approx|inc|ltd|corp|mt|dept|ave|blvd)$/.test(
+          abbr,
+        ) &&
+        !/[A-Za-z0-9_.]$/.test(before.slice(0, before.length - abbr.length - 1))
+      ) {
+        p = i;
+        continue;
+      }
+    }
+    if (j < t.length && mark(t[j])) {
+      p = i;
+      continue;
+    }
+    let k = j;
+    if (t[k] === ',') k += 1;
+    let next = k;
+    while (next < t.length && blank(t[next])) next += 1;
+    const ok =
+      k === t.length ||
+      (next > k && next < t.length && /[A-Za-z]/.test(t[next])) ||
+      (k < t.length && blank(t[k]) && next === t.length);
+    if (!ok) {
+      p = i;
+      continue;
+    }
+    out += t.slice(last, p);
+    out += t.slice(p, i); // blanks after the sentence mark
+    if (next < t.length && /[a-z]/.test(t[next])) {
+      out += t.slice(k, next);
+      out += t[next].toUpperCase();
+      last = next + 1;
+      p = next + 1;
+    } else {
+      last = k;
+      p = k;
+    }
+  }
+  if (last === 0) return t;
+  return out + t.slice(last);
 }
 
 function keepsFiller(word: string, all: string, before: string): boolean {
@@ -2281,6 +2371,7 @@ export function ruleCleanup(
     .replace(/\s*\bnew paragraph\b[,.]?\s*/gi, layoutCommand('\n\n'))
     .replace(/\s*\bnew line\b[,.]?\s*/gi, layoutCommand('\n'));
   t = openingFillerMarks(t);
+  t = openingFillerClause(t);
   t = t.replace(
     FILLERS,
     (

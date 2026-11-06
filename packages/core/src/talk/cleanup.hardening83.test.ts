@@ -103,7 +103,6 @@ describe('ADR 0235 a filler sentence goes with its mark', () => {
     ['so... um. next we go', 'So.... Next we go.'],
     ['Thanks. Um. can you send it', 'Thanks.. Can you send it?'],
     ['So, um. Next we go', 'So. Next we go.'],
-    ['Thanks. Um, can you send it', 'Thanks can you send it.'],
     [
       'Over 1,000 people signed up last week.',
       'Over 1,000 people signed up last week.',

@@ -777,8 +777,8 @@
     {
       "id": "p125",
       "category": "imperative-tag",
-      "raw": "Let\u2019s call it a day, shall we",
-      "ideal": "Let\u2019s call it a day, shall we?"
+      "raw": "Let’s call it a day, shall we",
+      "ideal": "Let’s call it a day, shall we?"
     },
     {
       "id": "p126",
@@ -1035,8 +1035,8 @@
     {
       "id": "p168",
       "category": "question",
-      "raw": "What time\u2019s the game on Sunday",
-      "ideal": "What time\u2019s the game on Sunday?"
+      "raw": "What time’s the game on Sunday",
+      "ideal": "What time’s the game on Sunday?"
     },
     {
       "id": "p169",
@@ -1233,74 +1233,74 @@
     {
       "id": "p201",
       "category": "comma-run",
-      "raw": "We met at the caf\u00e9,, then walked home",
-      "ideal": "We met at the caf\u00e9, then walked home."
+      "raw": "We met at the café,, then walked home",
+      "ideal": "We met at the café, then walked home."
     },
     {
       "id": "p202",
       "category": "curly-close-comma",
-      "raw": "The plan was \u201cship it Friday,\u201d then cut the release",
-      "ideal": "The plan was \u201cship it Friday,\u201d then cut the release."
+      "raw": "The plan was “ship it Friday,” then cut the release",
+      "ideal": "The plan was “ship it Friday,” then cut the release."
     },
     {
       "id": "p203",
       "category": "curly-close-comma",
-      "raw": "She said \u201cI\u2019m ready,\u201d and left",
-      "ideal": "She said \u201cI\u2019m ready,\u201d and left."
+      "raw": "She said “I’m ready,” and left",
+      "ideal": "She said “I’m ready,” and left."
     },
     {
       "id": "p204",
       "category": "curly-close-comma",
-      "raw": "Call it \u2018done,\u2019 then move on",
-      "ideal": "Call it \u2018done,\u2019 then move on."
+      "raw": "Call it ‘done,’ then move on",
+      "ideal": "Call it ‘done,’ then move on."
     },
     {
       "id": "p205",
       "category": "curly-close-comma",
-      "raw": "We marked it \u201cblocked,\u201d so nobody starts it",
-      "ideal": "We marked it \u201cblocked,\u201d so nobody starts it."
+      "raw": "We marked it “blocked,” so nobody starts it",
+      "ideal": "We marked it “blocked,” so nobody starts it."
     },
     {
       "id": "p206",
       "category": "curly-close-comma",
-      "raw": "His note ended \u201cthanks,\u201d",
-      "ideal": "His note ended \u201cthanks,\u201d"
+      "raw": "His note ended “thanks,”",
+      "ideal": "His note ended “thanks,”"
     },
     {
       "id": "p207",
       "category": "curly-close-comma",
-      "raw": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d",
-      "ideal": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d"
+      "raw": "Pick “A,” “B,” or “C”",
+      "ideal": "Pick “A,” “B,” or “C”"
     },
     {
       "id": "p208",
       "category": "curly-close-comma",
-      "raw": "The label read \u201cfragile,\u201d on every box",
-      "ideal": "The label read \u201cfragile,\u201d on every box."
+      "raw": "The label read “fragile,” on every box",
+      "ideal": "The label read “fragile,” on every box."
     },
     {
       "id": "p209",
       "category": "curly-close-comma",
-      "raw": "Write \u201curgent,\u201d in the subject",
-      "ideal": "Write \u201curgent,\u201d in the subject."
+      "raw": "Write “urgent,” in the subject",
+      "ideal": "Write “urgent,” in the subject."
     },
     {
       "id": "p210",
       "category": "curly-close-comma",
-      "raw": "Tag it \u201cv1,\u201d and publish",
-      "ideal": "Tag it \u201cv1,\u201d and publish."
+      "raw": "Tag it “v1,” and publish",
+      "ideal": "Tag it “v1,” and publish."
     },
     {
       "id": "p211",
       "category": "curly-close-comma",
-      "raw": "Use \u201cok,\u201d; then restart",
-      "ideal": "Use \u201cok,\u201d; then restart."
+      "raw": "Use “ok,”; then restart",
+      "ideal": "Use “ok,”; then restart."
     },
     {
       "id": "p212",
       "category": "curly-close-comma",
-      "raw": "I told Priya \u201cship tonight,\u201d before the freeze",
-      "ideal": "I told Priya \u201cship tonight,\u201d before the freeze."
+      "raw": "I told Priya “ship tonight,” before the freeze",
+      "ideal": "I told Priya “ship tonight,” before the freeze."
     },
     {
       "id": "p213",
@@ -1493,6 +1493,66 @@
       "category": "confirmation-sentence",
       "raw": "You're editing the document I sent. Correct.",
       "ideal": "You're editing the document I sent. Correct?"
+    },
+    {
+      "id": "p245",
+      "category": "filler-clause",
+      "raw": "Thanks. Um, can you send it",
+      "ideal": "Thanks. Can you send it?"
+    },
+    {
+      "id": "p246",
+      "category": "filler-clause",
+      "raw": "Thanks. Uh, can you send it",
+      "ideal": "Thanks. Can you send it?"
+    },
+    {
+      "id": "p247",
+      "category": "filler-clause",
+      "raw": "Done. Um, can you review it",
+      "ideal": "Done. Can you review it?"
+    },
+    {
+      "id": "p248",
+      "category": "filler-clause",
+      "raw": "Ship it Friday. Uh, also send the notes",
+      "ideal": "Ship it Friday. Also send the notes."
+    },
+    {
+      "id": "p249",
+      "category": "filler-clause",
+      "raw": "Yeah, it works, thanks. Um, next, can you make it quicker",
+      "ideal": "Yeah, it works, thanks. Next, can you make it quicker."
+    },
+    {
+      "id": "p250",
+      "category": "filler-clause",
+      "raw": "thanks. Uh it says loom",
+      "ideal": "Thanks. It says loom."
+    },
+    {
+      "id": "p251",
+      "category": "filler-clause",
+      "raw": "Yeah, a couple things that I want to consider here. Um the first thing is timing",
+      "ideal": "Yeah, a couple things that I want to consider here. The first thing is timing."
+    },
+    {
+      "id": "p252",
+      "category": "filler-clause",
+      "raw": "I did just Google us and the good news is that we come up pretty fast. Um bad news is that the logo is missing",
+      "ideal": "I did just Google us and the good news is that we come up pretty fast. Bad news is that the logo is missing."
+    },
+    {
+      "id": "p253",
+      "category": "filler-clause",
+      "raw": "Okay, contour went pretty well. Uh what's Valerie Health look like?",
+      "ideal": "Okay, contour went pretty well. What's Valerie Health look like?"
+    },
+    {
+      "id": "p254",
+      "category": "filler-clause",
+      "raw": "Maybe we should set up a logging system. Um, we can do that entirely offline as well",
+      "ideal": "Maybe we should set up a logging system. We can do that entirely offline as well."
     }
   ],
   "keep": [
@@ -4383,14 +4443,14 @@
     {
       "id": "k477",
       "rule": "curly-close-comma",
-      "raw": "He said,\u201chello\u201d",
-      "expect": "He said, \u201chello\u201d"
+      "raw": "He said,“hello”",
+      "expect": "He said, “hello”"
     },
     {
       "id": "k478",
       "rule": "curly-close-comma",
-      "raw": "She whispered,\u2018wait\u2019",
-      "expect": "She whispered, \u2018wait\u2019"
+      "raw": "She whispered,‘wait’",
+      "expect": "She whispered, ‘wait’"
     },
     {
       "id": "k479",
@@ -4407,14 +4467,14 @@
     {
       "id": "k481",
       "rule": "curly-close-comma",
-      "raw": "It\u2019s a nice day, isn\u2019t it",
-      "expect": "It\u2019s a nice day, isn\u2019t it?"
+      "raw": "It’s a nice day, isn’t it",
+      "expect": "It’s a nice day, isn’t it?"
     },
     {
       "id": "k482",
       "rule": "curly-close-comma",
-      "raw": "Let\u2019s call it a day, shall we",
-      "expect": "Let\u2019s call it a day, shall we?"
+      "raw": "Let’s call it a day, shall we",
+      "expect": "Let’s call it a day, shall we?"
     },
     {
       "id": "k483",
@@ -4438,8 +4498,8 @@
     {
       "id": "k486",
       "rule": "curly-close-comma",
-      "raw": "Dit-il,\u00bboui\u00ab",
-      "expect": "Dit-il, \u00bboui\u00ab"
+      "raw": "Dit-il,»oui«",
+      "expect": "Dit-il, »oui«"
     },
     {
       "id": "k487",
@@ -4494,12 +4554,6 @@
       "category": "dangling-comma-mark",
       "raw": "The demo is, um, basically done.",
       "expect": "The demo is basically done."
-    },
-    {
-      "id": "k496",
-      "category": "dangling-comma-mark",
-      "raw": "Thanks. Um, can you send it",
-      "expect": "Thanks can you send it."
     },
     {
       "id": "k497",
@@ -4756,6 +4810,90 @@
       "rule": "confirmation-sentence",
       "raw": "That answer is politically correct.",
       "expect": "That answer is politically correct."
+    },
+    {
+      "id": "k543",
+      "rule": "filler-clause",
+      "raw": "Grab the umbrella. Umbrella stands are by the door.",
+      "expect": "Grab the umbrella. Umbrella stands are by the door."
+    },
+    {
+      "id": "k544",
+      "rule": "filler-clause",
+      "raw": "Done. Umami is the fifth taste.",
+      "expect": "Done. Umami is the fifth taste."
+    },
+    {
+      "id": "k545",
+      "rule": "filler-clause",
+      "raw": "Okay. Uhura is my favorite character.",
+      "expect": "Okay. Uhura is my favorite character."
+    },
+    {
+      "id": "k546",
+      "rule": "filler-clause",
+      "raw": "Which school did you pick? UM. Go Blue!",
+      "expect": "Which school did you pick? UM. Go Blue!"
+    },
+    {
+      "id": "k547",
+      "rule": "filler-clause",
+      "raw": "It works. UM, Okay",
+      "expect": "It works. UM, Okay."
+    },
+    {
+      "id": "k548",
+      "rule": "filler-clause",
+      "raw": "We should, uh, ship it Friday.",
+      "expect": "We should ship it Friday."
+    },
+    {
+      "id": "k549",
+      "rule": "filler-clause",
+      "raw": "So, um, we should wait until Monday",
+      "expect": "So, we should wait until Monday."
+    },
+    {
+      "id": "k550",
+      "rule": "filler-clause",
+      "raw": "So, um. Next we go",
+      "expect": "So. Next we go."
+    },
+    {
+      "id": "k551",
+      "rule": "filler-clause",
+      "raw": "Thanks. Um. can you send it",
+      "expect": "Thanks.. Can you send it?"
+    },
+    {
+      "id": "k552",
+      "rule": "filler-clause",
+      "raw": "Turn left. Ahead is the parking garage.",
+      "expect": "Turn left. Ahead is the parking garage."
+    },
+    {
+      "id": "k553",
+      "rule": "filler-clause",
+      "raw": "Over 1,000 people signed up last week.",
+      "expect": "Over 1,000 people signed up last week."
+    },
+    {
+      "id": "k554",
+      "rule": "filler-clause",
+      "raw": "Mr. and Mrs. Smith are here.",
+      "expect": "Mr. and Mrs. Smith are here."
+    },
+    {
+      "id": "k555",
+      "rule": "filler-clause",
+      "raw": "Visit qrtz.ai. The docs are there.",
+      "expect": "Visit qrtz.ai. The docs are there."
+    },
+    {
+      "id": "k556",
+      "rule": "filler-clause",
+      "raw": "Is it you? Erma! Come in.",
+      "expect": "Is it you? Erma! Come in."
     }
   ]
 }

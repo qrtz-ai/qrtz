@@ -57,9 +57,17 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         old
     } else {
         // ADR 0236 (cycle 84): each candidate with its comma runs as one comma, as the last step does.
+        // ADR 0245 (cycle 128): also try the sentence-initial filler-clause edit (comma / bare) on the raw text.
         let candidates = [
             c59::rule_cleanup(&without_filler_marks(&with_layout(raw)), dict),
             c59::rule_cleanup(&without_filler_marks(raw), dict),
+            c59::rule_cleanup(
+                &without_filler_clause(&without_filler_marks(&with_layout(raw))),
+                dict,
+            ),
+            c59::rule_cleanup(&without_filler_clause(&without_filler_marks(raw)), dict),
+            c59::rule_cleanup(&without_filler_clause(&with_layout(raw)), dict),
+            c59::rule_cleanup(&without_filler_clause(raw), dict),
         ]
         .map(|c| {
             with_spoken_list_punct(&without_dangling_comma_marks(&without_space_before_curly_close(
@@ -124,6 +132,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         });
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
+        // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -172,8 +181,60 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     }) || (matches!(first.as_str(), "what" | "how") && second.contains(['\'', '\u{2019}']))
                 })
         });
+        // ADR 0245: after the filler-clause edit, a last sentence that opens like a yes/no or wh-question may end
+        // with "?" instead of cycle 59's ".".
+        let unmarked = old.strip_suffix('.').is_some_and(|body| {
+            new == format!("{body}?")
+                && body.rsplit(['\n', '.', '!', '?']).next().is_some_and(|s| {
+                    let first = s
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or_default()
+                        .trim_end_matches(',')
+                        .to_ascii_lowercase()
+                        .replace('\u{2019}', "'");
+                    matches!(
+                        first.as_str(),
+                        "can"
+                            | "could"
+                            | "will"
+                            | "would"
+                            | "should"
+                            | "shall"
+                            | "may"
+                            | "might"
+                            | "do"
+                            | "does"
+                            | "did"
+                            | "is"
+                            | "are"
+                            | "am"
+                            | "was"
+                            | "were"
+                            | "have"
+                            | "has"
+                            | "what"
+                            | "what's"
+                            | "who"
+                            | "who's"
+                            | "where"
+                            | "where's"
+                            | "when"
+                            | "when's"
+                            | "why"
+                            | "why's"
+                            | "how"
+                            | "how's"
+                            | "which"
+                    ) || ["what", "where", "when", "why", "how", "who"].iter().any(|wh| {
+                        first
+                            .strip_prefix(wh)
+                            .is_some_and(|tail| tail.starts_with(['\'', '\u{2019}']))
+                    })
+                })
+        });
         assert!(
-            list || opener || tag || imperative || date || wh_contraction,
+            list || opener || tag || imperative || date || wh_contraction || unmarked,
             "rule_cleanup({raw:?}): {new:?} vs cycle 59 {old:?}"
         );
     }
@@ -294,6 +355,89 @@ fn without_filler_marks(raw: &str) -> String {
     }
     out.push_str(&padded[last..]);
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
+}
+
+/// ADR 0245's filler-clause edit, made on the raw text (written independently of cleanup.rs): a filler right after a
+/// sentence end, with an optional comma and then blanks before a letter (or the end), is dropped; a lowercase next
+/// letter is capitalised. Kept capital fillers are left alone.
+fn without_filler_clause(raw: &str) -> String {
+    let b = raw.as_bytes();
+    let blank = |c: u8| matches!(c, b' ' | b'\t' | b'\n' | b'\r');
+    let mark = |c: u8| matches!(c, b'.' | b'!' | b'?');
+    let is_filler = |w: &str| {
+        let low = w.to_ascii_lowercase();
+        let re = regex::Regex::new(r"^(u+m+|u+h+|e+r+m+|e+r|a+h+|h+m+|m+h*m+)$").unwrap();
+        re.is_match(&low)
+    };
+    let mut out = String::new();
+    let (mut last, mut p) = (0, 0);
+    while p < b.len() {
+        if !blank(b[p]) || (p > 0 && !mark(b[p - 1])) {
+            p += 1;
+            continue;
+        }
+        let mut i = p;
+        while i < b.len() && blank(b[i]) {
+            i += 1;
+        }
+        let mut j = i;
+        while j < b.len() && b[j].is_ascii_alphabetic() {
+            j += 1;
+        }
+        let word = &raw[i..j];
+        if j == i || !is_filler(word) || (word.len() >= 2 && word.chars().all(|c| c.is_ascii_uppercase())) {
+            p = i;
+            continue;
+        }
+        if p > 0 && b[p - 1] == b'.' {
+            let before = &raw[..p];
+            let token = before[..before.len() - 1]
+                .rsplit([' ', '\n', '\t', '\r'])
+                .next()
+                .unwrap_or("");
+            if token.contains('.')
+                || (token.len() == 1 && token.chars().next().is_some_and(|c| c.is_ascii_alphanumeric()))
+            {
+                p = i;
+                continue;
+            }
+        }
+        if j < b.len() && mark(b[j]) {
+            p = i;
+            continue;
+        }
+        let mut k = j;
+        if b.get(k) == Some(&b',') {
+            k += 1;
+        }
+        let mut next = k;
+        while next < b.len() && blank(b[next]) {
+            next += 1;
+        }
+        let ok = k == b.len()
+            || (next > k && next < b.len() && b[next].is_ascii_alphabetic())
+            || (k < b.len() && blank(b[k]) && next == b.len());
+        if !ok {
+            p = i;
+            continue;
+        }
+        out.push_str(&raw[last..p]);
+        out.push_str(&raw[p..i]);
+        if next < b.len() && b[next].is_ascii_lowercase() {
+            out.push_str(&raw[k..next]);
+            out.push(b[next].to_ascii_uppercase() as char);
+            last = next + 1;
+            p = next + 1;
+        } else {
+            last = k;
+            p = k;
+        }
+    }
+    if last == 0 {
+        return raw.to_owned();
+    }
+    out.push_str(&raw[last..]);
+    out
 }
 
 /// ADR 0236's one allowed edit (written independently of cleanup.rs, with the `regex` crate): ", ," (and longer runs)

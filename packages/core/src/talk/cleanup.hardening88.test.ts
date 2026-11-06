@@ -35,7 +35,7 @@ describe('ADR 0241 comma before a mark stuck to a word stays', () => {
     ['The demo is, um, basically done.', 'The demo is basically done.'],
     ['So , um , we should wait', 'So, we should wait.'],
     ['Thanks. Um. Can you send it', 'Thanks. Can you send it?'],
-    ['Thanks. Um, can you send it', 'Thanks can you send it.'],
+    ['Thanks. Um, can you send it', 'Thanks. Can you send it?'],
     ['Over 1,000 people signed up.', 'Over 1,000 people signed up.'],
     ['Well, well, look who it is.', 'Well, well, look who it is.'],
   ])('%j -> %j', (raw, want) => {

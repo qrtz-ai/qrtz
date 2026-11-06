@@ -92,7 +92,8 @@ fn a_filler_sentence_reads_as_if_it_was_never_said() {
 }
 
 /// Left exactly as before: no filler, a kept capital filler, a filler-shaped start of a word, a lowercase word after
-/// the filler sentence, a filler after a comma or with a comma after it (ADR 0235 leaves those three), and commas.
+/// the filler sentence (ADR 0235), a filler after a comma ("So, um. Next"), and commas. A filler with a comma after
+/// it ("Thanks. Um, can you") is ADR 0245 (positive below / hardening128).
 #[test]
 fn the_refusals_are_unchanged() {
     for (raw, want) in [
@@ -132,12 +133,12 @@ fn the_refusals_are_unchanged() {
             "Visit qrtz.ai. The docs are there.",
             "Visit qrtz.ai. The docs are there.",
         ),
-        // A lowercase word after the filler sentence, or a filler with a comma after it: as before ADR 0235.
-        // "So, um. Next" is now cleaned by ADR 0241 (dangling comma before the mark).
+        // A lowercase word after the filler sentence: as before ADR 0235.
+        // "So, um. Next" is cleaned by ADR 0241 (dangling comma before the mark).
+        // "Thanks. Um, can you" is ADR 0245 (hardening128).
         ("so... um. next we go", "So.... Next we go."),
         ("Thanks. Um. can you send it", "Thanks.. Can you send it?"),
         ("So, um. Next we go", "So. Next we go."),
-        ("Thanks. Um, can you send it", "Thanks can you send it."),
         (
             "Over 1,000 people signed up last week.",
             "Over 1,000 people signed up last week.",

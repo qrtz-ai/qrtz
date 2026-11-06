@@ -1,5 +1,17 @@
 # Hardening log
 
+## 2026-11-06 — Cycle 128 (≈9:25–10:10 PT, polish): a sentence-initial filler after a period keeps the sentence mark (ADR 0245)
+
+- **Focus:** polish. origin/main at `52ff5304` (cycle 127 / ADR 0244). Mac online; prod+dev talk history (453+261).
+- **Landed:** `opening_filler_clause` — "Thanks. Um, can you…" / "thanks. Uh it says…" keep the period and capitalise
+  the next word (ADR 0235's deferred comma form, now evidenced). Rust + TS twin, polish +10, keep −k496 +14,
+  cleanup.json, hardening128 + hardening83/88 expects, cleanup_budget +1 text.
+- **Scores:** polish 241/244 → **251/254** exact, edit distance 39 (0.42 % of 9293), regressions 0; keep 0/553.
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no" wideners (no unmarked end hit); email/URL ITN; p41; unload;
+  N203 (still no free-relative false "?" in history); N197 (Mac disk ~6.2 GB — skipped mic switch).
+- **Latency:** release `cleanup_budget` filler-clause median **0.216 ms** (495-word baseline ~0.14 ms); ceiling 2 ms.
+- **SHA:** _(filled after push)_
+
 ## 2026-11-06 — Cycle 127 (≈8:49–9:05 PT, polish): a confirmation sentence "…. Right" / "…. Correct" ends with "?" (ADR 0244)
 
 - **Focus:** polish. origin/main at `cc752989` (cycle 126 / ADR 0243). Mac online; prod+dev talk history (453+258).
@@ -9,7 +21,6 @@
 - **Latency:** release `cleanup_budget` confirmation-sentence medians ≪ 2 ms (period form ~0.12–0.28 ms).
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
 - **SHA:** `40ba7a02`
-
 
 ## 2026-11-06 — Cycle 126 (≈8:25–9:05 PT, polish): unmarked ", right" / ", correct" ends with "?" (ADR 0243)
 

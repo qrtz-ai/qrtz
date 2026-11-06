@@ -2965,9 +2965,8 @@ fn remove_fillers(src: &str) -> String {
 /// text or follows a sentence mark and ASCII blanks, is a whole run of ASCII letters that [`is_filler_word`] takes,
 /// is not a kept capital filler ([`keeps_filler`]: "UM.") and its mark run ends the text or meets ASCII blanks and
 /// then, unless the filler opens the text, no lowercase letter (after "Done. Um. can you" the recogniser's lowercase
-/// makes the sentence end unclear, ADR 0120). A
-/// filler after a comma ("So, um. Next") and one with a comma after it ("Thanks. Um, can you") are left as they were
-/// (the second is a segment cut as often as a sentence; ADR 0235 records why). The pattern
+/// makes the sentence end unclear, ADR 0120). A filler after a comma ("So, um. Next") stays as it was. A filler with a
+/// comma after it (or with only blanks before the next word) is ADR 0245's [`opening_filler_clause`]. The pattern
 /// `(?<=^|[.!?])([ \t\n\r]+)(<filler>)[.!?]+(?=[ \t\n\r]|$)` in cleanup.ts (no lowercase letter next), the mark
 /// run dropped.
 fn opening_filler_marks(s: &str) -> String {
@@ -3009,18 +3008,103 @@ fn opening_filler_marks(s: &str) -> String {
     out
 }
 
+/// ADR 0245: a filler right after a sentence end, with a comma after it or with only blanks before the next word
+/// ("Thanks. Um, can you send it", "thanks. Uh it says loom"), is dropped, and a lowercase letter that follows is
+/// capitalised so [`continued_dot`] does not eat the sentence mark. Prod talk history (cycle 128) showed the period
+/// being lost ("thanks next", "Thanks can you"). Filler sentences that already carry their own mark stay with
+/// [`opening_filler_marks`]. Mid-sentence fillers ("should, uh, ship") and fillers after a comma ("So, um, next") are
+/// unchanged. Kept capital fillers ("UM,") and filler-shaped real words ("Umami", "Uhura") are refused. Same scan in
+/// cleanup.ts (`openingFillerClause`).
+fn opening_filler_clause(s: &str) -> String {
+    let b = s.as_bytes();
+    let blank = |c: u8| matches!(c, b' ' | b'\t' | b'\n' | b'\r');
+    let mark = |c: u8| matches!(c, b'.' | b'!' | b'?');
+    let mut out = String::new();
+    let (mut last, mut p) = (0, 0);
+    while p < b.len() {
+        if !blank(b[p]) || (p > 0 && !mark(b[p - 1])) {
+            p += 1;
+            continue;
+        }
+        let i = p + run_len(&s[p..], |c| c.is_ascii() && blank(c as u8));
+        let j = i + run_len(&s[i..], |c| c.is_ascii_alphabetic());
+        if j == i || !is_filler_word(&s[i..j]) || keeps_filler(&s[i..j], &s[p..j], &s[..p]) {
+            p = i;
+            continue;
+        }
+        // A "." that belongs to a dotted token ("e.g.", "U.S.", "p.m.") or a listed abbreviation ("Mr.") is not a
+        // sentence end; leave the filler for remove_fillers / continued_dot.
+        if p > 0 && b[p - 1] == b'.' {
+            let before = &s[..p];
+            if ends_with_abbreviation(before) {
+                p = i;
+                continue;
+            }
+            let token = before[..before.len() - 1]
+                .rsplit([' ', '\n', '\t', '\r'])
+                .next()
+                .unwrap_or("");
+            if token.contains('.')
+                || (token.len() == 1 && token.chars().next().is_some_and(|c| c.is_ascii_alphanumeric()))
+            {
+                p = i;
+                continue;
+            }
+        }
+        // Filler sentences with their own mark stay with opening_filler_marks.
+        if b.get(j).is_some_and(|&c| mark(c)) {
+            p = i;
+            continue;
+        }
+        let mut k = j;
+        if b.get(k) == Some(&b',') {
+            k += 1;
+        }
+        let next = k + run_len(&s[k..], |c| c.is_ascii() && blank(c as u8));
+        // Need end-of-text, or blanks and then a letter (the next word).
+        let ok = k == b.len()
+            || (next > k && b.get(next).is_some_and(|&c| c.is_ascii_alphabetic()))
+            || (k < b.len() && blank(b[k]) && next == b.len());
+        if !ok {
+            p = i;
+            continue;
+        }
+        if out.is_empty() {
+            out.reserve(s.len());
+        }
+        out.push_str(&s[last..p]);
+        out.push_str(&s[p..i]); // keep the blanks after the sentence mark
+                                // Capitalise a lowercase next letter so continued_dot cannot drop the mark.
+        if next < b.len() && b[next].is_ascii_lowercase() {
+            out.push_str(&s[k..next]);
+            out.push(b[next].to_ascii_uppercase() as char);
+            last = next + 1;
+            p = next + 1;
+        } else {
+            last = k;
+            p = k;
+        }
+    }
+    if last == 0 {
+        return s.to_string();
+    }
+    out.push_str(&s[last..]);
+    out
+}
+
 /// On-device cleanup: spoken commands, fillers (ADR 0192: with the comma before them where none belongs), stutters,
 /// spacing, "Scratch that" (ADR 0186), a final spoken "question mark" / "exclamation point" (ADR 0189),
 /// capitalization, terminal punctuation (ADR 0101: which repeats collapse, and no "." on a short dictation; ADR 0188:
 /// nor on a list of short lines; ADR 0201: whose line commas go; ADR 0206: "Hey <dictionary name>, <question>?"; ADR
 /// 0227: "..., isn't it?"), then
 /// spoken amounts as figures (ADR 0193: "$25", "15%", "3:30 p.m."), a spoken date's day as a figure (ADR 0230:
-/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236) and, last, a comma before a sentence mark dropped (ADR 0241).
+/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236), a comma before a sentence mark dropped (ADR 0241), and a sentence-initial filler clause after a period (ADR 0245).
 pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     let mut t = format!(" {raw} ");
     t = layout_command(NEW_PARAGRAPH, &t, "\n\n");
     t = layout_command(NEW_LINE, &t, "\n");
     t = opening_filler_marks(&t);
+    t = opening_filler_clause(&t);
     t = remove_fillers(&t);
     t = collapse_repeats(&t);
     t = collapse_blanks(&t);
