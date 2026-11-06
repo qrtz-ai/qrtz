@@ -111,6 +111,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
     // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases (incl. four-word Cap and ellipsis gap) collapse.
+    // ADR 0254 Cap-then-lower contraction is an allowed diff below (not in without_restart_phrase).
     let old = without_restart_phrase(&old);
     // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ space/tab-separated are/on/like collapses to the first copy.
     let old = without_triple_stutters(&old);
@@ -138,6 +139,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
         // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases — see without_restart_phrase on old.
+        // ADR 0254 Cap-then-lower — see cap_then_lower allowed diff below.
         // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ are/on/like — see without_triple_stutters on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
@@ -239,8 +241,131 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
+        // ADR 0254 (cycle 138): Cap-then-lower one-word contraction doubles collapse in
+        // rule_cleanup before sentence caps. Detect pairs in `raw` (so keep-set both-lower
+        // "it's it's" → post-cap "It's it's" is not treated as Cap-then-lower), then check that
+        // dropping the matching second copies from `old` yields `new` (allowing final "." → "?").
+        let cap_then_lower = {
+            let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
+            let raw_spans: Vec<(usize, usize, &str)> = word_re
+                .find_iter(raw)
+                .map(|m| (m.start(), m.end(), m.as_str()))
+                .collect();
+            let mut drop_idx = vec![false; raw_spans.len()];
+            let mut i = 0usize;
+            while i + 1 < raw_spans.len() {
+                let (_a0, b0, w0) = raw_spans[i];
+                let (a1, _b1, w1) = raw_spans[i + 1];
+                let gap = &raw[b0..a1];
+                let gap_ok = {
+                    let g = gap.as_bytes();
+                    let mut j = 0usize;
+                    while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                        j += 1;
+                    }
+                    if j == g.len() {
+                        true
+                    } else if g[j] == 0xe2 && g.get(j + 1) == Some(&0x80) && g.get(j + 2) == Some(&0xa6) {
+                        j += 3;
+                        while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                            j += 1;
+                        }
+                        j == g.len()
+                    } else if g[j] == b'.' {
+                        let start = j;
+                        while j < g.len() && g[j] == b'.' {
+                            j += 1;
+                        }
+                        if j - start < 2 {
+                            false
+                        } else {
+                            while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                                j += 1;
+                            }
+                            j == g.len()
+                        }
+                    } else {
+                        false
+                    }
+                };
+                let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
+                let ok = gap_ok
+                    && has_apos
+                    && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                    && w1.starts_with(|c: char| c.is_ascii_lowercase())
+                    && w0.eq_ignore_ascii_case(w1);
+                if ok {
+                    drop_idx[i + 1] = true;
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+            }
+            if !drop_idx.iter().any(|d| *d) {
+                false
+            } else {
+                let old_spans: Vec<(usize, usize)> =
+                    word_re.find_iter(&old).map(|m| (m.start(), m.end())).collect();
+                if old_spans.len() != raw_spans.len() {
+                    false
+                } else {
+                    let mut predicted = String::new();
+                    let mut last = 0usize;
+                    for (idx, &(a, b)) in old_spans.iter().enumerate() {
+                        if !drop_idx[idx] {
+                            continue;
+                        }
+                        let mut ws = a;
+                        while ws > last {
+                            let ch = old[..ws].chars().next_back().unwrap();
+                            if ch == ' ' || ch == '\t' {
+                                ws -= ch.len_utf8();
+                            } else {
+                                break;
+                            }
+                        }
+                        if ws > last {
+                            let prev = old[..ws].chars().next_back().unwrap();
+                            if prev == '\u{2026}' {
+                                ws -= prev.len_utf8();
+                            } else if prev == '.' {
+                                let mut dots = 0usize;
+                                let mut at = ws;
+                                while at > last {
+                                    let ch = old[..at].chars().next_back().unwrap();
+                                    if ch == '.' {
+                                        dots += 1;
+                                        at -= 1;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                if dots >= 2 {
+                                    ws = at;
+                                }
+                            }
+                            while ws > last {
+                                let ch = old[..ws].chars().next_back().unwrap();
+                                if ch == ' ' || ch == '\t' {
+                                    ws -= ch.len_utf8();
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                        predicted.push_str(&old[last..ws]);
+                        last = b;
+                    }
+                    predicted.push_str(&old[last..]);
+                    predicted == new
+                        || predicted
+                            .strip_suffix('.')
+                            .is_some_and(|body| new == format!("{body}?"))
+                }
+            }
+        };
         assert!(
-            list || opener || tag || imperative || date || wh_contraction || unmarked,
+            list || opener || tag || imperative || date || wh_contraction || unmarked || cap_then_lower,
             "rule_cleanup({raw:?}): {new:?} vs cycle 59 {old:?}"
         );
     }

@@ -5807,6 +5807,86 @@
       "raw": "why Why did we make a new Thing",
       "dict": false,
       "expect": "Why Why did we make a new Thing."
+    },
+    {
+      "raw": "What's what's the meeting pass code",
+      "dict": false,
+      "expect": "What's the meeting pass code?"
+    },
+    {
+      "raw": "It's it's the top two things aren't fading now",
+      "dict": false,
+      "expect": "It's the top two things aren't fading now."
+    },
+    {
+      "raw": "That's that's not true about the release today",
+      "dict": false,
+      "expect": "That's not true about the release today."
+    },
+    {
+      "raw": "There's there's no way around this today",
+      "dict": false,
+      "expect": "There's no way around this today."
+    },
+    {
+      "raw": "You're you're hearing a live stream of thoughts today",
+      "dict": false,
+      "expect": "You're hearing a live stream of thoughts today."
+    },
+    {
+      "raw": "Can't can't really ship without the tests today",
+      "dict": false,
+      "expect": "Can't really ship without the tests today."
+    },
+    {
+      "raw": "Won't won't allow that path for us today",
+      "dict": false,
+      "expect": "Won't allow that path for us today."
+    },
+    {
+      "raw": "What's... what's the meeting pass code now",
+      "dict": false,
+      "expect": "What's the meeting pass code now?"
+    },
+    {
+      "raw": "Can't Can't really wait for us today",
+      "dict": false,
+      "expect": "Can't Can't really wait for us today."
+    },
+    {
+      "raw": "What's What's the name of that cafe today",
+      "dict": false,
+      "expect": "What's What's the name of that cafe today."
+    },
+    {
+      "raw": "that's that's not a problem for me today",
+      "dict": false,
+      "expect": "That's that's not a problem for me today."
+    },
+    {
+      "raw": "Where where we put the snap summon today",
+      "dict": false,
+      "expect": "Where where we put the snap summon today."
+    },
+    {
+      "raw": "make make sure it uses CSS today please",
+      "dict": false,
+      "expect": "Make make sure it uses CSS today please."
+    },
+    {
+      "raw": "You're You're already on the right track today",
+      "dict": false,
+      "expect": "You're You're already on the right track today."
+    },
+    {
+      "raw": "there's there's still time left in the day",
+      "dict": false,
+      "expect": "There's there's still time left in the day."
+    },
+    {
+      "raw": "Doesn't Doesn't change the outcome for us",
+      "dict": false,
+      "expect": "Doesn't Doesn't change the outcome for us."
     }
   ],
   "dictionaryOnly": [

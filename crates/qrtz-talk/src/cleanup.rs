@@ -1887,11 +1887,13 @@ fn collapse_repeats(s: &str) -> String {
 /// single `.` stays a sentence boundary. Within each copy, only spaces/tabs. Spoken "scratch that"
 /// across an ellipsis still stays (ADR 0186).
 ///
-/// One-word (ADR 0248): a contracted word with an apostrophe, restarted Cap ("it's It's",
-/// "don't Don't", "can't Can't"). The first copy starts lowercase (mid-sentence); the second
-/// starts uppercase; eq_ignore_ascii_case. Plain words without an apostrophe stay with
-/// [`collapse_repeats`] / STUTTERS ("it It", "the The") or are refused ("like Like", "will Will").
-/// Both-Cap "It's It's" / "O'Brien O'Brien" stay.
+/// One-word (ADR 0248 / ADR 0254): a contracted word with an apostrophe, restarted with mixed
+/// Cap ("it's It's", "don't Don't", "What's what's", "It's it's"). Either the first copy starts
+/// lowercase and the second uppercase (mid-sentence Cap restart), or the first starts uppercase
+/// and the second lowercase (sentence-start Cap then lower restart); eq_ignore_ascii_case. Plain
+/// words without an apostrophe stay with [`collapse_repeats`] / STUTTERS ("it It", "the The") or
+/// are refused ("like Like", "will Will"). Both-Cap "It's It's" / "O'Brien O'Brien" and both-lower
+/// "it's it's" / "don't don't" stay.
 ///
 /// One-word (ADR 0249): bare lowercase "it" before Cap contraction "It's" / "It’s" drops the
 /// bare "it" and keeps the Cap form ("Like it It's" → "Like It's"). Both-lower "it it's" stays
@@ -2121,7 +2123,7 @@ fn restart_phrase(s: &str) -> String {
                 continue;
             }
         }
-        // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+        // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
         // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
         if i + 1 < spans.len() {
             let (a0, b0) = spans[i];
@@ -2129,9 +2131,8 @@ fn restart_phrase(s: &str) -> String {
             let has_apos = s[a0..b0].contains('\'') || s[a0..b0].contains('\u{2019}');
             let ok1 = copy_gap_ok(b0, a1)
                 && has_apos
-                && starts_lower(a0)
-                && starts_upper(a1)
-                && eq_ci(a0, b0, a1, b1);
+                && eq_ci(a0, b0, a1, b1)
+                && ((starts_lower(a0) && starts_upper(a1)) || (starts_upper(a0) && starts_lower(a1)));
             if ok1 {
                 drop[i + 1] = true;
                 i += 2;

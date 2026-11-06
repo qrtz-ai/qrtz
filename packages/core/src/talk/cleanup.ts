@@ -2365,7 +2365,7 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
-/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250: mid-sentence restart phrase collapses to one copy. */
+/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0254: mid-sentence restart phrase collapses to one copy. */
 function restartPhrase(s: string): string {
   const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
   const spans: { start: number; end: number; text: string }[] = [];
@@ -2506,7 +2506,7 @@ function restartPhrase(s: string): string {
         continue;
       }
     }
-    // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+    // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
     // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
     if (i + 1 < spans.length) {
       const w0 = spans[i];
@@ -2515,9 +2515,9 @@ function restartPhrase(s: string): string {
       const ok1 =
         copyGapOk(w0.end, w1.start) &&
         hasApos &&
-        /^[a-z]/.test(w0.text) &&
-        /^[A-Z]/.test(w1.text) &&
-        w0.text.toLowerCase() === w1.text.toLowerCase();
+        w0.text.toLowerCase() === w1.text.toLowerCase() &&
+        ((/^[a-z]/.test(w0.text) && /^[A-Z]/.test(w1.text)) ||
+          (/^[A-Z]/.test(w0.text) && /^[a-z]/.test(w1.text)));
       if (ok1) {
         drop[i + 1] = true;
         i += 2;

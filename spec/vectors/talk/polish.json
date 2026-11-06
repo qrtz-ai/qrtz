@@ -1949,6 +1949,54 @@
       "category": "repeat",
       "raw": "Please make it like like like a smooth fade",
       "ideal": "Please make it like a smooth fade."
+    },
+    {
+      "id": "p321",
+      "category": "repeat",
+      "raw": "What's what's the meeting pass code",
+      "ideal": "What's the meeting pass code?"
+    },
+    {
+      "id": "p322",
+      "category": "repeat",
+      "raw": "It's it's the top two things aren't fading now",
+      "ideal": "It's the top two things aren't fading now."
+    },
+    {
+      "id": "p323",
+      "category": "repeat",
+      "raw": "That's that's not true about the release today",
+      "ideal": "That's not true about the release today."
+    },
+    {
+      "id": "p324",
+      "category": "repeat",
+      "raw": "There's there's no way around this today",
+      "ideal": "There's no way around this today."
+    },
+    {
+      "id": "p325",
+      "category": "repeat",
+      "raw": "You're you're hearing a live stream of thoughts today",
+      "ideal": "You're hearing a live stream of thoughts today."
+    },
+    {
+      "id": "p326",
+      "category": "repeat",
+      "raw": "Can't can't really ship without the tests today",
+      "ideal": "Can't really ship without the tests today."
+    },
+    {
+      "id": "p327",
+      "category": "repeat",
+      "raw": "Won't won't allow that path for us today",
+      "ideal": "Won't allow that path for us today."
+    },
+    {
+      "id": "p328",
+      "category": "repeat",
+      "raw": "What's... what's the meeting pass code now",
+      "ideal": "What's the meeting pass code now?"
     }
   ],
   "keep": [
@@ -5662,6 +5710,46 @@
       "id": "k627",
       "raw": "why Why did we make a new Thing",
       "expect": "Why Why did we make a new Thing."
+    },
+    {
+      "id": "k628",
+      "raw": "Can't Can't really wait for us today",
+      "expect": "Can't Can't really wait for us today."
+    },
+    {
+      "id": "k629",
+      "raw": "What's What's the name of that cafe today",
+      "expect": "What's What's the name of that cafe today."
+    },
+    {
+      "id": "k630",
+      "raw": "that's that's not a problem for me today",
+      "expect": "That's that's not a problem for me today."
+    },
+    {
+      "id": "k631",
+      "raw": "Where where we put the snap summon today",
+      "expect": "Where where we put the snap summon today."
+    },
+    {
+      "id": "k632",
+      "raw": "make make sure it uses CSS today please",
+      "expect": "Make make sure it uses CSS today please."
+    },
+    {
+      "id": "k633",
+      "raw": "You're You're already on the right track today",
+      "expect": "You're You're already on the right track today."
+    },
+    {
+      "id": "k634",
+      "raw": "there's there's still time left in the day",
+      "expect": "There's there's still time left in the day."
+    },
+    {
+      "id": "k635",
+      "raw": "Doesn't Doesn't change the outcome for us",
+      "expect": "Doesn't Doesn't change the outcome for us."
     }
   ]
 }

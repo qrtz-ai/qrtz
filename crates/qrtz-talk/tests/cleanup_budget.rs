@@ -424,4 +424,25 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("on on on"), "{out}");
     assert!(!out.contains("like like like"), "{out}");
     assert_fits_budget(&text, " with triple on/like stutters");
+    // ADR 0254: Cap-then-lower one-word contraction doubles on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(
+            " Please confirm item{i} What's what's the pass code now"
+        ));
+        body.push_str(&format!(" and It's it's ready for review {i} today"));
+    }
+    body.push_str(". And then That's that's not true about the release today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("What's the pass code now"), "{out}");
+    assert!(
+        out.contains("It's ready for review") || out.contains("it's ready for review"),
+        "{out}"
+    );
+    assert!(out.contains("That's not true about the release today"), "{out}");
+    assert!(!out.contains("What's what's"), "{out}");
+    assert!(!out.contains("It's it's"), "{out}");
+    assert!(!out.contains("That's that's"), "{out}");
+    assert_fits_budget(&text, " with Cap-then-lower contraction restarts");
 }
