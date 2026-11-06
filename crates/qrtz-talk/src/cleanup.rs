@@ -2423,11 +2423,19 @@ fn terminal_punctuation(mut t: String, dict: &[DictionaryEntry]) -> String {
         } else if let Some(at) = vocative_question(&t, dict) {
             t.insert(at, ',');
             t.push('?');
-        } else if tag_question(&t) {
+        } else if tag_question(&t) || confirmation_sentence(&t) {
             // ADR 0227: "It's a nice day, isn't it" → "It's a nice day, isn't it?".
+            // ADR 0244: "…. update. Right" → "…. update. Right?".
             t.push('?');
         } else {
             t.push('.');
+        }
+    } else if t.ends_with('.') && !t.ends_with("..") {
+        // ADR 0244: the recogniser already wrote "." on a lone confirmation sentence ("…. Right.").
+        let body = &t[..t.len() - 1];
+        if confirmation_sentence(body) {
+            t.pop();
+            t.push('?');
         }
     }
     t
@@ -2626,7 +2634,8 @@ const TAG_THIRD_WORDS: &[(&str, &[&str])] = &[
 /// exactly one [`TAG_QUESTIONS`] pair (or a [`TAG_THIRD_WORDS`] form after "you"), an [`IMPERATIVE_TAGS`] form, or a
 /// [`CONFIRMATION_TAGS`] word ("right" / "correct"), written as the recogniser writes a tag mid-sentence: the
 /// contraction lowercase (ASCII or curly apostrophe), the pronoun lowercase or "I"; with at least one word before the
-/// comma, and no `; : " ( )` in the sentence. Short dictations (≤ 3 words) never get here (ADR 0101).
+/// comma, and no `; : " ( )` in the sentence. A lone confirmation sentence after a prior one is ADR 0244
+/// ([`confirmation_sentence`]). Short dictations (≤ 3 words) never get here (ADR 0101).
 fn tag_question(t: &str) -> bool {
     let s = &t[last_sentence_start(t)..];
     if s.contains([';', ':', '"', '(', ')']) {
@@ -2704,6 +2713,29 @@ fn confirmation_tag(head: &str, word: &str) -> bool {
         .trim_matches(|c: char| matches!(c, ',' | '.' | '!' | '?' | ';' | ':'))
         .to_ascii_lowercase();
     !CONFIRMATION_NOT_BEFORE.contains(&prev.as_str())
+}
+
+/// ADR 0244: a confirmation tag said as its own sentence after a prior one ("Just to confirm…. Right",
+/// "…. update. Correct") ends with "?". The last sentence of `body` (no trailing mark) is exactly one
+/// [`CONFIRMATION_TAGS`] word (any case; after a sentence end the recogniser capitalises it). The previous sentence's
+/// last word is not in [`CONFIRMATION_NOT_BEFORE`] ("Turn left. Right" stays a statement). Same checks in cleanup.ts.
+fn confirmation_sentence(body: &str) -> bool {
+    let start = last_sentence_start(body);
+    if start == 0 {
+        return false;
+    }
+    let s = body[start..].trim();
+    let mut words = s.split_whitespace();
+    let Some(w) = words.next() else {
+        return false;
+    };
+    if words.next().is_some() {
+        return false;
+    }
+    let w = w
+        .trim_matches(|c: char| matches!(c, ',' | ';' | ':'))
+        .to_ascii_lowercase();
+    confirmation_tag(&body[..start], &w)
 }
 
 /// ADR 0229: the positive tags an imperative takes, by the word its sentence opens with: "Let's grab lunch, shall

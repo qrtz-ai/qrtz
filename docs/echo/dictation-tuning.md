@@ -2967,3 +2967,57 @@ dictation with its own keep set.
 4. Unchanged: "Please turn left, right", "Go up, down, left, right", "Copy that, right away", "I got it right".
 5. If anything reads worse, revert the talk cleanup commit (Rust + TS twin + vectors + tests) and tell Echo the
    dictation.
+
+## 63. Cycle 127: a confirmation tag said as its own sentence ends with "?" (ADR 0244)
+
+Polish first. Mac online; re-scanned prod talk history (453) and dev history (258). ADR 0243 deferred the
+sentence-break form ("Just to confirm, all of this will automatically update. Right" → "…. Right.") as a keep
+refusal. History now has that exact unmarked case, plus "…. morph together. Right?" where rising intonation already
+wrote the mark.
+
+`confirmation_sentence` accepts a last sentence that is exactly one `CONFIRMATION_TAGS` word (any case) after a
+prior sentence, with the previous sentence's last word not in `CONFIRMATION_NOT_BEFORE`. Fires for unmarked
+("…. Right") and for a recogniser "." ("…. Right." → "…. Right?"). Mid-dictation ". Right." clauses are left alone
+(only the final sentence is marked, same as `tag_question`).
+
+| Run                                     | Exact         | Edit distance                 | Regressions | Keep set (hits / n) |
+| --------------------------------------- | ------------- | ----------------------------- | ----------- | ------------------- |
+| cycle 126 (`cc752989`), 236 cases       | 233 / 236     | 39 chars (0.46 % of 8422)     | 0           | 0 / 527             |
+| this cycle, 236 cases                   | 233 / 236     | 39 chars                      | 0           | 0 / 527             |
+| this cycle, 244 cases (+8 sentence)     | **241 / 244** | **39 chars (0.44 % of 8779)** | 0           | 0 / 540             |
+
+- **Examples:** "Just to confirm, all of this will automatically update. Right" → "…. Right?" (was "…. Right.");
+  "…. Right." (recogniser period) → "…. Right?"; "And then just these ones morph together. Right" → "…. Right?";
+  "All of this will automatically update. Correct" → "…. Correct?". Kept: "Turn left. Right.", "Go up. Right.",
+  "Look north. Right.", "Please turn left. Right.", "Face west. Right.", "Step forward. Right.", "…. Right?",
+  lone "Right" / "Correct", "Copy that. Right away.", "Keep going back. Right.", "Then left. Right.".
+- **False-positive evidence:** 14 new keep vectors against 8 new positives (k521 moved out of keep), 14 refusals in
+  tests/hardening127.rs. hardening60 oracle takes the same "." → "?" edit independently; green on generated text.
+- **Rejected this cycle:** mid-dictation ". Right." rewrite; ", okay" / ", yeah" / ", huh" / ", eh" / ", no"; year
+  ITN (k350); email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188 don't retry); unload; speculative N203 without
+  history evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: 495 words ~0.12 ms; confirmation-sentence period form ~0.12–0.28 ms;
+  unmarked ~0.12–0.26 ms; ceiling 2 ms. Capture, segmenting, decode schedule, insert and the timing log unchanged.
+- **Dictation path review since cycle 126:** origin/main unchanged at `cc752989` until this commit. N197 (Mac
+  device-switch) and N203 stay open; p15 already fixed in cycle 125.
+- **Nano quick check:** vitest packages/core talk hardening126/127 (43 passed). No Note code changed.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with Bobs. N197 still
+needs the Mac device-switch gap (disk ~6.7 GB free on the Mac — skipped disruptive mic switch).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197 when a quiet
+window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only from a real unmarked
+dictation with its own keep set.
+
+### Test on Jared's Mac (cycle 127)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), then `scripts/dev/dev-local.sh` as usual.
+2. Hold fn and say "Just to confirm, all of this will automatically update" then a clear pause and "Right" flat —
+   typed text should end with "Right?" not "Right.".
+3. Optional: "We should ship today" pause "Right" → "We should ship today. Right?".
+4. Unchanged: "Turn left. Right", "Go up. Right", "Copy that. Right away", comma-form ", right" from cycle 126.
+5. If anything reads worse, revert the talk cleanup commit (Rust + TS twin + vectors + tests) and tell Echo the
+   dictation.

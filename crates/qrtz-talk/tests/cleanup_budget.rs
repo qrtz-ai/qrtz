@@ -282,4 +282,20 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(out.ends_with("correct?"), "{out}");
     assert!(out.matches("right").count() >= 40, "{out}");
     assert_fits_budget(&text, " with confirmation tags");
+    // ADR 0244: confirmation sentences at the end (unmarked and the recogniser's "." form). Mid-dictation
+    // ". Right." clauses are left alone; only the final sentence is marked (same as tag_question).
+    let text = format!(
+        "{} Just to confirm, all of this will automatically update. Right.",
+        long_dictation()
+    );
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.ends_with("Right?"), "{out}");
+    assert_fits_budget(&text, " with a confirmation sentence (period form)");
+    let text = format!(
+        "{} And then just these ones morph together. Right",
+        long_dictation()
+    );
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.ends_with("Right?"), "{out}");
+    assert_fits_budget(&text, " with a confirmation sentence (unmarked)");
 }

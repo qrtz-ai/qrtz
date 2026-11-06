@@ -40,10 +40,6 @@ describe('ADR 0243 confirmation tag refusals stay', () => {
       'That answer is politically correct',
       'That answer is politically correct.',
     ],
-    [
-      'Just to confirm, all of this will automatically update. Right',
-      'Just to confirm, all of this will automatically update. Right.',
-    ],
     ["It's fine, right?", "It's fine, right?"],
     ['Am I right', 'Am I right'],
     ['Keep right at the fork', 'Keep right at the fork.'],

@@ -1,5 +1,16 @@
 # Hardening log
 
+## 2026-11-06 — Cycle 127 (≈8:49–9:05 PT, polish): a confirmation sentence "…. Right" / "…. Correct" ends with "?" (ADR 0244)
+
+- **Focus:** polish. origin/main at `cc752989` (cycle 126 / ADR 0243). Mac online; prod+dev talk history (453+258).
+- **Landed:** `confirmation_sentence` — last sentence is lone Right/Correct after a prior sentence → "?"; also
+  rewrites the recogniser's trailing "." on that shape. Direction prev-word refuse unchanged (ADR 0243 list).
+- **Scores:** polish 233/236 → **241/244** exact, edit distance 39 (0.44 % of 8779), regressions 0; keep 0/540.
+- **Latency:** release `cleanup_budget` confirmation-sentence medians ≪ 2 ms (period form ~0.12–0.28 ms).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
+- **SHA:** (filled after push)
+
+
 ## 2026-11-06 — Cycle 126 (≈8:25–9:05 PT, polish): unmarked ", right" / ", correct" ends with "?" (ADR 0243)
 
 - **Focus:** polish. origin/main at `b4a206c6` (cycle 125 / ADR 0242). Mac online; prod+dev talk history (453+258)

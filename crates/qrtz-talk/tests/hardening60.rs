@@ -123,13 +123,19 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
         });
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
+        // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
-                && body.rsplit_once(", ").is_some_and(|(_, t)| {
+                && (body.rsplit_once(", ").is_some_and(|(_, t)| {
                     let w: Vec<&str> = t.split(' ').collect();
                     ((2..=3).contains(&w.len()) && (w[0].ends_with("n't") || w[0].ends_with("n\u{2019}t")))
                         || (w.len() == 1 && matches!(w[0], "right" | "correct"))
-                })
+                }) || body.rsplit(['\n', '.', '!', '?']).next().is_some_and(|s| {
+                    let w: Vec<&str> = s.split_whitespace().collect();
+                    w.len() == 1
+                        && matches!(w[0].to_ascii_lowercase().as_str(), "right" | "correct")
+                        && body.chars().any(|c| matches!(c, '.' | '!' | '?' | '\n'))
+                }))
         });
         let imperative = old.strip_suffix('.').is_some_and(|body| {
             let sentence = body.rsplit(['\n', '.', '!', '?']).next().unwrap_or_default();

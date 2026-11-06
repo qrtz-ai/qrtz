@@ -566,13 +566,21 @@ function terminalPunctuation(
     return body && !body.includes('.') ? t.slice(0, -1) : t;
   }
   // ADR 0196: "?" when the last sentence can only be a question.
-  if (!/[\p{L}\p{N}]$/u.test(t)) return t;
-  if (unmarkedQuestion(t)) return `${openerComma(t)}?`;
-  // ADR 0206: "Hey <dictionary name> <question>" gets a comma after the name and "?".
-  const at = vocativeQuestion(t, dict);
-  if (at !== null) return `${t.slice(0, at)},${t.slice(at)}?`;
-  // ADR 0227: "It's a nice day, isn't it" -> "It's a nice day, isn't it?".
-  return tagQuestion(t) ? `${t}?` : `${t}.`;
+  if (/[\p{L}\p{N}]$/u.test(t)) {
+    if (unmarkedQuestion(t)) return `${openerComma(t)}?`;
+    // ADR 0206: "Hey <dictionary name> <question>" gets a comma after the name and "?".
+    const at = vocativeQuestion(t, dict);
+    if (at !== null) return `${t.slice(0, at)},${t.slice(at)}?`;
+    // ADR 0227: "It's a nice day, isn't it" -> "It's a nice day, isn't it?".
+    // ADR 0244: "…. update. Right" -> "…. update. Right?".
+    return tagQuestion(t) || confirmationSentence(t) ? `${t}?` : `${t}.`;
+  }
+  // ADR 0244: the recogniser already wrote "." on a lone confirmation sentence ("…. Right.").
+  if (t.endsWith('.') && !t.endsWith('..')) {
+    const body = t.slice(0, -1);
+    if (confirmationSentence(body)) return `${body}?`;
+  }
+  return t;
 }
 
 /** ADR 0206: the subjects a question may have after a vocative name. Same as cleanup.rs VOCATIVE_SUBJECTS. */
@@ -806,6 +814,20 @@ function confirmationTag(head: string, word: string): boolean {
   if (parts.length === 0) return false;
   const prev = parts[parts.length - 1].replace(/[,.!?]+$/g, '').toLowerCase();
   return !(CONFIRMATION_NOT_BEFORE as readonly string[]).includes(prev);
+}
+
+/** ADR 0244: last sentence of `body` is a lone confirmation word after a prior sentence. Same as cleanup.rs
+ * confirmation_sentence. */
+function confirmationSentence(body: string): boolean {
+  const line = body.lastIndexOf('\n') + 1;
+  let start = line;
+  for (const m of body.slice(line).matchAll(/[.!?]\s/g))
+    start = line + (m.index ?? 0) + m[0].length;
+  if (start === 0) return false;
+  const words = body.slice(start).trim().split(/\s+/).filter(Boolean);
+  if (words.length !== 1) return false;
+  const w = words[0].replace(/[,;:]+$/g, '').toLowerCase();
+  return confirmationTag(body.slice(0, start), w);
 }
 
 /** ADR 0227 / 0229 / 0243: does the dictation end in an unmarked tag question ("..., isn't it", "..., right")? Same
