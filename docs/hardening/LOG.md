@@ -9,7 +9,7 @@
 - **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; like Like / so|like STUTTERS; lowercase
   "like a like a"; email/URL ITN; p41; unload; N203; N197 (mic-switch still disruptive; Mac ~16 GB
   free); year ITN.
-- **SHAs:** code `cf0ae0ea`
+- **SHAs:** code `cf0ae0ea`, docs `fcac7230`
 
 ## 2026-11-06 — Cycle 131 (≈10:51–11:05 PT, polish): Cap-leading two-word and three-word restart phrases (ADR 0247)
 
