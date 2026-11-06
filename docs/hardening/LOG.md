@@ -1,3 +1,15 @@
+## 2026-11-06 — Cycle 135 (≈12:51–1:20 PT, polish): triple+ "are" stutter collapses (ADR 0251)
+
+- **Landed:** extend `collapses` / TS REPEATS — a run of 3+ space/tab-separated "are" (any case)
+  collapses to the first copy (ADR 0251). Doubles stay; never across commas; "are" not added to
+  STUTTERS. Rust + TS twin, polish +8, keep +8, cleanup.json, hardening135 + hardening60 oracle,
+  cleanup_budget probe.
+- **Polish:** 293/296 → **301/304** exact, edit distance **39**, regressions **0**, keep **0/608**.
+- **Latency:** release `cleanup_budget` triple-are median **0.247 ms** (865-word probe; ceiling 2 ms).
+- **Rejected:** "are" into STUTTERS; "on"/"is"/"why"/"like" STUTTERS; ", okay"/", yeah"/", huh"/", eh"/", no";
+  email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap restart (0 hits); general triple-any-word.
+- **SHAs:** code `6edb62f8`, docs `TBD`
+
 ## 2026-11-06 — Cycle 134 (≈12:18–12:40 PT, polish): four-word Cap restart phrase (ADR 0250)
 
 - **Landed:** widen `restart_phrase` — mid-sentence Cap-leading four-word restart phrases collapse

@@ -3268,3 +3268,50 @@ phrase repeats until Cap-lemma or comma-restart evidence is clean.
 3. Refuse checks: "we could just have we could just have our configuration" stays both-lower;
    "New York City Hall New York City Hall is big." stays; ADR 0247 "I don't know I don't know how"
    still collapses to one "I don't know"; ADR 0249 "it It's broken" still collapses to "It's broken".
+
+## 70. Cycle 135: triple+ "are" stutter collapses (ADR 0251)
+
+| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 134, 296 cases                         | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
+| this cycle, 304 cases (+8 triple are)        | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
+
+- **Examples:** "Are are are we always fetching on hover" → "Are we always fetching on hover?"; "we
+  are are are going tomorrow" → "We are going tomorrow."; "Are are are are we done yet today" →
+  "Are we done yet today?". Kept: "you are Are you sure about that", "The results are are
+  interesting today", "Are Are we ready to ship", "is is that correct though", "turn it on on Friday
+  please", prior ADR 0248 Cap-contraction and ADR 0250 four-word Cap keeps.
+- **Rejected this cycle:** adding "are" to STUTTERS (doubles — "you are Are you"); adding
+  "on"/"is"/"why"/"like" to STUTTERS; ", okay" / ", yeah" / ", huh" / ", eh" / ", no"; email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch;
+  year ITN (k350); five-word Cap restart (0 hits); general triple-any-word collapse (breaks "No no
+  no" / "Wait wait wait" emphasis).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: triple-are median **0.247 ms** (865-word probe; ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 134:** origin/main at `679e526a` until this commit. Fresh Mac
+  history hit "Are are are we always fetching on hover?". N197 and N203 stay open; p19/p20/p41 still
+  failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / comma-separated
+phrase repeats until Cap-lemma or comma-restart evidence is clean. Do not add "are"/"is"/"on"/"like"
+to STUTTERS.
+
+### Test on Jared's Mac (cycle 135)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "Are are are we always fetching on hover" (or dictate so Parakeet stutters "are"
+   three times) — it should type "Are we always fetching on hover?". Then "we are are are going
+   tomorrow" → "We are going tomorrow."
+3. Refuse checks: "you are Are you sure about that" stays as a double; "The results are are
+   interesting today" stays; "is is that correct though" stays; ADR 0250 "we could just have We
+   could just have" still collapses; ADR 0248 "it's It's" still collapses; "the the the cat" still
+   collapses via STUTTERS.
+
