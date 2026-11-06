@@ -1,3 +1,19 @@
+## 2026-11-06 — Cycle 139 (≈3:21–3:35 PM PT, polish): Cap-then-lower multi-word restart collapses (ADR 0255)
+
+- **Focus:** polish. origin/main at `3ebea9ae` (cycle 138 / ADR 0254). Mac online; prod+dev talk history (453+443).
+- **Landed:** Cap-then-lower widen of ADR 0246–0250 two-/three-/four-word `restart_phrase` — "Is that is that" /
+  "You have to you have to" / "How's it going how's it going" (and ellipsis form) drop the second copy. Cap-second
+  stays. Both-lower multi-word stays. Rust + TS twin, polish +8, keep +8 (k568/k583 Cap-then-lower → both-lower),
+  cleanup.json, hardening139 + hardening131/60, cleanup_budget +1 text.
+- **Scores:** polish 325/328 → **333/336** exact, edit distance 39 (0.32 % of 12036), regressions 0; keep 0/640.
+- **Rejected:** Cap Cap "So So"; "is Is"/"why Why"/"like Like"; adding are/is/on/like/why/so/where to STUTTERS;
+  "a An"; lowercase multi-word restarts; "hold on, hold on" across comma; content-word doubles; both-lower
+  contraction doubles; email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap restart; general
+  triple-any-word; ", okay"/, yeah/, huh/, eh/, no.
+- **Latency:** release `cleanup_budget` Cap-then-lower multi-word median **0.385 ms** (1347-word; ceiling 2 ms).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
+- **SHA:** `f1f1c1b3` (code), `1eaec066` (docs)
+
 ## 2026-11-06 — Echo cycle 138 (ADR 0254 Cap-then-lower contraction)
 
 - **Landed:** Cap-then-lower one-word contraction doubles collapse ("What's what's", "It's it's";
