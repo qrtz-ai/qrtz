@@ -2372,9 +2372,29 @@ function restartPhrase(s: string): string {
     spans.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
   }
   if (spans.length < 2) return s;
-  // Spaces/tabs only: a newline between copies is a real sentence start, not a restart.
+  // Spaces/tabs only within a copy: a newline between copies is a real sentence start, not a restart.
   const onlySpaceTab = (from: number, to: number) =>
     from <= to && /^[ \t]*$/.test(s.slice(from, to));
+  // ADR 0252: between copies, also allow an ellipsis (`...` / `…`) with surrounding spaces/tabs.
+  // A single `.` is a sentence boundary and must not match.
+  const copyGapOk = (from: number, to: number) => {
+    if (from > to) return false;
+    const gap = s.slice(from, to);
+    let i = 0;
+    while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
+    if (i === gap.length) return true;
+    if (gap[i] === '…') {
+      i += 1;
+    } else if (gap[i] === '.') {
+      const start = i;
+      while (i < gap.length && gap[i] === '.') i += 1;
+      if (i - start < 2) return false;
+    } else {
+      return false;
+    }
+    while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
+    return i === gap.length;
+  };
   const lettersLower = (w: string) =>
     [...w]
       .filter((c) => /[A-Za-z]/.test(c))
@@ -2401,7 +2421,7 @@ function restartPhrase(s: string): string {
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
         onlySpaceTab(w2.end, w3.start) &&
-        onlySpaceTab(w3.end, w4.start) &&
+        copyGapOk(w3.end, w4.start) &&
         onlySpaceTab(w4.end, w5.start) &&
         onlySpaceTab(w5.end, w6.start) &&
         onlySpaceTab(w6.end, w7.start) &&
@@ -2437,7 +2457,7 @@ function restartPhrase(s: string): string {
       const ok3 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
-        onlySpaceTab(w2.end, w3.start) &&
+        copyGapOk(w2.end, w3.start) &&
         onlySpaceTab(w3.end, w4.start) &&
         onlySpaceTab(w4.end, w5.start) &&
         middleOk(w1.text) &&
@@ -2465,7 +2485,7 @@ function restartPhrase(s: string): string {
       ];
       const ok2 =
         onlySpaceTab(w0.end, w1.start) &&
-        onlySpaceTab(w1.end, w2.start) &&
+        copyGapOk(w1.end, w2.start) &&
         onlySpaceTab(w2.end, w3.start) &&
         // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
         lettersLower(w1.text) &&
@@ -2491,7 +2511,7 @@ function restartPhrase(s: string): string {
       const w1 = spans[i + 1];
       const hasApos = /['’]/.test(w0.text);
       const ok1 =
-        onlySpaceTab(w0.end, w1.start) &&
+        copyGapOk(w0.end, w1.start) &&
         hasApos &&
         /^[a-z]/.test(w0.text) &&
         /^[A-Z]/.test(w1.text) &&
@@ -2503,7 +2523,7 @@ function restartPhrase(s: string): string {
       }
       const isBareIt = w0.text === 'it';
       const isCapIts = w1.text === "It's" || w1.text === 'It’s';
-      const okIt = onlySpaceTab(w0.end, w1.start) && isBareIt && isCapIts;
+      const okIt = copyGapOk(w0.end, w1.start) && isBareIt && isCapIts;
       if (okIt) {
         drop[i] = true;
         i += 2;
@@ -2523,6 +2543,26 @@ function restartPhrase(s: string): string {
       const ch = s[ws - 1];
       if (ch === ' ' || ch === '\t') ws -= 1;
       else break;
+    }
+    // ADR 0252: also drop `...` / `…` that sat between the kept copy and this dropped copy.
+    if (ws > last) {
+      const prev = s[ws - 1];
+      if (prev === '…') {
+        ws -= 1;
+      } else if (prev === '.') {
+        let dots = 0;
+        let at = ws;
+        while (at > last && s[at - 1] === '.') {
+          dots += 1;
+          at -= 1;
+        }
+        if (dots >= 2) ws = at;
+      }
+      while (ws > last) {
+        const ch = s[ws - 1];
+        if (ch === ' ' || ch === '\t') ws -= 1;
+        else break;
+      }
     }
     out += s.slice(last, ws);
     last = end;

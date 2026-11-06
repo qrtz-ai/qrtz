@@ -389,4 +389,19 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("are are are"), "{out}");
     assert!(!out.contains("Are are are"), "{out}");
     assert_fits_budget(&text, " with triple are stutters");
+    // ADR 0252: Cap-restart phrases across an ellipsis on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(
+            " Please note item{i} I don't really... I don't really like option {i}"
+        ));
+    }
+    body.push_str(". And then Wait for it... Wait for it to load first");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("I don't really like option"), "{out}");
+    assert!(out.contains("Wait for it to load first"), "{out}");
+    assert!(!out.contains("I don't really... I don't really"), "{out}");
+    assert!(!out.contains("Wait for it... Wait for it"), "{out}");
+    assert_fits_budget(&text, " with ellipsis Cap restart phrases");
 }

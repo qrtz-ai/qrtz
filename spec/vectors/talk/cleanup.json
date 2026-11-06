@@ -5647,6 +5647,86 @@
       "raw": "is is that correct though",
       "dict": false,
       "expect": "Is is that correct though."
+    },
+    {
+      "raw": "But um I don't really... I don't really like this. What would you recommend?",
+      "dict": false,
+      "expect": "But I don't really like this. What would you recommend?"
+    },
+    {
+      "raw": "I don't really... I don't really like this",
+      "dict": false,
+      "expect": "I don't really like this."
+    },
+    {
+      "raw": "I don't really… I don't really like this today",
+      "dict": false,
+      "expect": "I don't really like this today."
+    },
+    {
+      "raw": "I don't... I don't know how to fix that",
+      "dict": false,
+      "expect": "I don't know how to fix that."
+    },
+    {
+      "raw": "We should go... We should go now please",
+      "dict": false,
+      "expect": "We should go now please."
+    },
+    {
+      "raw": "Wait for it... Wait for it to load first",
+      "dict": false,
+      "expect": "Wait for it to load first."
+    },
+    {
+      "raw": "Can you... Can you host the prototype on a server",
+      "dict": false,
+      "expect": "Can you host the prototype on a server?"
+    },
+    {
+      "raw": "we could just have... We could just have our configuration ready",
+      "dict": false,
+      "expect": "We could just have our configuration ready."
+    },
+    {
+      "raw": "I'll use it. It needs to work correctly today",
+      "dict": false,
+      "expect": "I'll use it. It needs to work correctly today."
+    },
+    {
+      "raw": "I don't really. I don't really like this idea",
+      "dict": false,
+      "expect": "I don't really. I don't really like this idea."
+    },
+    {
+      "raw": "new york... New York looks nice today",
+      "dict": false,
+      "expect": "New york... New York looks nice today."
+    },
+    {
+      "raw": "scratch that... Scratch that for me please",
+      "dict": false,
+      "expect": "Scratch that... Scratch that for me please."
+    },
+    {
+      "raw": "like a like a smooth fade across the board",
+      "dict": false,
+      "expect": "Like a like a smooth fade across the board."
+    },
+    {
+      "raw": "I was thinking... she was leaving early today",
+      "dict": false,
+      "expect": "I was thinking... She was leaving early today."
+    },
+    {
+      "raw": "Wait... Wait a minute please now",
+      "dict": false,
+      "expect": "Wait... Wait a minute please now."
+    },
+    {
+      "raw": "The results are are interesting... today for us",
+      "dict": false,
+      "expect": "The results are are interesting... Today for us."
     }
   ],
   "dictionaryOnly": [

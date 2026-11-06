@@ -1882,6 +1882,11 @@ fn collapse_repeats(s: &str) -> String {
 /// they say". Same Cap-restart signature; two middle words may each be lowercase or an "I"
 /// pronoun. Prefers four- then three- then two- then one-word matches.
 ///
+/// Ellipsis between copies (ADR 0252): the gap between the last word of the first copy and the
+/// first word of the second may be spaces/tabs, or spaces/tabs around `...` / `…` (U+2026). A
+/// single `.` stays a sentence boundary. Within each copy, only spaces/tabs. Spoken "scratch that"
+/// across an ellipsis still stays (ADR 0186).
+///
 /// One-word (ADR 0248): a contracted word with an apostrophe, restarted Cap ("it's It's",
 /// "don't Don't", "can't Can't"). The first copy starts lowercase (mid-sentence); the second
 /// starts uppercase; eq_ignore_ascii_case. Plain words without an apostrophe stay with
@@ -1972,9 +1977,42 @@ fn restart_phrase(s: &str) -> String {
         return s.to_owned();
     }
 
-    // Spaces and tabs only: a newline between copies is a real sentence start ("scratch that\nScratch that"), not a restart.
+    // Spaces and tabs only within a copy: a newline between copies is a real sentence start
+    // ("scratch that\nScratch that"), not a restart.
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
+    // ADR 0252: between copies, also allow an ellipsis (`...` / `…`) with surrounding spaces/tabs.
+    // A single `.` is a sentence boundary and must not match.
+    let copy_gap_ok = |from: usize, to: usize| {
+        if from > to {
+            return false;
+        }
+        let gap = s[from..to].as_bytes();
+        let mut i = 0usize;
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        if i == gap.len() {
+            return true;
+        }
+        if gap[i] == 0xe2 && gap.get(i + 1) == Some(&0x80) && gap.get(i + 2) == Some(&0xa6) {
+            i += 3; // U+2026 …
+        } else if gap[i] == b'.' {
+            let start = i;
+            while i < gap.len() && gap[i] == b'.' {
+                i += 1;
+            }
+            if i - start < 2 {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        i == gap.len()
+    };
     let letters_lower = |a: usize, b: usize| {
         s[a..b]
             .chars()
@@ -2007,7 +2045,7 @@ fn restart_phrase(s: &str) -> String {
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
-                && only_space_tab(b3, a4)
+                && copy_gap_ok(b3, a4)
                 && only_space_tab(b4, a5)
                 && only_space_tab(b5, a6)
                 && only_space_tab(b6, a7)
@@ -2040,7 +2078,7 @@ fn restart_phrase(s: &str) -> String {
             let (a5, b5) = spans[i + 5];
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
-                && only_space_tab(b2, a3)
+                && copy_gap_ok(b2, a3)
                 && only_space_tab(b3, a4)
                 && only_space_tab(b4, a5)
                 && middle_ok(a1, b1)
@@ -2065,7 +2103,7 @@ fn restart_phrase(s: &str) -> String {
             let (a2, b2) = spans[i + 2];
             let (a3, b3) = spans[i + 3];
             let ok2 = only_space_tab(b0, a1)
-                && only_space_tab(b1, a2)
+                && copy_gap_ok(b1, a2)
                 && only_space_tab(b2, a3)
                 // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
                 // Last word of each copy stays lowercase so "new york New York" is kept.
@@ -2089,7 +2127,7 @@ fn restart_phrase(s: &str) -> String {
             let (a0, b0) = spans[i];
             let (a1, b1) = spans[i + 1];
             let has_apos = s[a0..b0].contains('\'') || s[a0..b0].contains('\u{2019}');
-            let ok1 = only_space_tab(b0, a1)
+            let ok1 = copy_gap_ok(b0, a1)
                 && has_apos
                 && starts_lower(a0)
                 && starts_upper(a1)
@@ -2102,7 +2140,7 @@ fn restart_phrase(s: &str) -> String {
             let is_bare_it = &s[a0..b0] == "it";
             let w1 = &s[a1..b1];
             let is_cap_its = w1 == "It's" || w1 == "It’s";
-            let ok_it = only_space_tab(b0, a1) && is_bare_it && is_cap_its;
+            let ok_it = copy_gap_ok(b0, a1) && is_bare_it && is_cap_its;
             if ok_it {
                 drop[i] = true;
                 i += 2;
@@ -2115,7 +2153,8 @@ fn restart_phrase(s: &str) -> String {
         return s.to_owned();
     }
 
-    // Build output: copy through, omitting dropped words and the whitespace immediately before each.
+    // Build output: copy through, omitting dropped words and the whitespace (and ADR 0252 ellipsis)
+    // immediately before each.
     let mut out = String::with_capacity(s.len());
     let mut last = 0usize;
     for (idx, &(a, b)) in spans.iter().enumerate() {
@@ -2129,6 +2168,36 @@ fn restart_phrase(s: &str) -> String {
                 ws -= ch.len_utf8();
             } else {
                 break;
+            }
+        }
+        // ADR 0252: also drop `...` / `…` that sat between the kept copy and this dropped copy.
+        if ws > last {
+            let prev = s[..ws].chars().next_back().unwrap();
+            if prev == '\u{2026}' {
+                ws -= prev.len_utf8();
+            } else if prev == '.' {
+                let mut dots = 0usize;
+                let mut at = ws;
+                while at > last {
+                    let ch = s[..at].chars().next_back().unwrap();
+                    if ch == '.' {
+                        dots += 1;
+                        at -= 1;
+                    } else {
+                        break;
+                    }
+                }
+                if dots >= 2 {
+                    ws = at;
+                }
+            }
+            while ws > last {
+                let ch = s[..ws].chars().next_back().unwrap();
+                if ch == ' ' || ch == '\t' {
+                    ws -= ch.len_utf8();
+                } else {
+                    break;
+                }
             }
         }
         out.push_str(&s[last..ws]);

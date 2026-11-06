@@ -1853,6 +1853,54 @@
       "category": "repeat",
       "raw": "Please confirm are are are the results in now",
       "ideal": "Please confirm are the results in now."
+    },
+    {
+      "id": "p305",
+      "category": "restart",
+      "raw": "But um I don't really... I don't really like this. What would you recommend?",
+      "ideal": "But I don't really like this. What would you recommend?"
+    },
+    {
+      "id": "p306",
+      "category": "restart",
+      "raw": "I don't really... I don't really like this",
+      "ideal": "I don't really like this."
+    },
+    {
+      "id": "p307",
+      "category": "restart",
+      "raw": "I don't really… I don't really like this today",
+      "ideal": "I don't really like this today."
+    },
+    {
+      "id": "p308",
+      "category": "restart",
+      "raw": "I don't... I don't know how to fix that",
+      "ideal": "I don't know how to fix that."
+    },
+    {
+      "id": "p309",
+      "category": "restart",
+      "raw": "We should go... We should go now please",
+      "ideal": "We should go now please."
+    },
+    {
+      "id": "p310",
+      "category": "restart",
+      "raw": "Wait for it... Wait for it to load first",
+      "ideal": "Wait for it to load first."
+    },
+    {
+      "id": "p311",
+      "category": "restart",
+      "raw": "Can you... Can you host the prototype on a server",
+      "ideal": "Can you host the prototype on a server?"
+    },
+    {
+      "id": "p312",
+      "category": "restart",
+      "raw": "we could just have... We could just have our configuration ready",
+      "ideal": "We could just have our configuration ready."
     }
   ],
   "keep": [
@@ -5486,6 +5534,46 @@
       "id": "k611",
       "raw": "is is that correct though",
       "expect": "Is is that correct though."
+    },
+    {
+      "id": "k612",
+      "raw": "I'll use it. It needs to work correctly today",
+      "expect": "I'll use it. It needs to work correctly today."
+    },
+    {
+      "id": "k613",
+      "raw": "I don't really. I don't really like this idea",
+      "expect": "I don't really. I don't really like this idea."
+    },
+    {
+      "id": "k614",
+      "raw": "new york... New York looks nice today",
+      "expect": "New york... New York looks nice today."
+    },
+    {
+      "id": "k615",
+      "raw": "scratch that... Scratch that for me please",
+      "expect": "Scratch that... Scratch that for me please."
+    },
+    {
+      "id": "k616",
+      "raw": "like a like a smooth fade across the board",
+      "expect": "Like a like a smooth fade across the board."
+    },
+    {
+      "id": "k617",
+      "raw": "I was thinking... she was leaving early today",
+      "expect": "I was thinking... She was leaving early today."
+    },
+    {
+      "id": "k618",
+      "raw": "Wait... Wait a minute please now",
+      "expect": "Wait... Wait a minute please now."
+    },
+    {
+      "id": "k619",
+      "raw": "The results are are interesting... today for us",
+      "expect": "The results are are interesting... Today for us."
     }
   ]
 }

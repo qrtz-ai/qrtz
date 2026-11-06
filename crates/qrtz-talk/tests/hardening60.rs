@@ -110,7 +110,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_dangling_comma_marks(&old);
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
-    // ADR 0246–0250 (cycles 130–134): restart phrases (incl. four-word Cap) collapse.
+    // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases (incl. four-word Cap and ellipsis gap) collapse.
     let old = without_restart_phrase(&old);
     // ADR 0251 (cycle 135): triple+ space/tab-separated "are" collapses to the first copy.
     let old = without_triple_are(&old);
@@ -137,7 +137,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
-        // ADR 0246–0250 (cycles 130–134): restart phrases — see without_restart_phrase on old.
+        // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases — see without_restart_phrase on old.
         // ADR 0251 (cycle 135): triple+ "are" — see without_triple_are on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
@@ -430,6 +430,37 @@ fn without_restart_phrase(s: &str) -> String {
     }
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
+    // ADR 0252: between copies, also allow an ellipsis (`...` / `…`) with surrounding spaces/tabs.
+    let copy_gap_ok = |from: usize, to: usize| {
+        if from > to {
+            return false;
+        }
+        let gap = s[from..to].as_bytes();
+        let mut i = 0usize;
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        if i == gap.len() {
+            return true;
+        }
+        if gap[i] == 0xe2 && gap.get(i + 1) == Some(&0x80) && gap.get(i + 2) == Some(&0xa6) {
+            i += 3;
+        } else if gap[i] == b'.' {
+            let start = i;
+            while i < gap.len() && gap[i] == b'.' {
+                i += 1;
+            }
+            if i - start < 2 {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        i == gap.len()
+    };
     let letters_lower = |w: &str| {
         w.chars()
             .filter(|c| c.is_ascii_alphabetic())
@@ -455,7 +486,7 @@ fn without_restart_phrase(s: &str) -> String {
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
-                && only_space_tab(b3, a4)
+                && copy_gap_ok(b3, a4)
                 && only_space_tab(b4, a5)
                 && only_space_tab(b5, a6)
                 && only_space_tab(b6, a7)
@@ -488,7 +519,7 @@ fn without_restart_phrase(s: &str) -> String {
             let (a5, _b5, ref w5) = spans[i + 5];
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
-                && only_space_tab(b2, a3)
+                && copy_gap_ok(b2, a3)
                 && only_space_tab(b3, a4)
                 && only_space_tab(b4, a5)
                 && middle_ok(w1)
@@ -513,7 +544,7 @@ fn without_restart_phrase(s: &str) -> String {
             let (a2, b2, ref w2) = spans[i + 2];
             let (a3, _b3, ref w3) = spans[i + 3];
             let ok2 = only_space_tab(b0, a1)
-                && only_space_tab(b1, a2)
+                && copy_gap_ok(b1, a2)
                 && only_space_tab(b2, a3)
                 && letters_lower(w1)
                 && w2.starts_with(|c: char| c.is_ascii_uppercase())
@@ -534,7 +565,7 @@ fn without_restart_phrase(s: &str) -> String {
             let (_a0, b0, ref w0) = spans[i];
             let (a1, _b1, ref w1) = spans[i + 1];
             let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
-            let ok1 = only_space_tab(b0, a1)
+            let ok1 = copy_gap_ok(b0, a1)
                 && has_apos
                 && w0.starts_with(|c: char| c.is_ascii_lowercase())
                 && w1.starts_with(|c: char| c.is_ascii_uppercase())
@@ -546,7 +577,7 @@ fn without_restart_phrase(s: &str) -> String {
             }
             let is_bare_it = w0 == "it";
             let is_cap_its = w1 == "It's" || w1.as_str() == "It’s";
-            let ok_it = only_space_tab(b0, a1) && is_bare_it && is_cap_its;
+            let ok_it = copy_gap_ok(b0, a1) && is_bare_it && is_cap_its;
             if ok_it {
                 drop[i] = true;
                 i += 2;
@@ -571,6 +602,36 @@ fn without_restart_phrase(s: &str) -> String {
                 ws -= ch.len_utf8();
             } else {
                 break;
+            }
+        }
+        // ADR 0252: also drop `...` / `…` between the kept copy and this dropped copy.
+        if ws > last {
+            let prev = s[..ws].chars().next_back().unwrap();
+            if prev == '\u{2026}' {
+                ws -= prev.len_utf8();
+            } else if prev == '.' {
+                let mut dots = 0usize;
+                let mut at = ws;
+                while at > last {
+                    let ch = s[..at].chars().next_back().unwrap();
+                    if ch == '.' {
+                        dots += 1;
+                        at -= 1;
+                    } else {
+                        break;
+                    }
+                }
+                if dots >= 2 {
+                    ws = at;
+                }
+            }
+            while ws > last {
+                let ch = s[..ws].chars().next_back().unwrap();
+                if ch == ' ' || ch == '\t' {
+                    ws -= ch.len_utf8();
+                } else {
+                    break;
+                }
             }
         }
         out.push_str(&s[last..ws]);
