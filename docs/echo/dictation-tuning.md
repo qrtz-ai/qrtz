@@ -3408,3 +3408,54 @@ clean. Do not add "are"/"is"/"on"/"like"/"why"/"so" to STUTTERS.
 3. Refuse checks: "turn it on on Friday please" stays as a double; "I was like like whatever about it"
    stays; "like Like it or not" stays; ADR 0251 "Are are are we always fetching on hover" still
    collapses; ADR 0252 "I don't really... I don't really like this" still collapses.
+
+## 73. Cycle 138: Cap-then-lower one-word contraction restart collapses (ADR 0254)
+
+| Run                                              | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 137, 320 cases                             | **317 / 320** | **39 chars (0.34 % of 11490)** | 0           | 0 / 624             |
+| this cycle, 328 cases (+8 Cap-then-lower)        | **325 / 328** | **39 chars (0.33 % of 11791)** | 0           | 0 / 632             |
+
+- **Examples:** "What's what's the meeting pass code" → "What's the meeting pass code?"; "It's it's
+  the top two things aren't fading now" → "It's the top two things aren't fading now."; "What's...
+  what's the meeting pass code now" → "What's the meeting pass code now?". Kept: "it's it's not a
+  big deal for us", "It's It's fine at the start of the line", "don't don't go down that path yet",
+  "O'Brien O'Brien wrote the release notes", "Can't Can't really wait for us today", "What's What's
+  the name of that cafe today", "Where where we put the snap summon today", "make make sure it uses
+  CSS today please", prior ADR 0248 lower-then-Cap and ADR 0253 keeps.
+- **Rejected this cycle:** Cap Cap "So So" (keep k581); "is Is" / "why Why" / "like Like" / adding
+  those or "so" to STUTTERS; "a An" Cap-lemma; lowercase multi-word restarts ("the starting deck the
+  starting deck", "what's it what's it"); "hold on, hold on" across a comma; content-word doubles
+  ("make make", "campaign campaign", "every every"); both-lower contraction doubles (ADR 0248 keep);
+  email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197
+  mic-switch; year ITN (k350); five-word Cap restart; general triple-any-word.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap-then-lower median **0.348 ms** (1185-word
+  probe; ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass, insert
+  unchanged.
+- **Dictation path review since cycle 137:** origin/main at `c071c360` until this commit. Fresh Mac
+  history (prod 453, dev 439) hit "What's what's the meeting pass code" and "It's it's the top two
+  things". N197 and N203 stay open; p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window (Mac ~11 GB free this cycle — skipped disruptive
+measurement).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / "is Is" /
+"there's a so there's a" / lowercase multi-word restarts until Cap-lemma or Cap-second evidence is
+clean. Do not add "are"/"is"/"on"/"like"/"why"/"so" to STUTTERS.
+
+### Test on Jared's Mac (cycle 138)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "What's what's the meeting pass code" (or dictate so Parakeet writes Cap then
+   lower of the same contraction) — it should type "What's the meeting pass code?". Then "It's it's
+   the top two things aren't fading" → "It's the top two things aren't fading."
+3. Refuse checks: "it's it's not a big deal" stays as a both-lower double (after sentence cap "It's
+   it's…"); "It's It's fine" stays; "Where where we put the snap" stays (no apostrophe); ADR 0248
+   "it's It's not correct" still collapses; ADR 0253 "on on On the replay modal" still collapses.
+
