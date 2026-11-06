@@ -9,7 +9,7 @@
 - **Rejected:** both-lower "it it's"; ", okay"/", yeah"/", huh"/", eh"/", no"; like Like / so|like
   STUTTERS; lowercase "like a like a"; "a An"; "why Why"; email/URL ITN; p41; unload; N203; N197;
   year ITN.
-- **SHAs:** code pending, docs pending
+- **SHAs:** code `20ac6c3c`
 
 ## 2026-11-06 — Cycle 132 (≈11:19–11:50 PT, polish): one-word Cap contraction restart (ADR 0248)
 
