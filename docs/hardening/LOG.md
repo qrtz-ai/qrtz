@@ -10,7 +10,7 @@
 - **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; period ", right."; inverted tags;
   which/should openers; email/URL ITN; p41; unload; N203; N197 (Mac disk ~1.3 GB); year ITN; so/like
   STUTTERS; lowercase-second-copy phrase stutters without Cap.
-- **SHAs:** code `a1e9ad49` (docs follow)
+- **SHAs:** code `a1e9ad49`, docs `5d73cc21`
 
 # Hardening log
 
