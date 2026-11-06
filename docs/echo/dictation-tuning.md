@@ -3411,10 +3411,10 @@ clean. Do not add "are"/"is"/"on"/"like"/"why"/"so" to STUTTERS.
 
 ## 73. Cycle 138: Cap-then-lower one-word contraction restart collapses (ADR 0254)
 
-| Run                                              | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| ------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 137, 320 cases                             | **317 / 320** | **39 chars (0.34 % of 11490)** | 0           | 0 / 624             |
-| this cycle, 328 cases (+8 Cap-then-lower)        | **325 / 328** | **39 chars (0.33 % of 11791)** | 0           | 0 / 632             |
+| Run                                       | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ----------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 137, 320 cases                      | **317 / 320** | **39 chars (0.34 % of 11490)** | 0           | 0 / 624             |
+| this cycle, 328 cases (+8 Cap-then-lower) | **325 / 328** | **39 chars (0.33 % of 11791)** | 0           | 0 / 632             |
 
 - **Examples:** "What's what's the meeting pass code" → "What's the meeting pass code?"; "It's it's
   the top two things aren't fading now" → "It's the top two things aren't fading now."; "What's...
@@ -3459,3 +3459,51 @@ clean. Do not add "are"/"is"/"on"/"like"/"why"/"so" to STUTTERS.
    it's…"); "It's It's fine" stays; "Where where we put the snap" stays (no apostrophe); ADR 0248
    "it's It's not correct" still collapses; ADR 0253 "on on On the replay modal" still collapses.
 
+## 74. Cycle 139: Cap-then-lower multi-word restart phrases collapse (ADR 0255)
+
+| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 138, 328 cases                         | **325 / 328** | **39 chars (0.33 % of 11791)** | 0           | 0 / 632             |
+| this cycle, 336 cases (+8 Cap-then-lower MW) | **333 / 336** | **39 chars (0.32 % of 12036)** | 0           | 0 / 640             |
+
+- **Examples:** "Is that is that one good today" → "Is that one good today?"; "You have to you
+  have to ship it today" → "You have to ship it today."; "How's it going how's it going for you
+  today" → "How's it going for you today?"; "Is that... is that one good for us now" → "Is that one
+  good for us now?". Kept: "is that is that one good today", "you have to you have to ship it
+  today", "Is this is that one good today", "New York New York is the place today", "No, no just
+  push it…", prior ADR 0254 / 0253 / 0251 keeps.
+- **Rejected this cycle:** Cap Cap "So So"; "is Is" / "why Why" / "like Like" / adding those or
+  "so"/"where" to STUTTERS; "a An"; lowercase multi-word restarts; "hold on, hold on" across a
+  comma; content-word doubles; both-lower contraction doubles; email/URL ITN (p19/p20, ADR 0223);
+  p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN (k350);
+  five-word Cap restart; general triple-any-word; ", okay"/, yeah/, huh/, eh/, no without unmarked
+  evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap-then-lower multi-word median **0.385 ms**
+  (1347-word probe; ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass,
+  insert unchanged.
+- **Dictation path review since cycle 138:** origin/main at `3ebea9ae` until this commit. Fresh Mac
+  history (prod 453, dev 443) hit "Is that is that one good" and "You have to you have to". N197
+  and N203 stay open; p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / "is Is" /
+lowercase multi-word restarts / Cap-then-lower one-word without apostrophe ("Where where") until
+evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTTERS.
+
+### Test on Jared's Mac (cycle 139)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "Is that is that one good" (or dictate so Parakeet writes Cap then lower of the
+   same two-word phrase) — it should type "Is that one good?". Then "You have to you have to ship
+   it" → "You have to ship it."
+3. Refuse checks: "is that is that one good" stays as both-lower (after sentence cap "Is that is
+   that…"); "New York New York is the place" stays; Cap Cap "Can you Can you host…" still collapses;
+   ADR 0254 "What's what's the meeting pass code" still collapses; ADR 0253 "on on On the replay
+   modal" still collapses.
