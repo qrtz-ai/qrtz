@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.4.5 (2026-11-05)
+
+- Fix: echo drops a comma that sits only before a sentence mark, so "Yeah, also, uh." types "Yeah, also." and "So, um. Next we go" types "So. Next we go."
+
 ## 0.4.4 (2026-10-29)
 
 - Fix: echo no longer puts a space between a comma and a curly closing quote, so “ship it Friday,” stays tight.
