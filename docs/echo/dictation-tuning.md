@@ -3140,3 +3140,43 @@ from a real unmarked dictation with its own keep set.
    how to do that" → "I don't know how to do that.".
 3. Refuse checks: "We moved to new york New York last year." stays; "New York City New York City is
    big enough." stays; "You have to you have to change that." stays (no Cap on the second copy).
+
+## 67. Cycle 132: one-word Cap contraction restart (ADR 0248)
+
+| Run                                        | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 131, 272 cases                       | **269 / 272** | **39 chars (0.39 % of 10047)** | 0           | 0 / 570             |
+| this cycle, 280 cases (+8 Cap-contraction) | **277 / 280** | **39 chars (0.38 % of 10301)** | 0           | 0 / 580             |
+
+- **Examples:** "Yeah, it's still flying in, it's It's not correct" → "…. it's not correct.";
+  "I don't Don't want that change" → "I don't want that change."; "we can't Can't really ship"
+  → "We can't really ship.". Kept: "it's it's", "It's It's", "will Will", "like Like", "is Is",
+  "O'Brien O'Brien", "like a like a", prior two-/three-word keeps.
+- **Rejected this cycle:** ", okay" / ", yeah" / ", huh" / ", eh" / ", no" (no unmarked
+  end-of-sentence hit); "like Like" / adding "so"/"like" to STUTTERS; lowercase "like a like a"
+  (ADR 0247 refuse); email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload;
+  speculative N203 without history; N197 (Mac disk ~16 GB free but mic-switch still disruptive);
+  year ITN (k350).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap-contraction median **0.228 ms** (ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 131:** origin/main at `eca5188a` until this commit. Fresh Mac
+  history (prod 453, dev 306, +36 since cycle 131) surfaced "it's It's". N197 and N203 stay open.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window (Mac ~16 GB free this cycle — skipped disruptive
+switch).
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set.
+
+### Test on Jared's Mac (cycle 132)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "it's It's not correct" (or dictate so Parakeet restarts "it's" with a capital) —
+   it should type "it's not correct.". Then "don't Don't want that" → "don't want that.".
+3. Refuse checks: "It's It's fine." stays (both Cap); "will Will smith" stays; "like Like it" stays;
+   "like a like a smooth fade" stays.

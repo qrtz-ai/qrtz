@@ -1,3 +1,16 @@
+## 2026-11-06 — Cycle 132 (≈11:19–11:50 PT, polish): one-word Cap contraction restart (ADR 0248)
+
+- **Landed:** widen `restart_phrase` — mid-sentence Cap restart of a contraction ("it's It's",
+  "don't Don't", "can't Can't") collapses (ADR 0248). Rust + TS twin, polish +8, keep +10,
+  cleanup.json, hardening132 + hardening60 oracle, cleanup_budget probe.
+- **Polish:** 269/272 → **277/280** exact, edit distance **39** (0.38 % of ~103xx), regressions **0**,
+  keep **0/580**.
+- **Latency:** release `cleanup_budget` Cap-contraction median **0.228 ms** (782-word probe; ceiling 2 ms).
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; like Like / so|like STUTTERS; lowercase
+  "like a like a"; email/URL ITN; p41; unload; N203; N197 (mic-switch still disruptive; Mac ~16 GB
+  free); year ITN.
+- **SHAs:** code pending, docs pending
+
 ## 2026-11-06 — Cycle 131 (≈10:51–11:05 PT, polish): Cap-leading two-word and three-word restart phrases (ADR 0247)
 
 - **Landed:** widen `restart_phrase` — Title-case first copy ("Can you Can you") and three-word Cap

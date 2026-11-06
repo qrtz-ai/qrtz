@@ -1860,8 +1860,8 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246 / ADR 0247: a two- or three-word phrase the recogniser restarts mid-sentence with a
-/// capital on the first word of the second copy collapses to one copy.
+/// ADR 0246 / ADR 0247 / ADR 0248: a phrase the recogniser restarts mid-sentence with a capital
+/// on the first word of the second copy collapses to one copy.
 ///
 /// Two-word (ADR 0246, widened in ADR 0247): "as a As a", "in the In the", "Can you Can you",
 /// "I don't I don't". The last word of each copy is lowercase (so "new york New York" stays —
@@ -1874,7 +1874,13 @@ fn collapse_repeats(s: &str) -> String {
 /// second copy's first word; the last word of each copy is lowercase (so "New York City New
 /// York City" stays). A middle word may be the pronoun "I" / "I'd" / "I'm" / "I've" / "I'll"
 /// (often capitalised). Only spaces/tabs between the words; a newline is a real sentence start.
-/// Prefers the longer (three-word) match when both could apply. Runs after [`collapse_repeats`].
+/// Prefers the longer (three-word) match when both could apply.
+///
+/// One-word (ADR 0248): a contracted word with an apostrophe, restarted Cap ("it's It's",
+/// "don't Don't", "can't Can't"). The first copy starts lowercase (mid-sentence); the second
+/// starts uppercase; eq_ignore_ascii_case. Plain words without an apostrophe stay with
+/// [`collapse_repeats`] / STUTTERS ("it It", "the The") or are refused ("like Like", "will Will").
+/// Both-Cap "It's It's" / "O'Brien O'Brien" stay. Runs after [`collapse_repeats`].
 fn restart_phrase(s: &str) -> String {
     /// A dictation word: letters with optional internal ASCII / curly apostrophes ("doesn't", "can't").
     fn next_word(s: &str, from: usize) -> Option<(usize, usize)> {
@@ -1952,7 +1958,7 @@ fn restart_phrase(s: &str) -> String {
             break;
         }
     }
-    if spans.len() < 4 {
+    if spans.len() < 2 {
         return s.to_owned();
     }
 
@@ -2028,6 +2034,22 @@ fn restart_phrase(s: &str) -> String {
                 drop[i + 2] = true;
                 drop[i + 3] = true;
                 i += 4;
+                continue;
+            }
+        }
+        // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+        if i + 1 < spans.len() {
+            let (a0, b0) = spans[i];
+            let (a1, b1) = spans[i + 1];
+            let has_apos = s[a0..b0].contains('\'') || s[a0..b0].contains('\u{2019}');
+            let ok1 = only_space_tab(b0, a1)
+                && has_apos
+                && starts_lower(a0)
+                && starts_upper(a1)
+                && eq_ci(a0, b0, a1, b1);
+            if ok1 {
+                drop[i + 1] = true;
+                i += 2;
                 continue;
             }
         }

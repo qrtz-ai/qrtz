@@ -2370,7 +2370,7 @@ function restartPhrase(s: string): string {
   while ((m = wordRe.exec(s)) !== null) {
     spans.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
   }
-  if (spans.length < 4) return s;
+  if (spans.length < 2) return s;
   // Spaces/tabs only: a newline between copies is a real sentence start, not a restart.
   const onlySpaceTab = (from: number, to: number) =>
     from <= to && /^[ \t]*$/.test(s.slice(from, to));
@@ -2443,6 +2443,23 @@ function restartPhrase(s: string): string {
         continue;
       }
     }
+    // ADR 0248: one-word Cap restart of a contraction ("it's It's", "don't Don't").
+    if (i + 1 < spans.length) {
+      const w0 = spans[i];
+      const w1 = spans[i + 1];
+      const hasApos = /['’]/.test(w0.text);
+      const ok1 =
+        onlySpaceTab(w0.end, w1.start) &&
+        hasApos &&
+        /^[a-z]/.test(w0.text) &&
+        /^[A-Z]/.test(w1.text) &&
+        w0.text.toLowerCase() === w1.text.toLowerCase();
+      if (ok1) {
+        drop[i + 1] = true;
+        i += 2;
+        continue;
+      }
+    }
     i += 1;
   }
   if (drop.every((d) => !d)) return s;
@@ -2500,7 +2517,7 @@ export function ruleCleanup(
       ? w
       : all,
   );
-  // ADR 0246 / ADR 0247: mid-sentence two- or three-word restart phrase.
+  // ADR 0246 / ADR 0247 / ADR 0248: mid-sentence restart phrase (incl. one-word Cap contraction).
   t = restartPhrase(t);
   t = t.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n');
   t = t

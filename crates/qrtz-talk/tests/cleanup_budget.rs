@@ -327,4 +327,20 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(out.contains("I don't know how to finish this"), "{out}");
     assert!(!out.contains("Can you Can you"), "{out}");
     assert_fits_budget(&text, " with restart phrases");
+    // ADR 0248: one-word Cap contraction restarts on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} it's It's ready now"));
+    }
+    body.push_str(". And then we can't Can't really wait");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("it's ready now"), "{out}");
+    assert!(
+        out.contains("we can't really wait") || out.contains("We can't really wait"),
+        "{out}"
+    );
+    assert!(!out.contains("it's It's"), "{out}");
+    assert!(!out.contains("can't Can't"), "{out}");
+    assert_fits_budget(&text, " with Cap contraction restarts");
 }
