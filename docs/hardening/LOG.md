@@ -1,3 +1,16 @@
+## 2026-11-06 — Cycle 136 (≈1:26–1:45 PM PT, polish): Cap-restart phrases across an ellipsis collapse (ADR 0252)
+
+- **Focus:** polish. origin/main at `c9c83656` (cycle 135 / ADR 0251). Mac online; prod+dev talk history (453+406;
+  +28 since cycle 135 tip scan).
+- **Landed:** `restart_phrase` copy-gap allows `...` / `…` between Cap-restart copies (spaces/tabs within a copy;
+  single `.` stays a sentence boundary). Rust + TS twin, polish +8, keep +8, cleanup.json, hardening136 +
+  hardening60 oracle, cleanup_budget +1 text.
+- **Scores:** polish 301/304 → **309/312** exact, edit distance 39 (0.35 % of 11244), regressions 0; keep 0/616.
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; "why Why"/"is Is"/"like Like"/STUTTERS wideners; "a An";
+  "there's a so there's a"; five-word Cap; general triple-any-word; email/URL ITN; p41; unload; N203; N197; year ITN.
+- **Latency:** release `cleanup_budget` ellipsis Cap-restart median **0.274 ms** (986-word; ceiling 2 ms).
+- **SHA:** `da880a3b`
+
 ## 2026-11-06 — Cycle 135 (≈12:51–1:20 PT, polish): triple+ "are" stutter collapses (ADR 0251)
 
 - **Landed:** extend `collapses` / TS REPEATS — a run of 3+ space/tab-separated "are" (any case)

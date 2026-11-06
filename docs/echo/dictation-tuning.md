@@ -3315,3 +3315,52 @@ to STUTTERS.
    could just have" still collapses; ADR 0248 "it's It's" still collapses; "the the the cat" still
    collapses via STUTTERS.
 
+
+## 71. Cycle 136: Cap-restart phrases across an ellipsis collapse (ADR 0252)
+
+| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 135, 304 cases                         | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
+| this cycle, 312 cases (+8 ellipsis Cap)      | **309 / 312** | **39 chars (0.35 % of 11244)** | 0           | 0 / 616             |
+
+- **Examples:** "I don't really... I don't really like this" → "I don't really like this."; "Can
+  you... Can you host the prototype on a server" → "Can you host the prototype on a server?"; "we
+  could just have... We could just have our configuration ready" → "We could just have our
+  configuration ready.". Kept: "I'll use it. It needs to work correctly today"; "I don't really. I
+  don't really like this idea"; "new york... New York looks nice today"; "scratch that... Scratch
+  that for me please"; "like a like a smooth fade across the board"; "Wait... Wait a minute please
+  now"; prior ADR 0248 Cap-contraction, ADR 0250 four-word Cap, and ADR 0251 triple-are keeps.
+- **Rejected this cycle:** ", okay" / ", yeah" / ", huh" / ", eh" / ", no"; "why Why" / "is Is" /
+  "like Like" / adding those to STUTTERS; "a An"; "there's a so there's a" (lowercase second;
+  ADR 0247 refuse); five-word Cap restart (0 hits); general triple-any-word; email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch;
+  year ITN (k350).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: ellipsis Cap-restart median **0.274 ms**
+  (986-word probe; ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass,
+  insert unchanged.
+- **Dictation path review since cycle 135:** origin/main at `c9c83656` until this commit. Fresh Mac
+  history hit "I don't really... I don't really like this". N197 and N203 stay open; p19/p20/p41
+  still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / "is Is" /
+"there's a so there's a" until Cap-lemma or Cap-second evidence is clean. Do not add
+"are"/"is"/"on"/"like"/"why" to STUTTERS.
+
+### Test on Jared's Mac (cycle 136)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "I don't really" then trail off and restart "I don't really like this" so Parakeet
+   writes an ellipsis between the copies — it should type "I don't really like this." Then "Can
+   you... Can you host the prototype on a server" → "Can you host the prototype on a server?"
+3. Refuse checks: "I'll use it. It needs to work" stays as two sentences; "I don't really. I don't
+   really like this" (single period) stays; "new york... New York" stays; "scratch that... Scratch
+   that" stays; ADR 0251 "Are are are we always fetching on hover" still collapses; ADR 0250 "we
+   could just have We could just have" still collapses.
