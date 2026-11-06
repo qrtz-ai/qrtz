@@ -1863,24 +1863,29 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250: a phrase the recogniser restarts
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0255: a phrase the recogniser restarts
 /// mid-sentence with a capital on the first word of the second copy collapses to one copy.
 ///
-/// Two-word (ADR 0246, widened in ADR 0247): "as a As a", "in the In the", "Can you Can you",
-/// "I don't I don't". The last word of each copy is lowercase (so "new york New York" stays —
-/// "York" starts uppercase). The first word of the first copy may be lowercase or Title case;
-/// the first word of the second copy starts uppercase. Apostrophes inside a word count as part
-/// of that word. Spoken "scratch that" (ADR 0186) is not a restart.
+/// Two-word (ADR 0246, widened in ADR 0247 / ADR 0255): "as a As a", "in the In the", "Can you
+/// Can you", "I don't I don't", and Cap-then-lower "Is that is that", "You have to you have to".
+/// The last word of each copy is lowercase (so "new york New York" stays — "York" starts
+/// uppercase). Cap-second form: first copy may be lowercase or Title case, second starts
+/// uppercase. Cap-then-lower form (ADR 0255): first copy starts uppercase, second starts
+/// lowercase. Apostrophes inside a word count as part of that word. Spoken "scratch that"
+/// (ADR 0186) is not a restart. Both-lower multi-word stays (sentence caps may Cap the first
+/// word after this step).
 ///
-/// Three-word (ADR 0247): "I don't know I don't know", "How's it going How's it going",
-/// "What are the What are the", "how I want How I want". Same Cap-restart signature on the
-/// second copy's first word; the last word of each copy is lowercase (so "New York City New
-/// York City" stays). A middle word may be the pronoun "I" / "I'd" / "I'm" / "I've" / "I'll"
-/// (often capitalised). Only spaces/tabs between the words; a newline is a real sentence start.
+/// Three-word (ADR 0247 / ADR 0255): "I don't know I don't know", "How's it going How's it
+/// going", "What are the What are the", Cap-then-lower "How's it going how's it going". Same
+/// Cap-second or Cap-then-lower signature; the last word of each copy is lowercase (so "New
+/// York City New York City" stays). A middle word may be the pronoun "I" / "I'd" / "I'm" /
+/// "I've" / "I'll" (often capitalised). Only spaces/tabs between the words; a newline is a
+/// real sentence start.
 ///
-/// Four-word (ADR 0250): "we could just have We could just have", "What did they say What did
-/// they say". Same Cap-restart signature; two middle words may each be lowercase or an "I"
-/// pronoun. Prefers four- then three- then two- then one-word matches.
+/// Four-word (ADR 0250 / ADR 0255): "we could just have We could just have", "What did they say
+/// What did they say", Cap-then-lower "We could just have we could just have". Same Cap-second
+/// or Cap-then-lower signature; two middle words may each be lowercase or an "I" pronoun.
+/// Prefers four- then three- then two- then one-word matches.
 ///
 /// Ellipsis between copies (ADR 0252): the gap between the last word of the first copy and the
 /// first word of the second may be spaces/tabs, or spaces/tabs around `...` / `…` (U+2026). A
@@ -2044,6 +2049,13 @@ fn restart_phrase(s: &str) -> String {
             let (a5, b5) = spans[i + 5];
             let (a6, b6) = spans[i + 6];
             let (a7, b7) = spans[i + 7];
+            // ADR 0255: Cap-second (a4 Cap) or Cap-then-lower (a0 Cap, a4 lower).
+            let second_cap4 = starts_upper(a4) && middle_ok(a5, b5) && middle_ok(a6, b6) && starts_lower(a7);
+            let cap_then_lower4 = starts_upper(a0)
+                && starts_lower(a4)
+                && middle_ok(a5, b5)
+                && middle_ok(a6, b6)
+                && starts_lower(a7);
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
@@ -2054,10 +2066,7 @@ fn restart_phrase(s: &str) -> String {
                 && middle_ok(a1, b1)
                 && middle_ok(a2, b2)
                 && letters_lower(a3, b3)
-                && starts_upper(a4)
-                && middle_ok(a5, b5)
-                && middle_ok(a6, b6)
-                && starts_lower(a7)
+                && (second_cap4 || cap_then_lower4)
                 && eq_ci(a0, b0, a4, b4)
                 && eq_ci(a1, b1, a5, b5)
                 && eq_ci(a2, b2, a6, b6)
@@ -2078,6 +2087,10 @@ fn restart_phrase(s: &str) -> String {
             let (a3, b3) = spans[i + 3];
             let (a4, b4) = spans[i + 4];
             let (a5, b5) = spans[i + 5];
+            // ADR 0255: Cap-second (a3 Cap) or Cap-then-lower (a0 Cap, a3 lower).
+            let second_cap3 = starts_upper(a3) && middle_ok(a4, b4) && starts_lower(a5);
+            let cap_then_lower3 =
+                starts_upper(a0) && starts_lower(a3) && middle_ok(a4, b4) && starts_lower(a5);
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && copy_gap_ok(b2, a3)
@@ -2085,9 +2098,7 @@ fn restart_phrase(s: &str) -> String {
                 && only_space_tab(b4, a5)
                 && middle_ok(a1, b1)
                 && letters_lower(a2, b2)
-                && starts_upper(a3)
-                && middle_ok(a4, b4)
-                && starts_lower(a5)
+                && (second_cap3 || cap_then_lower3)
                 && eq_ci(a0, b0, a3, b3)
                 && eq_ci(a1, b1, a4, b4)
                 && eq_ci(a2, b2, a5, b5);
@@ -2104,18 +2115,19 @@ fn restart_phrase(s: &str) -> String {
             let (a1, b1) = spans[i + 1];
             let (a2, b2) = spans[i + 2];
             let (a3, b3) = spans[i + 3];
+            // ADR 0247: Cap-second — first word of the first copy may be Title case ("Can you Can you").
+            // ADR 0255: Cap-then-lower — first copy Cap, second lower ("Is that is that").
+            // Last word of each copy stays lowercase so "new york New York" is kept.
+            let second_cap2 = starts_upper(a2) && starts_lower(a3);
+            let cap_then_lower2 = starts_upper(a0) && starts_lower(a2) && starts_lower(a3);
             let ok2 = only_space_tab(b0, a1)
                 && copy_gap_ok(b1, a2)
                 && only_space_tab(b2, a3)
-                // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
-                // Last word of each copy stays lowercase so "new york New York" is kept.
                 && letters_lower(a1, b1)
-                && starts_upper(a2)
-                && starts_lower(a3)
+                && (second_cap2 || cap_then_lower2)
                 && eq_ci(a0, b0, a2, b2)
                 && eq_ci(a1, b1, a3, b3)
-                && !(s[a0..b0].eq_ignore_ascii_case("scratch")
-                    && s[a1..b1].eq_ignore_ascii_case("that"));
+                && !(s[a0..b0].eq_ignore_ascii_case("scratch") && s[a1..b1].eq_ignore_ascii_case("that"));
             if ok2 {
                 drop[i + 2] = true;
                 drop[i + 3] = true;

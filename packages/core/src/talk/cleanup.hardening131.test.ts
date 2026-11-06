@@ -74,7 +74,7 @@ describe('ADR 0247 restart phrase refusals stay', () => {
       'New York City New York City is big enough.',
     ],
     [
-      'You have to you have to change that',
+      'you have to you have to change that',
       'You have to you have to change that.',
     ],
     [

@@ -5296,7 +5296,7 @@
     {
       "raw": "You have to you have to change that",
       "dict": false,
-      "expect": "You have to you have to change that."
+      "expect": "You have to change that."
     },
     {
       "raw": "Yeah, it's still flying in, it's It's not correct",
@@ -5386,7 +5386,7 @@
     {
       "raw": "You have to you have to change that again",
       "dict": false,
-      "expect": "You have to you have to change that again."
+      "expect": "You have to change that again."
     },
     {
       "raw": "Like it It's very hit or miss",
@@ -5887,6 +5887,96 @@
       "raw": "Doesn't Doesn't change the outcome for us",
       "dict": false,
       "expect": "Doesn't Doesn't change the outcome for us."
+    },
+    {
+      "raw": "Is that is that one good today",
+      "dict": false,
+      "expect": "Is that one good today?"
+    },
+    {
+      "raw": "You have to you have to ship it today",
+      "dict": false,
+      "expect": "You have to ship it today."
+    },
+    {
+      "raw": "Can we can we try that again today",
+      "dict": false,
+      "expect": "Can we try that again today?"
+    },
+    {
+      "raw": "What are the what are the deciding factors today",
+      "dict": false,
+      "expect": "What are the deciding factors today?"
+    },
+    {
+      "raw": "How's it going how's it going for you today",
+      "dict": false,
+      "expect": "How's it going for you today?"
+    },
+    {
+      "raw": "Let's just let's just make the feature flag today",
+      "dict": false,
+      "expect": "Let's just make the feature flag today."
+    },
+    {
+      "raw": "This is this is the right path for us today",
+      "dict": false,
+      "expect": "This is the right path for us today."
+    },
+    {
+      "raw": "Is that... is that one good for us now",
+      "dict": false,
+      "expect": "Is that one good for us now?"
+    },
+    {
+      "raw": "is that is that one good today",
+      "dict": false,
+      "expect": "Is that is that one good today."
+    },
+    {
+      "raw": "you have to you have to ship it today",
+      "dict": false,
+      "expect": "You have to you have to ship it today."
+    },
+    {
+      "raw": "how's it going how's it going for you today",
+      "dict": false,
+      "expect": "How's it going how's it going for you today."
+    },
+    {
+      "raw": "can we can we try that again today",
+      "dict": false,
+      "expect": "Can we can we try that again today."
+    },
+    {
+      "raw": "Is this is that one good today",
+      "dict": false,
+      "expect": "Is this is that one good today."
+    },
+    {
+      "raw": "No, no just push it for us today please",
+      "dict": false,
+      "expect": "No, no just push it for us today please."
+    },
+    {
+      "raw": "New York New York is the place today",
+      "dict": false,
+      "expect": "New York New York is the place today."
+    },
+    {
+      "raw": "the starting deck the starting deck looks fine today",
+      "dict": false,
+      "expect": "The starting deck the starting deck looks fine today."
+    },
+    {
+      "raw": "I already did I sent a message. Is that is that one good?",
+      "dict": false,
+      "expect": "I already did I sent a message. Is that one good?"
+    },
+    {
+      "raw": "We could just have we could just have our configuration today",
+      "dict": false,
+      "expect": "We could just have our configuration today."
     }
   ],
   "dictionaryOnly": [

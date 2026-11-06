@@ -2365,7 +2365,7 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
-/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0254: mid-sentence restart phrase collapses to one copy. */
+/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0254 / ADR 0255: mid-sentence restart phrase collapses to one copy. */
 function restartPhrase(s: string): string {
   const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
   const spans: { start: number; end: number; text: string }[] = [];
@@ -2419,6 +2419,18 @@ function restartPhrase(s: string): string {
         spans[i + 6],
         spans[i + 7],
       ];
+      // ADR 0255: Cap-second (w4 Cap) or Cap-then-lower (w0 Cap, w4 lower).
+      const secondCap4 =
+        /^[A-Z]/.test(w4.text) &&
+        middleOk(w5.text) &&
+        middleOk(w6.text) &&
+        /^[a-z]/.test(w7.text);
+      const capThenLower4 =
+        /^[A-Z]/.test(w0.text) &&
+        /^[a-z]/.test(w4.text) &&
+        middleOk(w5.text) &&
+        middleOk(w6.text) &&
+        /^[a-z]/.test(w7.text);
       const ok4 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
@@ -2430,10 +2442,7 @@ function restartPhrase(s: string): string {
         middleOk(w1.text) &&
         middleOk(w2.text) &&
         lettersLower(w3.text) &&
-        /^[A-Z]/.test(w4.text) &&
-        middleOk(w5.text) &&
-        middleOk(w6.text) &&
-        /^[a-z]/.test(w7.text) &&
+        (secondCap4 || capThenLower4) &&
         w0.text.toLowerCase() === w4.text.toLowerCase() &&
         w1.text.toLowerCase() === w5.text.toLowerCase() &&
         w2.text.toLowerCase() === w6.text.toLowerCase() &&
@@ -2456,6 +2465,14 @@ function restartPhrase(s: string): string {
         spans[i + 4],
         spans[i + 5],
       ];
+      // ADR 0255: Cap-second (w3 Cap) or Cap-then-lower (w0 Cap, w3 lower).
+      const secondCap3 =
+        /^[A-Z]/.test(w3.text) && middleOk(w4.text) && /^[a-z]/.test(w5.text);
+      const capThenLower3 =
+        /^[A-Z]/.test(w0.text) &&
+        /^[a-z]/.test(w3.text) &&
+        middleOk(w4.text) &&
+        /^[a-z]/.test(w5.text);
       const ok3 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
@@ -2464,9 +2481,7 @@ function restartPhrase(s: string): string {
         onlySpaceTab(w4.end, w5.start) &&
         middleOk(w1.text) &&
         lettersLower(w2.text) &&
-        /^[A-Z]/.test(w3.text) &&
-        middleOk(w4.text) &&
-        /^[a-z]/.test(w5.text) &&
+        (secondCap3 || capThenLower3) &&
         w0.text.toLowerCase() === w3.text.toLowerCase() &&
         w1.text.toLowerCase() === w4.text.toLowerCase() &&
         w2.text.toLowerCase() === w5.text.toLowerCase();
@@ -2485,14 +2500,19 @@ function restartPhrase(s: string): string {
         spans[i + 2],
         spans[i + 3],
       ];
+      // ADR 0247: Cap-second — first word of the first copy may be Title case ("Can you Can you").
+      // ADR 0255: Cap-then-lower — first copy Cap, second lower ("Is that is that").
+      const secondCap2 = /^[A-Z]/.test(w2.text) && /^[a-z]/.test(w3.text);
+      const capThenLower2 =
+        /^[A-Z]/.test(w0.text) &&
+        /^[a-z]/.test(w2.text) &&
+        /^[a-z]/.test(w3.text);
       const ok2 =
         onlySpaceTab(w0.end, w1.start) &&
         copyGapOk(w1.end, w2.start) &&
         onlySpaceTab(w2.end, w3.start) &&
-        // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
         lettersLower(w1.text) &&
-        /^[A-Z]/.test(w2.text) &&
-        /^[a-z]/.test(w3.text) &&
+        (secondCap2 || capThenLower2) &&
         w0.text.toLowerCase() === w2.text.toLowerCase() &&
         w1.text.toLowerCase() === w3.text.toLowerCase() &&
         !(

@@ -1997,6 +1997,54 @@
       "category": "repeat",
       "raw": "What's... what's the meeting pass code now",
       "ideal": "What's the meeting pass code now?"
+    },
+    {
+      "id": "p329",
+      "category": "repeat",
+      "raw": "Is that is that one good today",
+      "ideal": "Is that one good today?"
+    },
+    {
+      "id": "p330",
+      "category": "repeat",
+      "raw": "You have to you have to ship it today",
+      "ideal": "You have to ship it today."
+    },
+    {
+      "id": "p331",
+      "category": "repeat",
+      "raw": "Can we can we try that again today",
+      "ideal": "Can we try that again today?"
+    },
+    {
+      "id": "p332",
+      "category": "repeat",
+      "raw": "What are the what are the deciding factors today",
+      "ideal": "What are the deciding factors today?"
+    },
+    {
+      "id": "p333",
+      "category": "repeat",
+      "raw": "How's it going how's it going for you today",
+      "ideal": "How's it going for you today?"
+    },
+    {
+      "id": "p334",
+      "category": "repeat",
+      "raw": "Let's just let's just make the feature flag today",
+      "ideal": "Let's just make the feature flag today."
+    },
+    {
+      "id": "p335",
+      "category": "repeat",
+      "raw": "This is this is the right path for us today",
+      "ideal": "This is the right path for us today."
+    },
+    {
+      "id": "p336",
+      "category": "repeat",
+      "raw": "Is that... is that one good for us now",
+      "ideal": "Is that one good for us now?"
     }
   ],
   "keep": [
@@ -5408,7 +5456,7 @@
     {
       "id": "k568",
       "rule": "restart-phrase",
-      "raw": "You have to you have to change that",
+      "raw": "you have to you have to change that",
       "expect": "You have to you have to change that."
     },
     {
@@ -5488,7 +5536,7 @@
     },
     {
       "id": "k583",
-      "raw": "You have to you have to change that again",
+      "raw": "you have to you have to change that again",
       "expect": "You have to you have to change that again."
     },
     {
@@ -5750,6 +5798,46 @@
       "id": "k635",
       "raw": "Doesn't Doesn't change the outcome for us",
       "expect": "Doesn't Doesn't change the outcome for us."
+    },
+    {
+      "id": "k636",
+      "raw": "is that is that one good today",
+      "expect": "Is that is that one good today."
+    },
+    {
+      "id": "k637",
+      "raw": "you have to you have to ship it today",
+      "expect": "You have to you have to ship it today."
+    },
+    {
+      "id": "k638",
+      "raw": "how's it going how's it going for you today",
+      "expect": "How's it going how's it going for you today."
+    },
+    {
+      "id": "k639",
+      "raw": "can we can we try that again today",
+      "expect": "Can we can we try that again today."
+    },
+    {
+      "id": "k640",
+      "raw": "Is this is that one good today",
+      "expect": "Is this is that one good today."
+    },
+    {
+      "id": "k641",
+      "raw": "No, no just push it for us today please",
+      "expect": "No, no just push it for us today please."
+    },
+    {
+      "id": "k642",
+      "raw": "New York New York is the place today",
+      "expect": "New York New York is the place today."
+    },
+    {
+      "id": "k643",
+      "raw": "the starting deck the starting deck looks fine today",
+      "expect": "The starting deck the starting deck looks fine today."
     }
   ]
 }

@@ -111,7 +111,8 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
     // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases (incl. four-word Cap and ellipsis gap) collapse.
-    // ADR 0254 Cap-then-lower contraction is an allowed diff below (not in without_restart_phrase).
+    // ADR 0254 / ADR 0255 Cap-then-lower (one-word contraction / multi-word) is an allowed diff below
+    // (not in without_restart_phrase — both-lower keep cases must stay).
     let old = without_restart_phrase(&old);
     // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ space/tab-separated are/on/like collapses to the first copy.
     let old = without_triple_stutters(&old);
@@ -139,7 +140,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
         // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases — see without_restart_phrase on old.
-        // ADR 0254 Cap-then-lower — see cap_then_lower allowed diff below.
+        // ADR 0254 / ADR 0255 Cap-then-lower — see cap_then_lower allowed diff below.
         // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ are/on/like — see without_triple_stutters on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
@@ -241,65 +242,168 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 (cycle 138): Cap-then-lower one-word contraction doubles collapse in
-        // rule_cleanup before sentence caps. Detect pairs in `raw` (so keep-set both-lower
-        // "it's it's" → post-cap "It's it's" is not treated as Cap-then-lower), then check that
-        // dropping the matching second copies from `old` yields `new` (allowing final "." → "?").
+        // ADR 0254 (cycle 138) / ADR 0255 (cycle 139): Cap-then-lower doubles collapse in
+        // rule_cleanup before sentence caps — one-word contractions (0254) and multi-word
+        // restart phrases (0255). Detect pairs in `raw` (so keep-set both-lower
+        // "it's it's" / "is that is that" → post-cap forms are not treated as Cap-then-lower),
+        // then check that dropping the matching second copies from `old` yields `new`
+        // (allowing final "." → "?").
         let cap_then_lower = {
             let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
             let raw_spans: Vec<(usize, usize, &str)> = word_re
                 .find_iter(raw)
                 .map(|m| (m.start(), m.end(), m.as_str()))
                 .collect();
-            let mut drop_idx = vec![false; raw_spans.len()];
-            let mut i = 0usize;
-            while i + 1 < raw_spans.len() {
-                let (_a0, b0, w0) = raw_spans[i];
-                let (a1, _b1, w1) = raw_spans[i + 1];
-                let gap = &raw[b0..a1];
-                let gap_ok = {
-                    let g = gap.as_bytes();
-                    let mut j = 0usize;
-                    while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+            let only_space_tab =
+                |from: usize, to: usize| from <= to && raw[from..to].chars().all(|c| c == ' ' || c == '\t');
+            let gap_ok = |from: usize, to: usize| {
+                if from > to {
+                    return false;
+                }
+                let g = raw[from..to].as_bytes();
+                let mut j = 0usize;
+                while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                    j += 1;
+                }
+                if j == g.len() {
+                    return true;
+                }
+                if g[j] == 0xe2 && g.get(j + 1) == Some(&0x80) && g.get(j + 2) == Some(&0xa6) {
+                    j += 3;
+                } else if g[j] == b'.' {
+                    let start = j;
+                    while j < g.len() && g[j] == b'.' {
                         j += 1;
                     }
-                    if j == g.len() {
-                        true
-                    } else if g[j] == 0xe2 && g.get(j + 1) == Some(&0x80) && g.get(j + 2) == Some(&0xa6) {
-                        j += 3;
-                        while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
-                            j += 1;
-                        }
-                        j == g.len()
-                    } else if g[j] == b'.' {
-                        let start = j;
-                        while j < g.len() && g[j] == b'.' {
-                            j += 1;
-                        }
-                        if j - start < 2 {
-                            false
-                        } else {
-                            while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
-                                j += 1;
-                            }
-                            j == g.len()
-                        }
-                    } else {
-                        false
+                    if j - start < 2 {
+                        return false;
                     }
-                };
-                let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
-                let ok = gap_ok
-                    && has_apos
-                    && w0.starts_with(|c: char| c.is_ascii_uppercase())
-                    && w1.starts_with(|c: char| c.is_ascii_lowercase())
-                    && w0.eq_ignore_ascii_case(w1);
-                if ok {
-                    drop_idx[i + 1] = true;
-                    i += 2;
                 } else {
-                    i += 1;
+                    return false;
                 }
+                while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                    j += 1;
+                }
+                j == g.len()
+            };
+            let letters_lower = |w: &str| {
+                w.chars()
+                    .filter(|c| c.is_ascii_alphabetic())
+                    .all(|c| c.is_ascii_lowercase())
+            };
+            let is_i_word = |w: &str| {
+                let low = w.replace('\u{2019}', "'").to_ascii_lowercase();
+                matches!(low.as_str(), "i" | "i'd" | "i'm" | "i've" | "i'll")
+            };
+            let middle_ok = |w: &str| letters_lower(w) || is_i_word(w);
+            let mut drop_idx = vec![false; raw_spans.len()];
+            let mut i = 0usize;
+            while i < raw_spans.len() {
+                // Prefer four- then three- then two- then one-word (ADR 0255 / 0254).
+                if i + 7 < raw_spans.len() {
+                    let (_a0, b0, w0) = raw_spans[i];
+                    let (a1, b1, w1) = raw_spans[i + 1];
+                    let (a2, b2, w2) = raw_spans[i + 2];
+                    let (a3, b3, w3) = raw_spans[i + 3];
+                    let (a4, b4, w4) = raw_spans[i + 4];
+                    let (a5, b5, w5) = raw_spans[i + 5];
+                    let (a6, b6, w6) = raw_spans[i + 6];
+                    let (a7, _b7, w7) = raw_spans[i + 7];
+                    let ok4 = only_space_tab(b0, a1)
+                        && only_space_tab(b1, a2)
+                        && only_space_tab(b2, a3)
+                        && gap_ok(b3, a4)
+                        && only_space_tab(b4, a5)
+                        && only_space_tab(b5, a6)
+                        && only_space_tab(b6, a7)
+                        && middle_ok(w1)
+                        && middle_ok(w2)
+                        && letters_lower(w3)
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w4.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w5)
+                        && middle_ok(w6)
+                        && w7.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w0.eq_ignore_ascii_case(w4)
+                        && w1.eq_ignore_ascii_case(w5)
+                        && w2.eq_ignore_ascii_case(w6)
+                        && w3.eq_ignore_ascii_case(w7);
+                    if ok4 {
+                        drop_idx[i + 4] = true;
+                        drop_idx[i + 5] = true;
+                        drop_idx[i + 6] = true;
+                        drop_idx[i + 7] = true;
+                        i += 8;
+                        continue;
+                    }
+                }
+                if i + 5 < raw_spans.len() {
+                    let (_a0, b0, w0) = raw_spans[i];
+                    let (a1, b1, w1) = raw_spans[i + 1];
+                    let (a2, b2, w2) = raw_spans[i + 2];
+                    let (a3, b3, w3) = raw_spans[i + 3];
+                    let (a4, b4, w4) = raw_spans[i + 4];
+                    let (a5, _b5, w5) = raw_spans[i + 5];
+                    let ok3 = only_space_tab(b0, a1)
+                        && only_space_tab(b1, a2)
+                        && gap_ok(b2, a3)
+                        && only_space_tab(b3, a4)
+                        && only_space_tab(b4, a5)
+                        && middle_ok(w1)
+                        && letters_lower(w2)
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w4)
+                        && w5.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w0.eq_ignore_ascii_case(w3)
+                        && w1.eq_ignore_ascii_case(w4)
+                        && w2.eq_ignore_ascii_case(w5);
+                    if ok3 {
+                        drop_idx[i + 3] = true;
+                        drop_idx[i + 4] = true;
+                        drop_idx[i + 5] = true;
+                        i += 6;
+                        continue;
+                    }
+                }
+                if i + 3 < raw_spans.len() {
+                    let (_a0, b0, w0) = raw_spans[i];
+                    let (a1, b1, w1) = raw_spans[i + 1];
+                    let (a2, b2, w2) = raw_spans[i + 2];
+                    let (a3, _b3, w3) = raw_spans[i + 3];
+                    let ok2 = only_space_tab(b0, a1)
+                        && gap_ok(b1, a2)
+                        && only_space_tab(b2, a3)
+                        && letters_lower(w1)
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w2.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w0.eq_ignore_ascii_case(w2)
+                        && w1.eq_ignore_ascii_case(w3)
+                        && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
+                    if ok2 {
+                        drop_idx[i + 2] = true;
+                        drop_idx[i + 3] = true;
+                        i += 4;
+                        continue;
+                    }
+                }
+                if i + 1 < raw_spans.len() {
+                    let (_a0, b0, w0) = raw_spans[i];
+                    let (a1, _b1, w1) = raw_spans[i + 1];
+                    let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
+                    let ok1 = gap_ok(b0, a1)
+                        && has_apos
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w1.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w0.eq_ignore_ascii_case(w1);
+                    if ok1 {
+                        drop_idx[i + 1] = true;
+                        i += 2;
+                        continue;
+                    }
+                }
+                i += 1;
             }
             if !drop_idx.iter().any(|d| *d) {
                 false

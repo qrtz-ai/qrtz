@@ -445,4 +445,20 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("It's it's"), "{out}");
     assert!(!out.contains("That's that's"), "{out}");
     assert_fits_budget(&text, " with Cap-then-lower contraction restarts");
+    // ADR 0255: Cap-then-lower multi-word restart phrases on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} Is that is that one good now"));
+        body.push_str(&format!(" and You have to you have to ship it {i} today"));
+    }
+    body.push_str(". And then How's it going how's it going for the team today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("Is that one good now"), "{out}");
+    assert!(out.contains("You have to ship it"), "{out}");
+    assert!(out.contains("How's it going for the team today"), "{out}");
+    assert!(!out.contains("Is that is that"), "{out}");
+    assert!(!out.contains("You have to you have to"), "{out}");
+    assert!(!out.contains("How's it going how's it going"), "{out}");
+    assert_fits_budget(&text, " with Cap-then-lower multi-word restarts");
 }
