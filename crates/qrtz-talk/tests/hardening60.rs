@@ -110,7 +110,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_dangling_comma_marks(&old);
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
-    // ADR 0246 (cycle 130): mid-sentence two-word restart phrases collapse.
+    // ADR 0246 / ADR 0247 (cycles 130/131): mid-sentence two- or three-word restart phrases collapse.
     let old = without_restart_phrase(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
@@ -135,7 +135,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
-        // ADR 0246 (cycle 130): mid-sentence two-word restart phrases — see without_restart_phrase on old.
+        // ADR 0246 / ADR 0247 (cycles 130/131): mid-sentence two- or three-word restart phrases — see without_restart_phrase on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -360,8 +360,10 @@ fn without_filler_marks(raw: &str) -> String {
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
 }
 
-/// ADR 0246's restart-phrase edit, made on the text (written independently of cleanup.rs): a two-word all-lowercase
-/// phrase immediately repeated with a Title-case first word and lowercase second word collapses to one copy.
+/// ADR 0246 / ADR 0247's restart-phrase edit, made on the text (written independently of cleanup.rs): a
+/// two- or three-word phrase immediately repeated with a Title-case first word on the second copy and a
+/// lowercase last word collapses to one copy. The first copy's first word may be Title case (ADR 0247);
+/// a three-word middle word may be the pronoun "I" / a contracted "I".
 fn without_restart_phrase(s: &str) -> String {
     let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
     let spans: Vec<(usize, usize, String)> = word_re
@@ -378,30 +380,64 @@ fn without_restart_phrase(s: &str) -> String {
             .filter(|c| c.is_ascii_alphabetic())
             .all(|c| c.is_ascii_lowercase())
     };
+    let is_i_word = |w: &str| {
+        let low = w.replace('\u{2019}', "'").to_ascii_lowercase();
+        matches!(low.as_str(), "i" | "i'd" | "i'm" | "i've" | "i'll")
+    };
+    let middle_ok = |w: &str| letters_lower(w) || is_i_word(w);
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
-    while i + 3 < spans.len() {
-        let (_a0, b0, ref w0) = spans[i];
-        let (a1, b1, ref w1) = spans[i + 1];
-        let (a2, b2, ref w2) = spans[i + 2];
-        let (a3, _b3, ref w3) = spans[i + 3];
-        let ok = only_space_tab(b0, a1)
-            && only_space_tab(b1, a2)
-            && only_space_tab(b2, a3)
-            && letters_lower(w0)
-            && letters_lower(w1)
-            && w2.starts_with(|c: char| c.is_ascii_uppercase())
-            && w3.starts_with(|c: char| c.is_ascii_lowercase())
-            && w0.eq_ignore_ascii_case(w2)
-            && w1.eq_ignore_ascii_case(w3)
-            && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
-        if ok {
-            drop[i + 2] = true;
-            drop[i + 3] = true;
-            i += 4;
-        } else {
-            i += 1;
+    while i < spans.len() {
+        if i + 5 < spans.len() {
+            let (_a0, b0, ref w0) = spans[i];
+            let (a1, b1, ref w1) = spans[i + 1];
+            let (a2, b2, ref w2) = spans[i + 2];
+            let (a3, b3, ref w3) = spans[i + 3];
+            let (a4, b4, ref w4) = spans[i + 4];
+            let (a5, _b5, ref w5) = spans[i + 5];
+            let ok3 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                && only_space_tab(b3, a4)
+                && only_space_tab(b4, a5)
+                && middle_ok(w1)
+                && letters_lower(w2)
+                && w3.starts_with(|c: char| c.is_ascii_uppercase())
+                && middle_ok(w4)
+                && w5.starts_with(|c: char| c.is_ascii_lowercase())
+                && w0.eq_ignore_ascii_case(w3)
+                && w1.eq_ignore_ascii_case(w4)
+                && w2.eq_ignore_ascii_case(w5);
+            if ok3 {
+                drop[i + 3] = true;
+                drop[i + 4] = true;
+                drop[i + 5] = true;
+                i += 6;
+                continue;
+            }
         }
+        if i + 3 < spans.len() {
+            let (_a0, b0, ref w0) = spans[i];
+            let (a1, b1, ref w1) = spans[i + 1];
+            let (a2, b2, ref w2) = spans[i + 2];
+            let (a3, _b3, ref w3) = spans[i + 3];
+            let ok2 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                && letters_lower(w1)
+                && w2.starts_with(|c: char| c.is_ascii_uppercase())
+                && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                && w0.eq_ignore_ascii_case(w2)
+                && w1.eq_ignore_ascii_case(w3)
+                && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
+            if ok2 {
+                drop[i + 2] = true;
+                drop[i + 3] = true;
+                i += 4;
+                continue;
+            }
+        }
+        i += 1;
     }
     if drop.iter().all(|d| !*d) {
         return s.to_owned();

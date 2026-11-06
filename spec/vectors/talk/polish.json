@@ -777,8 +777,8 @@
     {
       "id": "p125",
       "category": "imperative-tag",
-      "raw": "Let\u2019s call it a day, shall we",
-      "ideal": "Let\u2019s call it a day, shall we?"
+      "raw": "Let’s call it a day, shall we",
+      "ideal": "Let’s call it a day, shall we?"
     },
     {
       "id": "p126",
@@ -1035,8 +1035,8 @@
     {
       "id": "p168",
       "category": "question",
-      "raw": "What time\u2019s the game on Sunday",
-      "ideal": "What time\u2019s the game on Sunday?"
+      "raw": "What time’s the game on Sunday",
+      "ideal": "What time’s the game on Sunday?"
     },
     {
       "id": "p169",
@@ -1233,74 +1233,74 @@
     {
       "id": "p201",
       "category": "comma-run",
-      "raw": "We met at the caf\u00e9,, then walked home",
-      "ideal": "We met at the caf\u00e9, then walked home."
+      "raw": "We met at the café,, then walked home",
+      "ideal": "We met at the café, then walked home."
     },
     {
       "id": "p202",
       "category": "curly-close-comma",
-      "raw": "The plan was \u201cship it Friday,\u201d then cut the release",
-      "ideal": "The plan was \u201cship it Friday,\u201d then cut the release."
+      "raw": "The plan was “ship it Friday,” then cut the release",
+      "ideal": "The plan was “ship it Friday,” then cut the release."
     },
     {
       "id": "p203",
       "category": "curly-close-comma",
-      "raw": "She said \u201cI\u2019m ready,\u201d and left",
-      "ideal": "She said \u201cI\u2019m ready,\u201d and left."
+      "raw": "She said “I’m ready,” and left",
+      "ideal": "She said “I’m ready,” and left."
     },
     {
       "id": "p204",
       "category": "curly-close-comma",
-      "raw": "Call it \u2018done,\u2019 then move on",
-      "ideal": "Call it \u2018done,\u2019 then move on."
+      "raw": "Call it ‘done,’ then move on",
+      "ideal": "Call it ‘done,’ then move on."
     },
     {
       "id": "p205",
       "category": "curly-close-comma",
-      "raw": "We marked it \u201cblocked,\u201d so nobody starts it",
-      "ideal": "We marked it \u201cblocked,\u201d so nobody starts it."
+      "raw": "We marked it “blocked,” so nobody starts it",
+      "ideal": "We marked it “blocked,” so nobody starts it."
     },
     {
       "id": "p206",
       "category": "curly-close-comma",
-      "raw": "His note ended \u201cthanks,\u201d",
-      "ideal": "His note ended \u201cthanks,\u201d"
+      "raw": "His note ended “thanks,”",
+      "ideal": "His note ended “thanks,”"
     },
     {
       "id": "p207",
       "category": "curly-close-comma",
-      "raw": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d",
-      "ideal": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d"
+      "raw": "Pick “A,” “B,” or “C”",
+      "ideal": "Pick “A,” “B,” or “C”"
     },
     {
       "id": "p208",
       "category": "curly-close-comma",
-      "raw": "The label read \u201cfragile,\u201d on every box",
-      "ideal": "The label read \u201cfragile,\u201d on every box."
+      "raw": "The label read “fragile,” on every box",
+      "ideal": "The label read “fragile,” on every box."
     },
     {
       "id": "p209",
       "category": "curly-close-comma",
-      "raw": "Write \u201curgent,\u201d in the subject",
-      "ideal": "Write \u201curgent,\u201d in the subject."
+      "raw": "Write “urgent,” in the subject",
+      "ideal": "Write “urgent,” in the subject."
     },
     {
       "id": "p210",
       "category": "curly-close-comma",
-      "raw": "Tag it \u201cv1,\u201d and publish",
-      "ideal": "Tag it \u201cv1,\u201d and publish."
+      "raw": "Tag it “v1,” and publish",
+      "ideal": "Tag it “v1,” and publish."
     },
     {
       "id": "p211",
       "category": "curly-close-comma",
-      "raw": "Use \u201cok,\u201d; then restart",
-      "ideal": "Use \u201cok,\u201d; then restart."
+      "raw": "Use “ok,”; then restart",
+      "ideal": "Use “ok,”; then restart."
     },
     {
       "id": "p212",
       "category": "curly-close-comma",
-      "raw": "I told Priya \u201cship tonight,\u201d before the freeze",
-      "ideal": "I told Priya \u201cship tonight,\u201d before the freeze."
+      "raw": "I told Priya “ship tonight,” before the freeze",
+      "ideal": "I told Priya “ship tonight,” before the freeze."
     },
     {
       "id": "p213",
@@ -1601,6 +1601,66 @@
       "category": "restart-phrase",
       "raw": "After the click it doesn't It doesn't fire twice",
       "ideal": "After the click it doesn't fire twice."
+    },
+    {
+      "id": "p263",
+      "category": "restart-phrase",
+      "raw": "Can you Can you host the prototype on a server",
+      "ideal": "Can you host the prototype on a server?"
+    },
+    {
+      "id": "p264",
+      "category": "restart-phrase",
+      "raw": "And then It would It would be ordered",
+      "ideal": "And then It would be ordered."
+    },
+    {
+      "id": "p265",
+      "category": "restart-phrase",
+      "raw": "That is That is more of a symbolic representation",
+      "ideal": "That is more of a symbolic representation."
+    },
+    {
+      "id": "p266",
+      "category": "restart-phrase",
+      "raw": "I don't I don't like the two energy ability",
+      "ideal": "I don't like the two energy ability."
+    },
+    {
+      "id": "p267",
+      "category": "restart-phrase",
+      "raw": "Let's just Let's just make the feature flag",
+      "ideal": "Let's just make the feature flag."
+    },
+    {
+      "id": "p268",
+      "category": "restart-phrase",
+      "raw": "So I guess I guess I'm wondering if there's a way",
+      "ideal": "So I guess I'm wondering if there's a way."
+    },
+    {
+      "id": "p269",
+      "category": "restart-phrase",
+      "raw": "I don't know I don't know how to do that UI",
+      "ideal": "I don't know how to do that UI."
+    },
+    {
+      "id": "p270",
+      "category": "restart-phrase",
+      "raw": "How's it going How's it going with the launch today",
+      "ideal": "How's it going with the launch today?"
+    },
+    {
+      "id": "p271",
+      "category": "restart-phrase",
+      "raw": "What are the What are the deciding factors on both sides",
+      "ideal": "What are the deciding factors on both sides?"
+    },
+    {
+      "id": "p272",
+      "category": "restart-phrase",
+      "raw": "with like how I want How I want this to go",
+      "ideal": "With like how I want this to go."
     }
   ],
   "keep": [
@@ -4491,14 +4551,14 @@
     {
       "id": "k477",
       "rule": "curly-close-comma",
-      "raw": "He said,\u201chello\u201d",
-      "expect": "He said, \u201chello\u201d"
+      "raw": "He said,“hello”",
+      "expect": "He said, “hello”"
     },
     {
       "id": "k478",
       "rule": "curly-close-comma",
-      "raw": "She whispered,\u2018wait\u2019",
-      "expect": "She whispered, \u2018wait\u2019"
+      "raw": "She whispered,‘wait’",
+      "expect": "She whispered, ‘wait’"
     },
     {
       "id": "k479",
@@ -4515,14 +4575,14 @@
     {
       "id": "k481",
       "rule": "curly-close-comma",
-      "raw": "It\u2019s a nice day, isn\u2019t it",
-      "expect": "It\u2019s a nice day, isn\u2019t it?"
+      "raw": "It’s a nice day, isn’t it",
+      "expect": "It’s a nice day, isn’t it?"
     },
     {
       "id": "k482",
       "rule": "curly-close-comma",
-      "raw": "Let\u2019s call it a day, shall we",
-      "expect": "Let\u2019s call it a day, shall we?"
+      "raw": "Let’s call it a day, shall we",
+      "expect": "Let’s call it a day, shall we?"
     },
     {
       "id": "k483",
@@ -4546,8 +4606,8 @@
     {
       "id": "k486",
       "rule": "curly-close-comma",
-      "raw": "Dit-il,\u00bboui\u00ab",
-      "expect": "Dit-il, \u00bboui\u00ab"
+      "raw": "Dit-il,»oui«",
+      "expect": "Dit-il, »oui«"
     },
     {
       "id": "k487",
@@ -5002,6 +5062,48 @@
       "rule": "restart-phrase",
       "raw": "Please scratch that Scratch that and send the file",
       "expect": "Please scratch that Scratch that and send the file."
+    },
+    {
+      "id": "k567",
+      "rule": "restart-phrase",
+      "raw": "New York City New York City is big enough",
+      "expect": "New York City New York City is big enough."
+    },
+    {
+      "id": "k568",
+      "rule": "restart-phrase",
+      "raw": "You have to you have to change that",
+      "expect": "You have to you have to change that."
+    },
+    {
+      "id": "k569",
+      "rule": "restart-phrase",
+      "raw": "that doesn't solve the starting deck the starting deck problem",
+      "expect": "That doesn't solve the starting deck the starting deck problem."
+    },
+    {
+      "id": "k570",
+      "rule": "restart-phrase",
+      "raw": "Thank You Thank You for coming",
+      "expect": "Thank You Thank You for coming."
+    },
+    {
+      "id": "k571",
+      "rule": "restart-phrase",
+      "raw": "Good Morning Good Morning everyone",
+      "expect": "Good Morning Good Morning everyone."
+    },
+    {
+      "id": "k572",
+      "rule": "restart-phrase",
+      "raw": "Machine Learning Ops Machine Learning Ops is hard",
+      "expect": "Machine Learning Ops Machine Learning Ops is hard."
+    },
+    {
+      "id": "k573",
+      "rule": "restart-phrase",
+      "raw": "Los Angeles County Los Angeles County voted today",
+      "expect": "Los Angeles County Los Angeles County voted today."
     }
   ]
 }

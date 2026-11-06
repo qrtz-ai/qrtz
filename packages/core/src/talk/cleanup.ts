@@ -2362,7 +2362,7 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
-/** ADR 0246: a mid-sentence two-word restart ("as a As a", "it doesn't It doesn't") collapses to one copy. */
+/** ADR 0246 / ADR 0247: mid-sentence two- or three-word restart phrase collapses to one copy. */
 function restartPhrase(s: string): string {
   const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
   const spans: { start: number; end: number; text: string }[] = [];
@@ -2378,36 +2378,72 @@ function restartPhrase(s: string): string {
     [...w]
       .filter((c) => /[A-Za-z]/.test(c))
       .every((c) => c === c.toLowerCase());
+  const isIWord = (w: string) =>
+    /^(i|i'd|i'm|i've|i'll)$/i.test(w.replace(/\u2019/g, "'"));
+  const middleOk = (w: string) => lettersLower(w) || isIWord(w);
   const drop = Array.from({ length: spans.length }, () => false);
   let i = 0;
-  while (i + 3 < spans.length) {
-    const [w0, w1, w2, w3] = [
-      spans[i],
-      spans[i + 1],
-      spans[i + 2],
-      spans[i + 3],
-    ];
-    const ok =
-      onlySpaceTab(w0.end, w1.start) &&
-      onlySpaceTab(w1.end, w2.start) &&
-      onlySpaceTab(w2.end, w3.start) &&
-      lettersLower(w0.text) &&
-      lettersLower(w1.text) &&
-      /^[A-Z]/.test(w2.text) &&
-      /^[a-z]/.test(w3.text) &&
-      w0.text.toLowerCase() === w2.text.toLowerCase() &&
-      w1.text.toLowerCase() === w3.text.toLowerCase() &&
-      // Spoken "scratch that" (ADR 0186) is a command, not a restart stutter.
-      !(
-        w0.text.toLowerCase() === 'scratch' && w1.text.toLowerCase() === 'that'
-      );
-    if (ok) {
-      drop[i + 2] = true;
-      drop[i + 3] = true;
-      i += 4;
-    } else {
-      i += 1;
+  while (i < spans.length) {
+    if (i + 5 < spans.length) {
+      const [w0, w1, w2, w3, w4, w5] = [
+        spans[i],
+        spans[i + 1],
+        spans[i + 2],
+        spans[i + 3],
+        spans[i + 4],
+        spans[i + 5],
+      ];
+      const ok3 =
+        onlySpaceTab(w0.end, w1.start) &&
+        onlySpaceTab(w1.end, w2.start) &&
+        onlySpaceTab(w2.end, w3.start) &&
+        onlySpaceTab(w3.end, w4.start) &&
+        onlySpaceTab(w4.end, w5.start) &&
+        middleOk(w1.text) &&
+        lettersLower(w2.text) &&
+        /^[A-Z]/.test(w3.text) &&
+        middleOk(w4.text) &&
+        /^[a-z]/.test(w5.text) &&
+        w0.text.toLowerCase() === w3.text.toLowerCase() &&
+        w1.text.toLowerCase() === w4.text.toLowerCase() &&
+        w2.text.toLowerCase() === w5.text.toLowerCase();
+      if (ok3) {
+        drop[i + 3] = true;
+        drop[i + 4] = true;
+        drop[i + 5] = true;
+        i += 6;
+        continue;
+      }
     }
+    if (i + 3 < spans.length) {
+      const [w0, w1, w2, w3] = [
+        spans[i],
+        spans[i + 1],
+        spans[i + 2],
+        spans[i + 3],
+      ];
+      const ok2 =
+        onlySpaceTab(w0.end, w1.start) &&
+        onlySpaceTab(w1.end, w2.start) &&
+        onlySpaceTab(w2.end, w3.start) &&
+        // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
+        lettersLower(w1.text) &&
+        /^[A-Z]/.test(w2.text) &&
+        /^[a-z]/.test(w3.text) &&
+        w0.text.toLowerCase() === w2.text.toLowerCase() &&
+        w1.text.toLowerCase() === w3.text.toLowerCase() &&
+        !(
+          w0.text.toLowerCase() === 'scratch' &&
+          w1.text.toLowerCase() === 'that'
+        );
+      if (ok2) {
+        drop[i + 2] = true;
+        drop[i + 3] = true;
+        i += 4;
+        continue;
+      }
+    }
+    i += 1;
   }
   if (drop.every((d) => !d)) return s;
   let out = '';
@@ -2464,7 +2500,7 @@ export function ruleCleanup(
       ? w
       : all,
   );
-  // ADR 0246: mid-sentence two-word restart phrase.
+  // ADR 0246 / ADR 0247: mid-sentence two- or three-word restart phrase.
   t = restartPhrase(t);
   t = t.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n');
   t = t

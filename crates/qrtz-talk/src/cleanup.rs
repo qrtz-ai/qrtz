@@ -1860,12 +1860,21 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246: a two-word phrase the recogniser restarts mid-sentence with a capital on the first word
-/// ("as a As a mock-up", "in a In a way", "in the In the best", "it doesn't It doesn't quite") collapses
-/// to one copy. The first copy is all-lowercase; the second copy's first word is capitalised and its
-/// second word is lowercase (so "new york New York" / "app store App Store" stay). Only whitespace
-/// between the four words; no punctuation. Apostrophes inside a word ("doesn't", "can't") count as
-/// part of that word. Runs after [`collapse_repeats`].
+/// ADR 0246 / ADR 0247: a two- or three-word phrase the recogniser restarts mid-sentence with a
+/// capital on the first word of the second copy collapses to one copy.
+///
+/// Two-word (ADR 0246, widened in ADR 0247): "as a As a", "in the In the", "Can you Can you",
+/// "I don't I don't". The last word of each copy is lowercase (so "new york New York" stays —
+/// "York" starts uppercase). The first word of the first copy may be lowercase or Title case;
+/// the first word of the second copy starts uppercase. Apostrophes inside a word count as part
+/// of that word. Spoken "scratch that" (ADR 0186) is not a restart.
+///
+/// Three-word (ADR 0247): "I don't know I don't know", "How's it going How's it going",
+/// "What are the What are the", "how I want How I want". Same Cap-restart signature on the
+/// second copy's first word; the last word of each copy is lowercase (so "New York City New
+/// York City" stays). A middle word may be the pronoun "I" / "I'd" / "I'm" / "I've" / "I'll"
+/// (often capitalised). Only spaces/tabs between the words; a newline is a real sentence start.
+/// Prefers the longer (three-word) match when both could apply. Runs after [`collapse_repeats`].
 fn restart_phrase(s: &str) -> String {
     /// A dictation word: letters with optional internal ASCII / curly apostrophes ("doesn't", "can't").
     fn next_word(s: &str, from: usize) -> Option<(usize, usize)> {
@@ -1931,9 +1940,6 @@ fn restart_phrase(s: &str) -> String {
     let mut at = 0;
     while at < s.len() {
         if let Some((a, b)) = next_word(s, at) {
-            // next_word skips leading whitespace from `at`, so the word starts at `a`.
-            // Advance search from end of word; but if there was non-space junk between at and a, we must
-            // only accept when from `at` we only skipped whitespace OR at==a.
             if at < a && !s[at..a].chars().all(char::is_whitespace) {
                 at += s[at..].chars().next().map_or(1, char::len_utf8);
                 continue;
@@ -1959,33 +1965,73 @@ fn restart_phrase(s: &str) -> String {
             .filter(|c| c.is_ascii_alphabetic())
             .all(|c| c.is_ascii_lowercase())
     };
+    let starts_upper = |a: usize| s[a..].starts_with(|c: char| c.is_ascii_uppercase());
+    let starts_lower = |a: usize| s[a..].starts_with(|c: char| c.is_ascii_lowercase());
+    let eq_ci = |a: usize, b: usize, c: usize, d: usize| s[a..b].eq_ignore_ascii_case(&s[c..d]);
+    let is_i_word = |a: usize, b: usize| {
+        let w = s[a..b].replace('\u{2019}', "'").to_ascii_lowercase();
+        matches!(w.as_str(), "i" | "i'd" | "i'm" | "i've" | "i'll")
+    };
+    // Middle word of a three-word phrase: lowercase, or the pronoun "I" / a contracted "I".
+    let middle_ok = |a: usize, b: usize| letters_lower(a, b) || is_i_word(a, b);
 
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
-    while i + 3 < spans.len() {
-        let (a0, b0) = spans[i];
-        let (a1, b1) = spans[i + 1];
-        let (a2, b2) = spans[i + 2];
-        let (a3, b3) = spans[i + 3];
-        let ok = only_space_tab(b0, a1)
-            && only_space_tab(b1, a2)
-            && only_space_tab(b2, a3)
-            && letters_lower(a0, b0)
-            && letters_lower(a1, b1)
-            && s[a2..].starts_with(|c: char| c.is_ascii_uppercase())
-            && s[a3..].starts_with(|c: char| c.is_ascii_lowercase())
-            && s[a0..b0].eq_ignore_ascii_case(&s[a2..b2])
-            && s[a1..b1].eq_ignore_ascii_case(&s[a3..b3])
-            // Spoken "scratch that" (ADR 0186) is a command, not a restart stutter.
-            && !(s[a0..b0].eq_ignore_ascii_case("scratch")
-                && s[a1..b1].eq_ignore_ascii_case("that"));
-        if ok {
-            drop[i + 2] = true;
-            drop[i + 3] = true;
-            i += 4;
-        } else {
-            i += 1;
+    while i < spans.len() {
+        // Prefer three-word match when both could apply.
+        if i + 5 < spans.len() {
+            let (a0, b0) = spans[i];
+            let (a1, b1) = spans[i + 1];
+            let (a2, b2) = spans[i + 2];
+            let (a3, b3) = spans[i + 3];
+            let (a4, b4) = spans[i + 4];
+            let (a5, b5) = spans[i + 5];
+            let ok3 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                && only_space_tab(b3, a4)
+                && only_space_tab(b4, a5)
+                && middle_ok(a1, b1)
+                && letters_lower(a2, b2)
+                && starts_upper(a3)
+                && middle_ok(a4, b4)
+                && starts_lower(a5)
+                && eq_ci(a0, b0, a3, b3)
+                && eq_ci(a1, b1, a4, b4)
+                && eq_ci(a2, b2, a5, b5);
+            if ok3 {
+                drop[i + 3] = true;
+                drop[i + 4] = true;
+                drop[i + 5] = true;
+                i += 6;
+                continue;
+            }
         }
+        if i + 3 < spans.len() {
+            let (a0, b0) = spans[i];
+            let (a1, b1) = spans[i + 1];
+            let (a2, b2) = spans[i + 2];
+            let (a3, b3) = spans[i + 3];
+            let ok2 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                // ADR 0247: first word of the first copy may be Title case ("Can you Can you").
+                // Last word of each copy stays lowercase so "new york New York" is kept.
+                && letters_lower(a1, b1)
+                && starts_upper(a2)
+                && starts_lower(a3)
+                && eq_ci(a0, b0, a2, b2)
+                && eq_ci(a1, b1, a3, b3)
+                && !(s[a0..b0].eq_ignore_ascii_case("scratch")
+                    && s[a1..b1].eq_ignore_ascii_case("that"));
+            if ok2 {
+                drop[i + 2] = true;
+                drop[i + 3] = true;
+                i += 4;
+                continue;
+            }
+        }
+        i += 1;
     }
     if drop.iter().all(|d| !*d) {
         return s.to_owned();
@@ -1998,8 +2044,6 @@ fn restart_phrase(s: &str) -> String {
         if !drop[idx] {
             continue;
         }
-        // Emit up to the whitespace before this dropped word, then skip the word.
-        // Find start of whitespace run before `a` (but not before `last`).
         let mut ws = a;
         while ws > last {
             let ch = s[..ws].chars().next_back().unwrap();
@@ -3254,7 +3298,7 @@ fn opening_filler_clause(s: &str) -> String {
 /// nor on a list of short lines; ADR 0201: whose line commas go; ADR 0206: "Hey <dictionary name>, <question>?"; ADR
 /// 0227: "..., isn't it?"), then
 /// spoken amounts as figures (ADR 0193: "$25", "15%", "3:30 p.m."), a spoken date's day as a figure (ADR 0230:
-/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236), a comma before a sentence mark dropped (ADR 0241), a sentence-initial filler clause after a period (ADR 0245), and a mid-sentence two-word restart phrase (ADR 0246).
+/// "on October 21st"), a spoken title as its abbreviation (ADR 0234), spoken list commas/period (ADR 0242), a run of commas as one (ADR 0236), a comma before a sentence mark dropped (ADR 0241), a sentence-initial filler clause after a period (ADR 0245), and a mid-sentence two- or three-word restart phrase (ADR 0246 / ADR 0247).
 pub fn rule_cleanup(raw: &str, dict: &[DictionaryEntry]) -> String {
     let mut t = format!(" {raw} ");
     t = layout_command(NEW_PARAGRAPH, &t, "\n\n");
