@@ -112,8 +112,8 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = with_spoken_list_punct(&old);
     // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases (incl. four-word Cap and ellipsis gap) collapse.
     let old = without_restart_phrase(&old);
-    // ADR 0251 (cycle 135): triple+ space/tab-separated "are" collapses to the first copy.
-    let old = without_triple_are(&old);
+    // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ space/tab-separated are/on/like collapses to the first copy.
+    let old = without_triple_stutters(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
         new.clone()
@@ -138,7 +138,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
         // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases — see without_restart_phrase on old.
-        // ADR 0251 (cycle 135): triple+ "are" — see without_triple_are on old.
+        // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ are/on/like — see without_triple_stutters on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -363,10 +363,10 @@ fn without_filler_marks(raw: &str) -> String {
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
 }
 
-/// ADR 0251's triple-"are" stutter edit, made on the text (written independently of cleanup.rs):
-/// a run of three or more space/tab-separated "are" (any ASCII case) collapses to the first copy.
-/// Doubles stay; commas between copies refuse the collapse.
-fn without_triple_are(s: &str) -> String {
+/// ADR 0251 / ADR 0253's triple stutter edit, made on the text (written independently of cleanup.rs):
+/// a run of three or more space/tab-separated "are" / "on" / "like" (any ASCII case) collapses to the
+/// first copy. Doubles stay; commas between copies refuse the collapse.
+fn without_triple_stutters(s: &str) -> String {
     let word_re = regex::Regex::new(r"[A-Za-z]+").unwrap();
     let spans: Vec<(usize, usize, String)> = word_re
         .find_iter(s)
@@ -377,16 +377,22 @@ fn without_triple_are(s: &str) -> String {
     }
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
-    let is_are = |w: &str| w.eq_ignore_ascii_case("are");
+    let is_triple = |w: &str| {
+        let l = w.to_ascii_lowercase();
+        matches!(l.as_str(), "are" | "on" | "like")
+    };
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
     while i < spans.len() {
-        if !is_are(&spans[i].2) {
+        if !is_triple(&spans[i].2) {
             i += 1;
             continue;
         }
         let mut j = i + 1;
-        while j < spans.len() && is_are(&spans[j].2) && only_space_tab(spans[j - 1].1, spans[j].0) {
+        while j < spans.len()
+            && spans[j].2.eq_ignore_ascii_case(&spans[i].2)
+            && only_space_tab(spans[j - 1].1, spans[j].0)
+        {
             j += 1;
         }
         if j - i >= 3 {

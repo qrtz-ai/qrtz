@@ -404,4 +404,24 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("I don't really... I don't really"), "{out}");
     assert!(!out.contains("Wait for it... Wait for it"), "{out}");
     assert_fits_budget(&text, " with ellipsis Cap restart phrases");
+    // ADR 0253: many triple+ "on" / "like" runs on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please toggle item{i} on on on the replay modal now"));
+        body.push_str(&format!(" and like like like to ping endpoint {i} today"));
+    }
+    body.push_str(". And then on on On the settings panel please");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        out.contains("on the replay modal") || out.contains("On the replay modal"),
+        "{out}"
+    );
+    assert!(
+        out.contains("like to ping endpoint") || out.contains("Like to ping endpoint"),
+        "{out}"
+    );
+    assert!(!out.contains("on on on"), "{out}");
+    assert!(!out.contains("like like like"), "{out}");
+    assert_fits_budget(&text, " with triple on/like stutters");
 }

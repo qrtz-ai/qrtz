@@ -777,8 +777,8 @@
     {
       "id": "p125",
       "category": "imperative-tag",
-      "raw": "Let’s call it a day, shall we",
-      "ideal": "Let’s call it a day, shall we?"
+      "raw": "Let\u2019s call it a day, shall we",
+      "ideal": "Let\u2019s call it a day, shall we?"
     },
     {
       "id": "p126",
@@ -1035,8 +1035,8 @@
     {
       "id": "p168",
       "category": "question",
-      "raw": "What time’s the game on Sunday",
-      "ideal": "What time’s the game on Sunday?"
+      "raw": "What time\u2019s the game on Sunday",
+      "ideal": "What time\u2019s the game on Sunday?"
     },
     {
       "id": "p169",
@@ -1233,74 +1233,74 @@
     {
       "id": "p201",
       "category": "comma-run",
-      "raw": "We met at the café,, then walked home",
-      "ideal": "We met at the café, then walked home."
+      "raw": "We met at the caf\u00e9,, then walked home",
+      "ideal": "We met at the caf\u00e9, then walked home."
     },
     {
       "id": "p202",
       "category": "curly-close-comma",
-      "raw": "The plan was “ship it Friday,” then cut the release",
-      "ideal": "The plan was “ship it Friday,” then cut the release."
+      "raw": "The plan was \u201cship it Friday,\u201d then cut the release",
+      "ideal": "The plan was \u201cship it Friday,\u201d then cut the release."
     },
     {
       "id": "p203",
       "category": "curly-close-comma",
-      "raw": "She said “I’m ready,” and left",
-      "ideal": "She said “I’m ready,” and left."
+      "raw": "She said \u201cI\u2019m ready,\u201d and left",
+      "ideal": "She said \u201cI\u2019m ready,\u201d and left."
     },
     {
       "id": "p204",
       "category": "curly-close-comma",
-      "raw": "Call it ‘done,’ then move on",
-      "ideal": "Call it ‘done,’ then move on."
+      "raw": "Call it \u2018done,\u2019 then move on",
+      "ideal": "Call it \u2018done,\u2019 then move on."
     },
     {
       "id": "p205",
       "category": "curly-close-comma",
-      "raw": "We marked it “blocked,” so nobody starts it",
-      "ideal": "We marked it “blocked,” so nobody starts it."
+      "raw": "We marked it \u201cblocked,\u201d so nobody starts it",
+      "ideal": "We marked it \u201cblocked,\u201d so nobody starts it."
     },
     {
       "id": "p206",
       "category": "curly-close-comma",
-      "raw": "His note ended “thanks,”",
-      "ideal": "His note ended “thanks,”"
+      "raw": "His note ended \u201cthanks,\u201d",
+      "ideal": "His note ended \u201cthanks,\u201d"
     },
     {
       "id": "p207",
       "category": "curly-close-comma",
-      "raw": "Pick “A,” “B,” or “C”",
-      "ideal": "Pick “A,” “B,” or “C”"
+      "raw": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d",
+      "ideal": "Pick \u201cA,\u201d \u201cB,\u201d or \u201cC\u201d"
     },
     {
       "id": "p208",
       "category": "curly-close-comma",
-      "raw": "The label read “fragile,” on every box",
-      "ideal": "The label read “fragile,” on every box."
+      "raw": "The label read \u201cfragile,\u201d on every box",
+      "ideal": "The label read \u201cfragile,\u201d on every box."
     },
     {
       "id": "p209",
       "category": "curly-close-comma",
-      "raw": "Write “urgent,” in the subject",
-      "ideal": "Write “urgent,” in the subject."
+      "raw": "Write \u201curgent,\u201d in the subject",
+      "ideal": "Write \u201curgent,\u201d in the subject."
     },
     {
       "id": "p210",
       "category": "curly-close-comma",
-      "raw": "Tag it “v1,” and publish",
-      "ideal": "Tag it “v1,” and publish."
+      "raw": "Tag it \u201cv1,\u201d and publish",
+      "ideal": "Tag it \u201cv1,\u201d and publish."
     },
     {
       "id": "p211",
       "category": "curly-close-comma",
-      "raw": "Use “ok,”; then restart",
-      "ideal": "Use “ok,”; then restart."
+      "raw": "Use \u201cok,\u201d; then restart",
+      "ideal": "Use \u201cok,\u201d; then restart."
     },
     {
       "id": "p212",
       "category": "curly-close-comma",
-      "raw": "I told Priya “ship tonight,” before the freeze",
-      "ideal": "I told Priya “ship tonight,” before the freeze."
+      "raw": "I told Priya \u201cship tonight,\u201d before the freeze",
+      "ideal": "I told Priya \u201cship tonight,\u201d before the freeze."
     },
     {
       "id": "p213",
@@ -1869,7 +1869,7 @@
     {
       "id": "p307",
       "category": "restart",
-      "raw": "I don't really… I don't really like this today",
+      "raw": "I don't really\u2026 I don't really like this today",
       "ideal": "I don't really like this today."
     },
     {
@@ -1901,6 +1901,54 @@
       "category": "restart",
       "raw": "we could just have... We could just have our configuration ready",
       "ideal": "We could just have our configuration ready."
+    },
+    {
+      "id": "p313",
+      "category": "repeat",
+      "raw": "on on On the replay modal",
+      "ideal": "On the replay modal."
+    },
+    {
+      "id": "p314",
+      "category": "repeat",
+      "raw": "like on on On the replay modal please",
+      "ideal": "Like on the replay modal please."
+    },
+    {
+      "id": "p315",
+      "category": "repeat",
+      "raw": "turn it on on on Friday please",
+      "ideal": "Turn it on Friday please."
+    },
+    {
+      "id": "p316",
+      "category": "repeat",
+      "raw": "Can you add a toggle for each like on on on the modal",
+      "ideal": "Can you add a toggle for each like on the modal?"
+    },
+    {
+      "id": "p317",
+      "category": "repeat",
+      "raw": "like like like to ping an API",
+      "ideal": "Like to ping an API."
+    },
+    {
+      "id": "p318",
+      "category": "repeat",
+      "raw": "easiest for you to like like uh like to ping",
+      "ideal": "Easiest for you to like to ping."
+    },
+    {
+      "id": "p319",
+      "category": "repeat",
+      "raw": "she was like LIKE like totally shocked today",
+      "ideal": "She was like totally shocked today."
+    },
+    {
+      "id": "p320",
+      "category": "repeat",
+      "raw": "Please make it like like like a smooth fade",
+      "ideal": "Please make it like a smooth fade."
     }
   ],
   "keep": [
@@ -4791,14 +4839,14 @@
     {
       "id": "k477",
       "rule": "curly-close-comma",
-      "raw": "He said,“hello”",
-      "expect": "He said, “hello”"
+      "raw": "He said,\u201chello\u201d",
+      "expect": "He said, \u201chello\u201d"
     },
     {
       "id": "k478",
       "rule": "curly-close-comma",
-      "raw": "She whispered,‘wait’",
-      "expect": "She whispered, ‘wait’"
+      "raw": "She whispered,\u2018wait\u2019",
+      "expect": "She whispered, \u2018wait\u2019"
     },
     {
       "id": "k479",
@@ -4815,14 +4863,14 @@
     {
       "id": "k481",
       "rule": "curly-close-comma",
-      "raw": "It’s a nice day, isn’t it",
-      "expect": "It’s a nice day, isn’t it?"
+      "raw": "It\u2019s a nice day, isn\u2019t it",
+      "expect": "It\u2019s a nice day, isn\u2019t it?"
     },
     {
       "id": "k482",
       "rule": "curly-close-comma",
-      "raw": "Let’s call it a day, shall we",
-      "expect": "Let’s call it a day, shall we?"
+      "raw": "Let\u2019s call it a day, shall we",
+      "expect": "Let\u2019s call it a day, shall we?"
     },
     {
       "id": "k483",
@@ -4846,8 +4894,8 @@
     {
       "id": "k486",
       "rule": "curly-close-comma",
-      "raw": "Dit-il,»oui«",
-      "expect": "Dit-il, »oui«"
+      "raw": "Dit-il,\u00bboui\u00ab",
+      "expect": "Dit-il, \u00bboui\u00ab"
     },
     {
       "id": "k487",
@@ -5574,6 +5622,46 @@
       "id": "k619",
       "raw": "The results are are interesting... today for us",
       "expect": "The results are are interesting... Today for us."
+    },
+    {
+      "id": "k620",
+      "raw": "turn it on on Friday please",
+      "expect": "Turn it on on Friday please."
+    },
+    {
+      "id": "k621",
+      "raw": "focus on On boarding the new hires",
+      "expect": "Focus on On boarding the new hires."
+    },
+    {
+      "id": "k622",
+      "raw": "I was like like whatever about it",
+      "expect": "I was like like whatever about it."
+    },
+    {
+      "id": "k623",
+      "raw": "like Like it or not we still ship today",
+      "expect": "Like Like it or not we still ship today."
+    },
+    {
+      "id": "k624",
+      "raw": "like a like a smooth fade across the board",
+      "expect": "Like a like a smooth fade across the board."
+    },
+    {
+      "id": "k625",
+      "raw": "on, on the other hand we wait today",
+      "expect": "On, on the other hand we wait today."
+    },
+    {
+      "id": "k626",
+      "raw": "like, like I said before today",
+      "expect": "Like, like I said before today."
+    },
+    {
+      "id": "k627",
+      "raw": "why Why did we make a new Thing",
+      "expect": "Why Why did we make a new Thing."
     }
   ]
 }

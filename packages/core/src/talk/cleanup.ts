@@ -5,7 +5,7 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Everything else is kept as said: numbers ("10 10", "1 1 2 3"), grammatical doubles ("had had", "that that",
 // "is is", "are are", "what it was was", "her her", "come in in the morning", "turn it on on Friday", "Will will"), and
 // emphasis or idiom ("very very", "no no", "bye bye", "so so", "my my", "there there").
-// ADR 0251: "are are" doubles stay; "are are are" (3+) collapses in the REPEATS callback (not in this set — same reason "is" was rejected).
+// ADR 0251 / ADR 0253: "are are" / "on on" / "like like" doubles stay; 3+ of those words collapse in the REPEATS callback (not in this set).
 const STUTTERS = new Set([
   'i',
   'a',
@@ -48,6 +48,8 @@ const STUTTERS = new Set([
 // Repeats across a comma ("I love you, you know", "take it, it is yours") are a clause boundary as often as a
 // stutter; only these collapse there ("I, I think", "the, the plan").
 const COMMA_STUTTERS = new Set(['i', 'a', 'an', 'the']);
+// ADR 0251 / ADR 0253: 3+ of these collapse; doubles stay; never in STUTTERS.
+const TRIPLE_STUTTERS = new Set(['are', 'on', 'like']);
 // ADR 0205 / ADR 0207: "we, we" / "they, they" collapses before a plain or negated modal (or "cannot"), with the
 // first pronoun opening its sentence (alone or after one opener): "So we, we can ship it" / "So we, we can't" ->
 // "So we can ship it" / "So we can't". Curly apostrophe folds to ASCII for the lookup. Same lists as cleanup.rs.
@@ -2601,12 +2603,12 @@ export function ruleCleanup(
     },
   );
   // Immediate repeats of stutter-prone words ("I I think", "the the"); ADR 0101.
-  // ADR 0251: triple+ "are" (space/tab-separated, any case) collapses; doubles stay; never across commas.
+  // ADR 0251 / ADR 0253: triple+ are/on/like (space/tab-separated, any case) collapses; doubles stay; never across commas.
   t = t.replace(REPEATS, (all: string, w: string, at: number, src: string) =>
     (all.includes(',') ? COMMA_STUTTERS : STUTTERS).has(w.toLowerCase()) ||
     subjectStutter(all, w, at, src) ||
     (!all.includes(',') &&
-      w.toLowerCase() === 'are' &&
+      TRIPLE_STUTTERS.has(w.toLowerCase()) &&
       all.split(/\s+/).filter(Boolean).length >= 3)
       ? w
       : all,

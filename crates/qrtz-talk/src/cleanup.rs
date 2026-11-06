@@ -2331,9 +2331,12 @@ fn lone_i(s: &str) -> String {
 }
 
 /// ADR 0101: does this repeat (the whole match `all`, its word `word`) collapse to one word?
-/// ADR 0251: after the STUTTERS / COMMA_STUTTERS check, a run of three or more space/tab-separated "are"
-/// (any case, `eq_ignore_ascii_case` via the lowercased word) collapses to the first copy. Doubles of "are"
-/// stay (so "you are Are you" never becomes "you are you"). Never collapses across commas.
+/// ADR 0251 / ADR 0253: after the STUTTERS / COMMA_STUTTERS check, a run of three or more
+/// space/tab-separated words from [`TRIPLE_STUTTERS`] (any case) collapses to the first copy.
+/// Doubles of those words stay (so "you are Are you", "turn it on on Friday", "I was like like
+/// whatever" never lose the second copy). Never collapses across commas. Do **not** put these
+/// words in [`STUTTERS`].
+const TRIPLE_STUTTERS: &[&str] = &["are", "on", "like"];
 fn collapses(word: &str, all: &str) -> bool {
     let w = word.to_ascii_lowercase();
     let list = if all.contains(',') {
@@ -2344,8 +2347,8 @@ fn collapses(word: &str, all: &str) -> bool {
     if list.contains(&w.as_str()) {
         return true;
     }
-    // ADR 0251: triple+ "are" only (not in STUTTERS — doubles must stay).
-    !all.contains(',') && w == "are" && all.split_whitespace().count() >= 3
+    // ADR 0251 / ADR 0253: triple+ allowlist only (not in STUTTERS — doubles must stay).
+    !all.contains(',') && TRIPLE_STUTTERS.contains(&w.as_str()) && all.split_whitespace().count() >= 3
 }
 
 /// ADR 0101: up to this many words is a short dictation (a reply, a search, a field): no "." is added, and a lone
