@@ -8,7 +8,7 @@
 - **Latency:** release `cleanup_budget` four-word Cap median **0.247 ms** (1027-word probe; ceiling 2 ms).
 - **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; "a An"; "why Why" / STUTTERS wideners;
   "hold on, hold on" across comma; email/URL ITN; p41; unload; N203; N197; year ITN.
-- **SHAs:** code `PENDING`, docs `PENDING`
+- **SHAs:** code `d6fd4b4c`, docs `PENDING`
 
 ## 2026-11-06 — Cycle 133 (≈11:55–12:20 PT, polish): bare "it" before Cap "It's" (ADR 0249)
 
