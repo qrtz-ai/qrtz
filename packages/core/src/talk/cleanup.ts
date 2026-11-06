@@ -1,10 +1,11 @@
 import type { DictionaryEntry } from './contract';
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-// ADR 0101: the stutter-prone words, the only ones whose immediate repeat collapses ("I I think", "the the").
+// ADR 0101: the stutter-prone words, the only ones whose immediate (double) repeat collapses ("I I think", "the the").
 // Everything else is kept as said: numbers ("10 10", "1 1 2 3"), grammatical doubles ("had had", "that that",
-// "is is", "what it was was", "her her", "come in in the morning", "turn it on on Friday", "Will will"), and
+// "is is", "are are", "what it was was", "her her", "come in in the morning", "turn it on on Friday", "Will will"), and
 // emphasis or idiom ("very very", "no no", "bye bye", "so so", "my my", "there there").
+// ADR 0251: "are are" doubles stay; "are are are" (3+) collapses in the REPEATS callback (not in this set — same reason "is" was rejected).
 const STUTTERS = new Set([
   'i',
   'a',
@@ -2560,9 +2561,13 @@ export function ruleCleanup(
     },
   );
   // Immediate repeats of stutter-prone words ("I I think", "the the"); ADR 0101.
+  // ADR 0251: triple+ "are" (space/tab-separated, any case) collapses; doubles stay; never across commas.
   t = t.replace(REPEATS, (all: string, w: string, at: number, src: string) =>
     (all.includes(',') ? COMMA_STUTTERS : STUTTERS).has(w.toLowerCase()) ||
-    subjectStutter(all, w, at, src)
+    subjectStutter(all, w, at, src) ||
+    (!all.includes(',') &&
+      w.toLowerCase() === 'are' &&
+      all.split(/\s+/).filter(Boolean).length >= 3)
       ? w
       : all,
   );

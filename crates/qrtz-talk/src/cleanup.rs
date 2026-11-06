@@ -64,10 +64,12 @@ fn run_len(s: &str, keep: impl Fn(char) -> bool) -> usize {
 /// A sentence end inside the text (not a decimal point, not the dots of "p.m.").
 static INNER_END: LazyLock<Regex> = LazyLock::new(|| re(r"[.!?]\s"));
 
-/// ADR 0101: the stutter-prone words, the only ones whose immediate repeat collapses ("I I think", "the the").
-/// Everything else is kept as said: numbers ("10 10", "1 1 2 3"), grammatical doubles ("had had", "that that",
-/// "is is", "what it was was", "her her", "come in in the morning", "turn it on on Friday", "Will will"), and
-/// emphasis or idiom ("very very", "no no", "bye bye", "so so", "my my", "there there").
+/// ADR 0101: the stutter-prone words, the only ones whose immediate (double) repeat collapses ("I I think",
+/// "the the"). Everything else is kept as said: numbers ("10 10", "1 1 2 3"), grammatical doubles ("had had",
+/// "that that", "is is", "are are", "what it was was", "her her", "come in in the morning", "turn it on on
+/// Friday", "Will will"), and emphasis or idiom ("very very", "no no", "bye bye", "so so", "my my", "there
+/// there"). ADR 0251: a run of three or more space/tab-separated "are" (any case) collapses to the first copy
+/// in [`collapses`]; doubles of "are"/"is" stay out of this list (same reason "is" was rejected).
 const STUTTERS: &[&str] = &[
     "i", "a", "an", "the", "to", "and", "but", "or", "of", "at", "for", "with", "from", "we", "you", "he",
     "she", "it", "they", "me", "our", "your", "his", "their", "this", "be", "would", "can", "could",
@@ -1798,7 +1800,8 @@ fn dangling_comma_marks_once(t: &str) -> String {
     out
 }
 
-/// ADR 0101: immediate repeats of a whole word, collapsed where [`collapses`] says so. ADR 0199: a scan for the pattern
+/// ADR 0101: immediate repeats of a whole word, collapsed where [`collapses`] says so. ADR 0251: a run of three or
+/// more space/tab-separated "are" (any case) also collapses there (doubles of "are" stay). ADR 0199: a scan for the pattern
 /// `(?i)(?<![\w'])(\w+)(?:[\s,]+\1(?![\w']))+` (ASCII `\w`). The apostrophe is part of a word on both sides, so
 /// "you, you're" and "it, it's" are not repeats. The word is a whole run of word characters (a shorter one would be
 /// followed by a word character, never by `[\s,]`); each repeat is a run of whitespace or commas and the same word,
@@ -2259,6 +2262,9 @@ fn lone_i(s: &str) -> String {
 }
 
 /// ADR 0101: does this repeat (the whole match `all`, its word `word`) collapse to one word?
+/// ADR 0251: after the STUTTERS / COMMA_STUTTERS check, a run of three or more space/tab-separated "are"
+/// (any case, `eq_ignore_ascii_case` via the lowercased word) collapses to the first copy. Doubles of "are"
+/// stay (so "you are Are you" never becomes "you are you"). Never collapses across commas.
 fn collapses(word: &str, all: &str) -> bool {
     let w = word.to_ascii_lowercase();
     let list = if all.contains(',') {
@@ -2266,7 +2272,11 @@ fn collapses(word: &str, all: &str) -> bool {
     } else {
         STUTTERS
     };
-    list.contains(&w.as_str())
+    if list.contains(&w.as_str()) {
+        return true;
+    }
+    // ADR 0251: triple+ "are" only (not in STUTTERS — doubles must stay).
+    !all.contains(',') && w == "are" && all.split_whitespace().count() >= 3
 }
 
 /// ADR 0101: up to this many words is a short dictation (a reply, a search, a field): no "." is added, and a lone

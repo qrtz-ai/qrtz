@@ -373,4 +373,20 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("We could just have We could just have"), "{out}");
     assert!(!out.contains("What did they say What did they say"), "{out}");
     assert_fits_budget(&text, " with four-word Cap restart phrases");
+    // ADR 0251: many triple+ "are" runs on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} are are are we ready now"));
+    }
+    body.push_str(". And then Are are are we always fetching on hover");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        out.contains("are we ready now") || out.contains("Are we ready now"),
+        "{out}"
+    );
+    assert!(out.contains("Are we always fetching on hover"), "{out}");
+    assert!(!out.contains("are are are"), "{out}");
+    assert!(!out.contains("Are are are"), "{out}");
+    assert_fits_budget(&text, " with triple are stutters");
 }
