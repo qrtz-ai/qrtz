@@ -8,7 +8,7 @@
 - **Latency:** release `cleanup_budget` triple-are median **0.247 ms** (865-word probe; ceiling 2 ms).
 - **Rejected:** "are" into STUTTERS; "on"/"is"/"why"/"like" STUTTERS; ", okay"/", yeah"/", huh"/", eh"/", no";
   email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap restart (0 hits); general triple-any-word.
-- **SHAs:** code `6edb62f8`, docs `TBD`
+- **SHAs:** code `6edb62f8`, docs `1f80b113`
 
 ## 2026-11-06 — Cycle 134 (≈12:18–12:40 PT, polish): four-word Cap restart phrase (ADR 0250)
 
