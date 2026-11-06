@@ -1,3 +1,14 @@
+## 2026-11-06 — Echo cycle 138 (ADR 0254 Cap-then-lower contraction)
+
+- **Landed:** Cap-then-lower one-word contraction doubles collapse ("What's what's", "It's it's";
+  ellipsis gap ok). ADR 0248 lower-then-Cap still collapses; both-Cap / both-lower stay.
+- **Scores:** polish 317/320 → **325/328** exact, edit distance 39, regressions 0, keep 0/632.
+- **Latency:** release `cleanup_budget` Cap-then-lower median **0.348 ms** (1185-word; ceiling 2 ms).
+- **Rejected:** Cap Cap "So So"; "is Is" / "why Why" / "like Like" / adding those or "so" to STUTTERS;
+  "a An"; lowercase multi-word restarts; "hold on, hold on" across comma; content-word doubles;
+  both-lower contraction doubles; email/URL ITN; p41; unload; N203; N197; year ITN.
+- **SHA:** code `3a5ccceb`; docs `6de1db84`
+
 ## 2026-11-06 — Cycle 137 (≈1:57–2:20 PM PT, polish): triple+ "on" / "like" stutter collapses (ADR 0253)
 
 - **Focus:** polish. origin/main at `aed2acad` (cycle 136 / ADR 0252). Mac online; prod+dev talk history (453+424).
