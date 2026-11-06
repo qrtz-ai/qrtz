@@ -12,7 +12,7 @@
   "Okay, okay."); email/URL ITN; p41; unload; N203; N197 (Mac disk ~1.5 GB); year ITN (k350); "make make" into
   STUTTERS.
 - **Latency:** release `cleanup_budget` restart-phrase median **0.208 ms** (495-word baseline ~0.135 ms); ceiling 2 ms.
-- **SHA:** 
+- **SHA:** `0489d5b3`
 
 
 ## 2026-11-06 — Cycle 128 (≈9:25–10:10 PT, polish): a sentence-initial filler after a period keeps the sentence mark (ADR 0245)
