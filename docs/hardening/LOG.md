@@ -1,5 +1,20 @@
 # Hardening log
 
+## 2026-11-06 — Cycle 130 (≈10:26–10:45 PT, polish): a mid-sentence two-word restart phrase collapses (ADR 0246)
+
+- **Focus:** polish. origin/main at `7f54b676` (cycle 128 / ADR 0245). Mac online; prod+dev talk history (453+262;
+  +4 new since cycle 127/129, including "as a As a").
+- **Landed:** `restart_phrase` — "as a As a" / "in a In a" / "in the In the" / "it doesn't It doesn't" keep one
+  copy (ADR 0246). Rust + TS twin, polish +8, keep +10, cleanup.json, hardening130 + hardening60 oracle,
+  cleanup_budget +1 text.
+- **Scores:** polish 251/254 → **259/262** exact, edit distance 39 (0.40 % of 9682), regressions 0; keep 0/563.
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no" (still 0 unmarked end hits; the only ", okay" hit was
+  "Okay, okay."); email/URL ITN; p41; unload; N203; N197 (Mac disk ~1.5 GB); year ITN (k350); "make make" into
+  STUTTERS.
+- **Latency:** release `cleanup_budget` restart-phrase median **0.208 ms** (495-word baseline ~0.135 ms); ceiling 2 ms.
+- **SHA:** 
+
+
 ## 2026-11-06 — Cycle 128 (≈9:25–10:10 PT, polish): a sentence-initial filler after a period keeps the sentence mark (ADR 0245)
 
 - **Focus:** polish. origin/main at `52ff5304` (cycle 127 / ADR 0244). Mac online; prod+dev talk history (453+261).
