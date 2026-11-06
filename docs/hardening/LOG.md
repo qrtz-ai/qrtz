@@ -9,7 +9,7 @@
 - **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; "why Why"/"is Is"/"like Like"/STUTTERS wideners; "a An";
   "there's a so there's a"; five-word Cap; general triple-any-word; email/URL ITN; p41; unload; N203; N197; year ITN.
 - **Latency:** release `cleanup_budget` ellipsis Cap-restart median **0.274 ms** (986-word; ceiling 2 ms).
-- **SHA:** `da880a3b`
+- **SHA:** `da880a3b` (code); docs `81569187`
 
 ## 2026-11-06 — Cycle 135 (≈12:51–1:20 PT, polish): triple+ "are" stutter collapses (ADR 0251)
 
