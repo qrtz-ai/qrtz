@@ -1,3 +1,15 @@
+## 2026-11-06 — Cycle 134 (≈12:18–12:40 PT, polish): four-word Cap restart phrase (ADR 0250)
+
+- **Landed:** widen `restart_phrase` — mid-sentence Cap-leading four-word restart phrases collapse
+  ("we could just have We could just have") (ADR 0250). Prefer four- then three- then two- then
+  one-word. Rust + TS twin, polish +8, keep +8, cleanup.json, hardening134 + hardening60 oracle,
+  cleanup_budget probe.
+- **Polish:** 285/288 → **293/296** exact, edit distance **39**, regressions **0**, keep **0/600**.
+- **Latency:** release `cleanup_budget` four-word Cap median **0.247 ms** (1027-word probe; ceiling 2 ms).
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; "a An"; "why Why" / STUTTERS wideners;
+  "hold on, hold on" across comma; email/URL ITN; p41; unload; N203; N197; year ITN.
+- **SHAs:** code `PENDING`, docs `PENDING`
+
 ## 2026-11-06 — Cycle 133 (≈11:55–12:20 PT, polish): bare "it" before Cap "It's" (ADR 0249)
 
 - **Landed:** widen `restart_phrase` — mid-sentence bare lowercase "it" before Cap "It's" /

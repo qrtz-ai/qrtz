@@ -1860,8 +1860,8 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: a phrase the recogniser restarts mid-sentence with a capital
-/// on the first word of the second copy collapses to one copy.
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250: a phrase the recogniser restarts
+/// mid-sentence with a capital on the first word of the second copy collapses to one copy.
 ///
 /// Two-word (ADR 0246, widened in ADR 0247): "as a As a", "in the In the", "Can you Can you",
 /// "I don't I don't". The last word of each copy is lowercase (so "new york New York" stays —
@@ -1874,7 +1874,10 @@ fn collapse_repeats(s: &str) -> String {
 /// second copy's first word; the last word of each copy is lowercase (so "New York City New
 /// York City" stays). A middle word may be the pronoun "I" / "I'd" / "I'm" / "I've" / "I'll"
 /// (often capitalised). Only spaces/tabs between the words; a newline is a real sentence start.
-/// Prefers the longer (three-word) match when both could apply.
+///
+/// Four-word (ADR 0250): "we could just have We could just have", "What did they say What did
+/// they say". Same Cap-restart signature; two middle words may each be lowercase or an "I"
+/// pronoun. Prefers four- then three- then two- then one-word matches.
 ///
 /// One-word (ADR 0248): a contracted word with an apostrophe, restarted Cap ("it's It's",
 /// "don't Don't", "can't Can't"). The first copy starts lowercase (mid-sentence); the second
@@ -1988,7 +1991,43 @@ fn restart_phrase(s: &str) -> String {
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
     while i < spans.len() {
-        // Prefer three-word match when both could apply.
+        // Prefer four- then three- then two- then one-word when both could apply (ADR 0250).
+        if i + 7 < spans.len() {
+            let (a0, b0) = spans[i];
+            let (a1, b1) = spans[i + 1];
+            let (a2, b2) = spans[i + 2];
+            let (a3, b3) = spans[i + 3];
+            let (a4, b4) = spans[i + 4];
+            let (a5, b5) = spans[i + 5];
+            let (a6, b6) = spans[i + 6];
+            let (a7, b7) = spans[i + 7];
+            let ok4 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                && only_space_tab(b3, a4)
+                && only_space_tab(b4, a5)
+                && only_space_tab(b5, a6)
+                && only_space_tab(b6, a7)
+                && middle_ok(a1, b1)
+                && middle_ok(a2, b2)
+                && letters_lower(a3, b3)
+                && starts_upper(a4)
+                && middle_ok(a5, b5)
+                && middle_ok(a6, b6)
+                && starts_lower(a7)
+                && eq_ci(a0, b0, a4, b4)
+                && eq_ci(a1, b1, a5, b5)
+                && eq_ci(a2, b2, a6, b6)
+                && eq_ci(a3, b3, a7, b7);
+            if ok4 {
+                drop[i + 4] = true;
+                drop[i + 5] = true;
+                drop[i + 6] = true;
+                drop[i + 7] = true;
+                i += 8;
+                continue;
+            }
+        }
         if i + 5 < spans.len() {
             let (a0, b0) = spans[i];
             let (a1, b1) = spans[i + 1];

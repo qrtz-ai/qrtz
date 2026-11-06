@@ -2362,7 +2362,7 @@ function spokenTitles(t: string, dict: readonly DictionaryEntry[]): string {
   return out;
 }
 
-/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: mid-sentence restart phrase collapses to one copy. */
+/** ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250: mid-sentence restart phrase collapses to one copy. */
 function restartPhrase(s: string): string {
   const wordRe = /[A-Za-z]+(?:['\u2019][A-Za-z]+)*/g;
   const spans: { start: number; end: number; text: string }[] = [];
@@ -2384,6 +2384,46 @@ function restartPhrase(s: string): string {
   const drop = Array.from({ length: spans.length }, () => false);
   let i = 0;
   while (i < spans.length) {
+    // Prefer four- then three- then two- then one-word (ADR 0250).
+    if (i + 7 < spans.length) {
+      const [w0, w1, w2, w3, w4, w5, w6, w7] = [
+        spans[i],
+        spans[i + 1],
+        spans[i + 2],
+        spans[i + 3],
+        spans[i + 4],
+        spans[i + 5],
+        spans[i + 6],
+        spans[i + 7],
+      ];
+      const ok4 =
+        onlySpaceTab(w0.end, w1.start) &&
+        onlySpaceTab(w1.end, w2.start) &&
+        onlySpaceTab(w2.end, w3.start) &&
+        onlySpaceTab(w3.end, w4.start) &&
+        onlySpaceTab(w4.end, w5.start) &&
+        onlySpaceTab(w5.end, w6.start) &&
+        onlySpaceTab(w6.end, w7.start) &&
+        middleOk(w1.text) &&
+        middleOk(w2.text) &&
+        lettersLower(w3.text) &&
+        /^[A-Z]/.test(w4.text) &&
+        middleOk(w5.text) &&
+        middleOk(w6.text) &&
+        /^[a-z]/.test(w7.text) &&
+        w0.text.toLowerCase() === w4.text.toLowerCase() &&
+        w1.text.toLowerCase() === w5.text.toLowerCase() &&
+        w2.text.toLowerCase() === w6.text.toLowerCase() &&
+        w3.text.toLowerCase() === w7.text.toLowerCase();
+      if (ok4) {
+        drop[i + 4] = true;
+        drop[i + 5] = true;
+        drop[i + 6] = true;
+        drop[i + 7] = true;
+        i += 8;
+        continue;
+      }
+    }
     if (i + 5 < spans.length) {
       const [w0, w1, w2, w3, w4, w5] = [
         spans[i],
@@ -2526,7 +2566,7 @@ export function ruleCleanup(
       ? w
       : all,
   );
-  // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249: mid-sentence restart phrase (incl. it-before-It's).
+  // ADR 0246–0250: mid-sentence restart phrase (incl. four-word Cap and it-before-It's).
   t = restartPhrase(t);
   t = t.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n');
   t = t

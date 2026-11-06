@@ -110,7 +110,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_dangling_comma_marks(&old);
     // ADR 0242 (cycle 125): spoken list "comma"/"period" become marks.
     let old = with_spoken_list_punct(&old);
-    // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 (cycles 130–133): restart phrases (incl. it-before-It's) collapse.
+    // ADR 0246–0250 (cycles 130–134): restart phrases (incl. four-word Cap) collapse.
     let old = without_restart_phrase(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
@@ -135,7 +135,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0243 (cycle 126): so may ", right" / ", correct".
         // ADR 0244 (cycle 127): so may a lone "Right" / "Correct" sentence after a prior one.
         // ADR 0245 (cycle 128): sentence-initial filler clause — see candidates + unmarked below.
-        // ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 (cycles 130–133): restart phrases — see without_restart_phrase on old.
+        // ADR 0246–0250 (cycles 130–134): restart phrases — see without_restart_phrase on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -360,12 +360,13 @@ fn without_filler_marks(raw: &str) -> String {
     out.strip_prefix(' ').unwrap_or(&out).to_owned()
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249's restart-phrase edit, made on the text (written
-/// independently of cleanup.rs): a two- or three-word phrase immediately repeated with a Title-case
-/// first word on the second copy and a lowercase last word collapses to one copy. The first copy's
-/// first word may be Title case (ADR 0247); a three-word middle word may be the pronoun "I" / a
-/// contracted "I". ADR 0248: a one-word Cap restart of a contraction ("it's It's") also collapses.
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250's restart-phrase edit, made on the text
+/// (written independently of cleanup.rs): a two-, three-, or four-word phrase immediately repeated
+/// with a Title-case first word on the second copy and a lowercase last word collapses to one copy.
+/// The first copy's first word may be Title case (ADR 0247); middle words may be the pronoun "I" /
+/// a contracted "I". ADR 0248: a one-word Cap restart of a contraction ("it's It's") also collapses.
 /// ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form drops "it" and keeps Cap.
+/// ADR 0250: four-word Cap restarts ("we could just have We could just have").
 fn without_restart_phrase(s: &str) -> String {
     let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
     let spans: Vec<(usize, usize, String)> = word_re
@@ -390,6 +391,42 @@ fn without_restart_phrase(s: &str) -> String {
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
     while i < spans.len() {
+        if i + 7 < spans.len() {
+            let (_a0, b0, ref w0) = spans[i];
+            let (a1, b1, ref w1) = spans[i + 1];
+            let (a2, b2, ref w2) = spans[i + 2];
+            let (a3, b3, ref w3) = spans[i + 3];
+            let (a4, b4, ref w4) = spans[i + 4];
+            let (a5, b5, ref w5) = spans[i + 5];
+            let (a6, b6, ref w6) = spans[i + 6];
+            let (a7, _b7, ref w7) = spans[i + 7];
+            let ok4 = only_space_tab(b0, a1)
+                && only_space_tab(b1, a2)
+                && only_space_tab(b2, a3)
+                && only_space_tab(b3, a4)
+                && only_space_tab(b4, a5)
+                && only_space_tab(b5, a6)
+                && only_space_tab(b6, a7)
+                && middle_ok(w1)
+                && middle_ok(w2)
+                && letters_lower(w3)
+                && w4.starts_with(|c: char| c.is_ascii_uppercase())
+                && middle_ok(w5)
+                && middle_ok(w6)
+                && w7.starts_with(|c: char| c.is_ascii_lowercase())
+                && w0.eq_ignore_ascii_case(w4)
+                && w1.eq_ignore_ascii_case(w5)
+                && w2.eq_ignore_ascii_case(w6)
+                && w3.eq_ignore_ascii_case(w7);
+            if ok4 {
+                drop[i + 4] = true;
+                drop[i + 5] = true;
+                drop[i + 6] = true;
+                drop[i + 7] = true;
+                i += 8;
+                continue;
+            }
+        }
         if i + 5 < spans.len() {
             let (_a0, b0, ref w0) = spans[i];
             let (a1, b1, ref w1) = spans[i + 1];

@@ -3223,3 +3223,48 @@ evidence is clean.
 3. Refuse checks: "it it's not a big deal" stays both-lower; "It It's fine" stays (Cap It); "give it
    its due" stays; "hit It's the limit" stays; ADR 0248 "it's It's not correct" still collapses to
    one "it's".
+
+## 69. Cycle 134: four-word Cap-leading restart phrases (ADR 0250)
+
+| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 133, 288 cases                         | **285 / 288** | **39 chars (0.37 % of 10481)** | 0           | 0 / 592             |
+| this cycle, 296 cases (+8 four-word Cap)     | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
+
+- **Examples:** "Then we could just have We could just have our configuration" → "Then we could just
+  have our configuration."; "What did they say What did they say about the plan" → "What did they
+  say about the plan?"; "how do you want How do you want this laid out" → "How do you want this laid
+  out?". Kept: both-lower "we could just have we could just have", "New York City Hall New York City
+  Hall", "I don't know how I Don't know how", unequal "…have something We could just have…", prior
+  two-/three-word and Cap-contraction / it-before-It's keeps.
+- **Rejected this cycle:** ", okay" / ", yeah" / ", huh" / ", eh" / ", no"; "a An" (different lemma);
+  "why Why" / adding "why"|"is"|"on"|"like" to STUTTERS; "hold on, hold on" across a comma;
+  email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197
+  mic-switch; year ITN (k350).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: four-word Cap median **0.247 ms** (ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 133:** origin/main at `fc94964d` until this commit. Fresh Mac
+  history (prod 453, dev 378, +39 since cycle 133) surfaced "we could just have We could just have".
+  N197 and N203 stay open; p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / comma-separated
+phrase repeats until Cap-lemma or comma-restart evidence is clean.
+
+### Test on Jared's Mac (cycle 134)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "we could just have We could just have our configuration" (or dictate so Parakeet
+   restarts the four-word phrase with a capital) — it should type "We could just have our
+   configuration." (or "Then we could just have…" if you lead with Then). Then "What did they say
+   What did they say about the plan" → "What did they say about the plan?".
+3. Refuse checks: "we could just have we could just have our configuration" stays both-lower;
+   "New York City Hall New York City Hall is big." stays; ADR 0247 "I don't know I don't know how"
+   still collapses to one "I don't know"; ADR 0249 "it It's broken" still collapses to "It's broken".

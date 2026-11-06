@@ -358,4 +358,19 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     );
     assert!(!out.contains("it It's"), "{out}");
     assert_fits_budget(&text, " with it-before-It's restarts");
+    // ADR 0250: four-word Cap restart phrases on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(
+            " Please keep item{i} we could just have We could just have a row"
+        ));
+    }
+    body.push_str(". And then What did they say What did they say about it");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("we could just have a row"), "{out}");
+    assert!(out.contains("What did they say about it"), "{out}");
+    assert!(!out.contains("We could just have We could just have"), "{out}");
+    assert!(!out.contains("What did they say What did they say"), "{out}");
+    assert_fits_budget(&text, " with four-word Cap restart phrases");
 }
