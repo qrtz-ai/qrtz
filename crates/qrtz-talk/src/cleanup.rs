@@ -2402,7 +2402,7 @@ fn unmarked_question(t: &str) -> bool {
 /// the recogniser ended it with is dropped only when it is a clean sentence end (not "p.m.", "etc.", "..."). ADR 0196:
 /// the mark added is "?" when the last sentence can only be a question ([`unmarked_question`]). ADR 0206: also when it
 /// is "Hey <dictionary name> <question>" ([`vocative_question`]), with a comma after the name. ADR 0227: also when it
-/// ends in a tag question ([`tag_question`]: "..., isn't it").
+/// ends in a tag question ([`tag_question`]: "..., isn't it", "..., right").
 fn terminal_punctuation(mut t: String, dict: &[DictionaryEntry]) -> String {
     if is_short_list(&t) {
         if t.ends_with('.') && clean_sentence_end(&t) {
@@ -2588,10 +2588,10 @@ fn vocative_question(t: &str, dict: &[DictionaryEntry]) -> Option<usize> {
 
 /// ADR 0227: a tag question's tag, the closed list: a negative contraction and the pronouns it takes as a tag ("It's a
 /// nice day, isn't it", "You sent it, didn't you", "There's time, isn't there", "I was right, wasn't I"). Agreement
-/// is checked, so "isn't they" or "don't it" refuse. Left out: positive tags ("is it", "do you", "will you": a
-/// cut-off question start or "Close the door, will you" need their own evidence), "shan't" and "ain't" (thin
-/// evidence), "amn't", and "this" / "that" ("isn't that" is as often an unfinished "isn't that the one"). Same table
-/// in cleanup.ts.
+/// is checked, so "isn't they" or "don't it" refuse. Left out: inverted positive tags ("is it", "do you", "will you":
+/// a cut-off question start or "Close the door, will you" need their own evidence), "shan't" and "ain't" (thin
+/// evidence), "amn't", and "this" / "that" ("isn't that" is as often an unfinished "isn't that the one"). Confirmation
+/// tags (", right" / ", correct") are ADR 0243. Same table in cleanup.ts.
 pub const TAG_QUESTIONS: &[(&str, &[&str])] = &[
     ("isn't", &["he", "she", "it", "there"]),
     ("wasn't", &["he", "she", "it", "there", "I"]),
@@ -2621,11 +2621,12 @@ const TAG_THIRD_WORDS: &[(&str, &[&str])] = &[
     ("wouldn't", &["think", "agree", "say"]),
 ];
 
-/// ADR 0227: does the dictation end in a tag question with no mark of its own? Called only where a "." would be
-/// added and [`unmarked_question`] and [`vocative_question`] said no. The last sentence ends in ", " then exactly one
-/// [`TAG_QUESTIONS`] pair (or a [`TAG_THIRD_WORDS`] form after "you"), written as the recogniser writes a tag mid-sentence:
-/// the contraction lowercase (ASCII or curly apostrophe), the pronoun lowercase or "I"; with at least one word
-/// before the comma, and no `; : " ( )` in the sentence. Short dictations (≤ 3 words) never get here (ADR 0101).
+/// ADR 0227 / 0229 / 0243: does the dictation end in a tag question with no mark of its own? Called only where a "."
+/// would be added and [`unmarked_question`] and [`vocative_question`] said no. The last sentence ends in ", " then
+/// exactly one [`TAG_QUESTIONS`] pair (or a [`TAG_THIRD_WORDS`] form after "you"), an [`IMPERATIVE_TAGS`] form, or a
+/// [`CONFIRMATION_TAGS`] word ("right" / "correct"), written as the recogniser writes a tag mid-sentence: the
+/// contraction lowercase (ASCII or curly apostrophe), the pronoun lowercase or "I"; with at least one word before the
+/// comma, and no `; : " ( )` in the sentence. Short dictations (≤ 3 words) never get here (ADR 0101).
 fn tag_question(t: &str) -> bool {
     let s = &t[last_sentence_start(t)..];
     if s.contains([';', ':', '"', '(', ')']) {
@@ -2641,6 +2642,10 @@ fn tag_question(t: &str) -> bool {
         .split_whitespace()
         .map(|w| w.replace('\u{2019}', "'"))
         .collect();
+    // ADR 0243: "That works for me, right" / "You mean this one, correct".
+    if let [w] = tag.as_slice() {
+        return confirmation_tag(&s[..comma], w);
+    }
     let (aux, pronoun, third) = match tag.as_slice() {
         [a, p] => (a, p, None),
         [a, p, x] => (a, p, Some(x)),
@@ -2660,6 +2665,45 @@ fn tag_question(t: &str) -> bool {
                 .any(|(a, xs)| a == aux && xs.contains(&x.as_str()))
     });
     agrees && third_ok
+}
+
+/// ADR 0243: confirmation tags that ask without an inverted auxiliary ("That works for me, right", "You mean this
+/// one, correct"). Closed list; lowercase only (as the recogniser writes a mid-sentence tag). Same list in cleanup.ts.
+pub const CONFIRMATION_TAGS: &[&str] = &["right", "correct"];
+
+/// ADR 0243: if the word right before the tag comma is one of these, ", right" is a direction list item ("Go up, down,
+/// left, right"), not a confirmation tag. "the one on the left, right" is left out this cycle (would need its own keep
+/// set). Same list in cleanup.ts.
+const CONFIRMATION_NOT_BEFORE: &[&str] = &[
+    "left",
+    "right",
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west",
+    "forward",
+    "back",
+    "backwards",
+    "forwards",
+    "port",
+    "starboard",
+];
+
+/// ADR 0243: does `head` (the last sentence up to its last comma) end in a non-direction word, with `word` one of
+/// [`CONFIRMATION_TAGS`]?
+fn confirmation_tag(head: &str, word: &str) -> bool {
+    if !CONFIRMATION_TAGS.contains(&word) {
+        return false;
+    }
+    let Some(prev) = head.split_whitespace().last() else {
+        return false;
+    };
+    let prev = prev
+        .trim_matches(|c: char| matches!(c, ',' | '.' | '!' | '?' | ';' | ':'))
+        .to_ascii_lowercase();
+    !CONFIRMATION_NOT_BEFORE.contains(&prev.as_str())
 }
 
 /// ADR 0229: the positive tags an imperative takes, by the word its sentence opens with: "Let's grab lunch, shall

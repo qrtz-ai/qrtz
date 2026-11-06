@@ -122,11 +122,13 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         QUESTION_OPENERS.contains(&w.trim_end_matches(',').to_ascii_lowercase().as_str())
                     })
         });
+        // ADR 0243 (cycle 126): so may ", right" / ", correct".
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && body.rsplit_once(", ").is_some_and(|(_, t)| {
                     let w: Vec<&str> = t.split(' ').collect();
-                    (2..=3).contains(&w.len()) && (w[0].ends_with("n't") || w[0].ends_with("n\u{2019}t"))
+                    ((2..=3).contains(&w.len()) && (w[0].ends_with("n't") || w[0].ends_with("n\u{2019}t")))
+                        || (w.len() == 1 && matches!(w[0], "right" | "correct"))
                 })
         });
         let imperative = old.strip_suffix('.').is_some_and(|body| {

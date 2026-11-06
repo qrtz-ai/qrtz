@@ -776,8 +776,40 @@ function imperativeTag(head: string, aux: string, pronoun: string): boolean {
   );
 }
 
-/** ADR 0227: does the dictation end in an unmarked tag question ("..., isn't it")? Same checks as cleanup.rs
- * tag_question. */
+/** ADR 0243: confirmation tags that ask without an inverted auxiliary. Same as cleanup.rs CONFIRMATION_TAGS. */
+export const CONFIRMATION_TAGS = ['right', 'correct'] as const;
+
+/** ADR 0243: direction words that refuse a confirmation tag when they sit right before the comma. Same as cleanup.rs
+ * CONFIRMATION_NOT_BEFORE. */
+const CONFIRMATION_NOT_BEFORE = [
+  'left',
+  'right',
+  'up',
+  'down',
+  'north',
+  'south',
+  'east',
+  'west',
+  'forward',
+  'back',
+  'backwards',
+  'forwards',
+  'port',
+  'starboard',
+] as const;
+
+/** ADR 0243: does `head` end in a non-direction word, with `word` one of CONFIRMATION_TAGS? Same as cleanup.rs
+ * confirmation_tag. */
+function confirmationTag(head: string, word: string): boolean {
+  if (!(CONFIRMATION_TAGS as readonly string[]).includes(word)) return false;
+  const parts = head.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return false;
+  const prev = parts[parts.length - 1].replace(/[,.!?]+$/g, '').toLowerCase();
+  return !(CONFIRMATION_NOT_BEFORE as readonly string[]).includes(prev);
+}
+
+/** ADR 0227 / 0229 / 0243: does the dictation end in an unmarked tag question ("..., isn't it", "..., right")? Same
+ * checks as cleanup.rs tag_question. */
 function tagQuestion(t: string): boolean {
   const line = t.lastIndexOf('\n') + 1;
   let start = line;
@@ -793,6 +825,8 @@ function tagQuestion(t: string): boolean {
     .split(/\s+/)
     .filter(Boolean)
     .map((w) => w.replaceAll('\u2019', "'"));
+  // ADR 0243: "That works for me, right" / "You mean this one, correct".
+  if (tag.length === 1) return confirmationTag(s.slice(0, comma), tag[0]);
   if (tag.length !== 2 && tag.length !== 3) return false;
   const [aux, pronoun, third] = tag;
   // ADR 0229: "Let's grab lunch, shall we" / "Please close the door, will you".

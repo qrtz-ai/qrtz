@@ -271,4 +271,15 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(out.contains("item0, item1,"), "{out}");
     assert!(out.ends_with("and item39."), "{out}");
     assert_fits_budget(&text, " with a long spoken list tail");
+    // ADR 0243: many confirmation tags so tag_question's one-word path runs on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" That works for item{i}, right"));
+    }
+    body.push_str(" You mean this one, correct");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.ends_with("correct?"), "{out}");
+    assert!(out.matches("right").count() >= 40, "{out}");
+    assert_fits_budget(&text, " with confirmation tags");
 }

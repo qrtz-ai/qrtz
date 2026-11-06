@@ -1,5 +1,22 @@
 # Hardening log
 
+## 2026-11-06 — Cycle 126 (≈8:25–9:05 PT, polish): unmarked ", right" / ", correct" ends with "?" (ADR 0243)
+
+- **Focus:** polish. origin/main at `b4a206c6` (cycle 125 / ADR 0242). Mac online; prod+dev talk history (453+258)
+  re-scanned for confirmation tags. Many ", right?" and one ", correct?" already marked by Parakeet; unmarked form
+  was getting "." from terminal_punctuation.
+- **Landed:** "That works for me, right" → "That works for me, right?"; "You mean this one, correct" → "…, correct?".
+  Direction lists ("Please turn left, right", "Go up, down, left, right") keep ".". Rust + TS twin, polish +8,
+  keep +14, cleanup.json, hardening126 + hardening60 oracle, cleanup_budget +1 text.
+- **Scores:** polish set 225 / 228, 39 chars → **233 / 236**, 39 chars (0.46 % of 8422), regressions 0; keep set 0 hits of 527.
+- **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no"; capitalized ", Right"; "the one on the left, right";
+  changing a mark Parakeet wrote; inverted positive tags; year ITN; email/URL ITN; p41; unload; N203 (still no
+  free-relative false "?" in history); N197 (Mac disk ~7 GB, tauri/vitest up — skipped mic switch).
+- **Suites:** qrtz-talk full suite (incl. `no_model_names_in_the_crate`); vitest talk twin; Note quick check;
+  `cargo fmt -p qrtz-talk --check`; `bun run lint`.
+- **Latency:** release cleanup_budget medians on the box: 495 words 0.123 ms; confirmation-tag text (700 words) **0.197 ms**; all under 2 ms.
+- **Box:** shared target `/workspace/qrtz-core2/target`; worktree `/workspace/qrtz-echo-wt-126`.
+
 ## 2026-11-06 — Cycle 125 (≈7:39–8:05 PT, polish): spoken list "comma"/"period" become marks (ADR 0242)
 
 - **Focus:** polish. origin/main still `77b4e922` (0.4.5 / cycle 88). Mac online; `echo-bench` on TTS spoken-list
@@ -16,7 +33,6 @@
 - **Latency:** release cleanup_budget medians on the box: 495 words 0.127 ms; spoken-list 0.146 ms; long list tail
   0.166 ms; all under 2 ms.
 - **Box:** shared target `/workspace/qrtz-core2/target`; worktree `/workspace/qrtz-echo-wt-125`.
-
 
 ## 2026-11-05 — Cycle 88 (≈11:25–11:40 PT, polish): a comma before a sentence mark is dropped (ADR 0241, QRT-265)
 
