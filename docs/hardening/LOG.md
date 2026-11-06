@@ -10,7 +10,7 @@
 - **Rejected:** ", okay"/", yeah"/", huh"/", eh"/", no" wideners (no unmarked end hit); email/URL ITN; p41; unload;
   N203 (still no free-relative false "?" in history); N197 (Mac disk ~6.2 GB — skipped mic switch).
 - **Latency:** release `cleanup_budget` filler-clause median **0.216 ms** (495-word baseline ~0.14 ms); ceiling 2 ms.
-- **SHA:** _(filled after push)_
+- **SHA:** `b344c95b`
 
 ## 2026-11-06 — Cycle 127 (≈8:49–9:05 PT, polish): a confirmation sentence "…. Right" / "…. Correct" ends with "?" (ADR 0244)
 
