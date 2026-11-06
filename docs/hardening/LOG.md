@@ -1,3 +1,17 @@
+## 2026-11-06 — Cycle 137 (≈1:57–2:20 PM PT, polish): triple+ "on" / "like" stutter collapses (ADR 0253)
+
+- **Focus:** polish. origin/main at `aed2acad` (cycle 136 / ADR 0252). Mac online; prod+dev talk history (453+424).
+- **Landed:** extend `TRIPLE_STUTTERS` / `collapses` / TS REPEATS — a run of 3+ space/tab-separated "on" or "like"
+  (any case) collapses to the first copy (ADR 0253; same allowlist as ADR 0251's "are"). Doubles stay; never across
+  commas; not added to STUTTERS. Rust + TS twin, polish +8, keep +8, cleanup.json, hardening137 + hardening60 oracle,
+  cleanup_budget +1 text.
+- **Scores:** polish 309/312 → **317/320** exact, edit distance 39 (0.34 % of 11490), regressions 0; keep 0/624.
+- **Rejected:** Cap Cap "So So" (k581); "so"/"on"/"like"/"is"/"why" into STUTTERS; lowercase multi-word restarts;
+  em-dash Cap-restart (0 hits); ", okay"/", yeah"/", huh"/", eh"/", no"; email/URL ITN; p41; unload; N203; N197;
+  year ITN; five-word Cap; general triple-any-word.
+- **Latency:** release `cleanup_budget` triple on/like median **0.348 ms** (1264-word; ceiling 2 ms).
+- **SHA:** code `a8a6d784`; docs `DOCSSHA`
+
 ## 2026-11-06 — Cycle 136 (≈1:26–1:45 PM PT, polish): Cap-restart phrases across an ellipsis collapse (ADR 0252)
 
 - **Focus:** polish. origin/main at `c9c83656` (cycle 135 / ADR 0251). Mac online; prod+dev talk history (453+406;

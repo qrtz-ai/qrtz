@@ -3226,10 +3226,10 @@ evidence is clean.
 
 ## 69. Cycle 134: four-word Cap-leading restart phrases (ADR 0250)
 
-| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 133, 288 cases                         | **285 / 288** | **39 chars (0.37 % of 10481)** | 0           | 0 / 592             |
-| this cycle, 296 cases (+8 four-word Cap)     | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
+| Run                                      | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ---------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 133, 288 cases                     | **285 / 288** | **39 chars (0.37 % of 10481)** | 0           | 0 / 592             |
+| this cycle, 296 cases (+8 four-word Cap) | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
 
 - **Examples:** "Then we could just have We could just have our configuration" → "Then we could just
   have our configuration."; "What did they say What did they say about the plan" → "What did they
@@ -3271,10 +3271,10 @@ phrase repeats until Cap-lemma or comma-restart evidence is clean.
 
 ## 70. Cycle 135: triple+ "are" stutter collapses (ADR 0251)
 
-| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 134, 296 cases                         | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
-| this cycle, 304 cases (+8 triple are)        | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
+| Run                                   | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 134, 296 cases                  | **293 / 296** | **39 chars (0.36 % of 10751)** | 0           | 0 / 600             |
+| this cycle, 304 cases (+8 triple are) | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
 
 - **Examples:** "Are are are we always fetching on hover" → "Are we always fetching on hover?"; "we
   are are are going tomorrow" → "We are going tomorrow."; "Are are are are we done yet today" →
@@ -3315,13 +3315,12 @@ to STUTTERS.
    could just have" still collapses; ADR 0248 "it's It's" still collapses; "the the the cat" still
    collapses via STUTTERS.
 
-
 ## 71. Cycle 136: Cap-restart phrases across an ellipsis collapse (ADR 0252)
 
-| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 135, 304 cases                         | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
-| this cycle, 312 cases (+8 ellipsis Cap)      | **309 / 312** | **39 chars (0.35 % of 11244)** | 0           | 0 / 616             |
+| Run                                     | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| --------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 135, 304 cases                    | **301 / 304** | **39 chars (0.36 % of 10972)** | 0           | 0 / 608             |
+| this cycle, 312 cases (+8 ellipsis Cap) | **309 / 312** | **39 chars (0.35 % of 11244)** | 0           | 0 / 616             |
 
 - **Examples:** "I don't really... I don't really like this" → "I don't really like this."; "Can
   you... Can you host the prototype on a server" → "Can you host the prototype on a server?"; "we
@@ -3364,3 +3363,48 @@ from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" /
    really like this" (single period) stays; "new york... New York" stays; "scratch that... Scratch
    that" stays; ADR 0251 "Are are are we always fetching on hover" still collapses; ADR 0250 "we
    could just have We could just have" still collapses.
+
+## 72. Cycle 137: triple+ "on" / "like" stutter collapses (ADR 0253)
+
+| Run                                       | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ----------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 136, 312 cases                      | **309 / 312** | **39 chars (0.35 % of 11244)** | 0           | 0 / 616             |
+| this cycle, 320 cases (+8 on/like triple) | **317 / 320** | **39 chars (0.34 % of 11490)** | 0           | 0 / 624             |
+
+- **Examples:** "on on On the replay modal" → "On the replay modal."; "turn it on on on Friday please" →
+  "Turn it on Friday please."; "like like like to ping an API" → "Like to ping an API."; "easiest for you to
+  like like uh like to ping" → "Easiest for you to like to ping.". Kept: "turn it on on Friday please", "I was
+  like like whatever about it", "like Like it or not we still ship today", "like a like a smooth fade across
+  the board", "on, on the other hand we wait today", "why Why did we make a new Thing", prior ADR 0251
+  are-double keeps.
+- **Rejected this cycle:** Cap Cap "So So" (keep k581); adding "so"/"on"/"like"/"is"/"why" to STUTTERS;
+  lowercase multi-word restarts ("the starting deck the starting deck", "what's it what's it" — ADR 0247);
+  em-dash Cap-restart (0 history hits); ", okay" / ", yeah" / ", huh" / ", eh" / ", no"; email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN
+  (k350); five-word Cap restart; general triple-any-word (breaks "No no no" / "yeah yeah yeah").
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: triple on/like median **0.348 ms** (1264-word probe;
+  ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 136:** origin/main at `aed2acad` until this commit. Fresh Mac history
+  hit "on on On the replay modal" and post-filler "like like like to ping". N197 and N203 stay open;
+  p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / "is Is" /
+"there's a so there's a" / lowercase multi-word restarts until Cap-lemma or Cap-second evidence is
+clean. Do not add "are"/"is"/"on"/"like"/"why"/"so" to STUTTERS.
+
+### Test on Jared's Mac (cycle 137)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and say "on on on the replay modal" (or dictate so Parakeet stutters "on" three times) — it
+   should type "On the replay modal." Then "like like like to ping an API" → "Like to ping an API."
+3. Refuse checks: "turn it on on Friday please" stays as a double; "I was like like whatever about it"
+   stays; "like Like it or not" stays; ADR 0251 "Are are are we always fetching on hover" still
+   collapses; ADR 0252 "I don't really... I don't really like this" still collapses.
