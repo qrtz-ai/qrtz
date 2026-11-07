@@ -13,7 +13,7 @@
   one-word STUTTERS period; Cap Cap contraction across period ("I'm. I'm").
 - **Latency:** release `cleanup_budget` contraction-headed median **0.464 ms** (1226-word; ceiling 2 ms).
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
-- **SHA:**  (code),  (ADR)
+- **SHA:** `ed22c3db` (code), `e58b12b5` (ADR), `4a0fc5ba` (LOG/tuning)
 
 ## 2026-11-06 — Cycle 140 (≈3:55–4:30 PM PT, polish): Cap-then-lower / both-lower across a period (ADR 0256)
 
