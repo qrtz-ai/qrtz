@@ -5,7 +5,7 @@
 - **Polish:** 373/380 → **377/380** exact, edit distance 64 → **39** (0.28 % of 13716), regressions **0**, keep **0/689**.
 - **Latency:** release `cleanup_budget` lowercase-than median **0.82–0.86 ms** (935-word probe; ceiling 2 ms); 495-word median 0.457 ms (0.468 ms before).
 - **Rejected:** content-word doubles ("every every", "make make", "edge edge"); "it it's"; "hold on, hold on"; "a An"; "So So"; "is Is" / "why Why" / "like Like"; mid-sentence "..." Cap continuation; email/URL ITN; p41; unload; N203; N197; year ITN.
-- **SHAs:** code `TBD`, docs `TBD`
+- **SHAs:** code `d2585835`, docs `fdf475ce`
 
 ## 2026-11-06 — Cycle 145 (≈6:48–7:00 PM PT, polish): Cap Cap pronoun "I" across a period (ADR 0260)
 
