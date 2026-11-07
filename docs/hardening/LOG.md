@@ -1,3 +1,19 @@
+## 2026-11-06 — Cycle 142 (≈5:19–5:40 PT, polish): Cap Cap verbal contraction across a period (ADR 0258)
+
+- **Focus:** polish. origin/main at `6b44f54d` (cycle 141 / ADR 0257). Mac online; prod+dev talk history (453+443).
+- **Landed:** Cap Cap one-word verbal contraction across a single period — "Like, I'm. I'm a senior…" →
+  "Like, I'm a senior…"; verbal-contraction filter refuses O'Brien / Bob's / So. So. Rust + TS twin,
+  polish +8, keep +10, cleanup.json, hardening142 + hardening60 oracle, cleanup_budget +1 text.
+- **Scores:** polish 349/352 → **357/360** exact, edit distance 39 (0.30 % of 12854), regressions 0; keep 0/666.
+- **Rejected:** Cap Cap non-contraction across period; Cap Cap contraction across spaces/ellipsis; Cap Cap
+  "So So" / "Where where"; "a An"; adding are/is/on/like/why/so/where to STUTTERS; "hold on, hold on";
+  content doubles; both-lower one-word contractions; bare "it it's"; email/URL ITN; p41; unload; N203;
+  N197; year ITN; five-word Cap; general triple-any-word; ", okay" without unmarked evidence; one-word
+  STUTTERS across a period.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` Cap Cap period median **0.474 ms** (1106-word; ceiling 2 ms).
+- **SHA:** (fill after push)
+
 ## 2026-11-06 — Cycle 141 (≈4:47–5:10 PM PT, polish): both-lower contraction-headed MW restart (ADR 0257)
 
 - **Focus:** polish. origin/main at `00993647` (cycle 140 / ADR 0256). Mac online; prod+dev talk history (453+443).

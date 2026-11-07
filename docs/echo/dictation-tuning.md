@@ -3608,3 +3608,55 @@ STUTTERS across a period / bare "it it's" / "hold on, hold on" until evidence is
    after sentence cap; "it's it's ready" stays; Cap Cap "Can you Can you host…" still collapses;
    ADR 0256 "should be. should be …" still collapses; ADR 0255 "Is that is that one good" still
    collapses; ADR 0254 "What's what's the meeting pass code" still collapses.
+
+## 77. Cycle 142: Cap Cap verbal contraction across a period (ADR 0258)
+
+| Run                                                   | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ----------------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 141, 352 cases                                  | **349 / 352** | **39 chars (0.31 % of 12582)** | 0           | 0 / 656             |
+| this cycle, 360 cases (+8 Cap Cap period contraction) | **357 / 360** | **39 chars (TBD %)**           | 0           | 0 / 666             |
+
+- **Examples:** "Like, I'm. I'm a senior engineer now today" → "Like, I'm a senior engineer now
+  today."; "It's. It's the top two things today" → "It's the top two things today."; "Don't. Don't
+  push that change today" → "Don't push that change today."; "What's. What's the meeting pass code
+  today" → "What's the meeting pass code today?". Kept: "I will go. I will go tomorrow…", "I'm
+  I'm…", "I'm... I'm…", "It's It's…", "So. So…", "Yes. Yes…", "I. I…", "O'Brien. O'Brien…",
+  "Bob's. Bob's…", "Where. Where…".
+- **Rejected this cycle:** Cap Cap non-contraction across period; Cap Cap contraction across
+  spaces/ellipsis; Cap Cap "So So" / "Where where"; "a An"; adding are/is/on/like/why/so/where to
+  STUTTERS; "hold on, hold on" across a comma; content-word doubles; both-lower one-word
+  contractions; bare "it it's" (ADR 0249 missed-comma risk); email/URL ITN (p19/p20, ADR 0223);
+  p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN (k350);
+  five-word Cap restart; general triple-any-word; ", okay"/, yeah/, huh/, eh/, no without unmarked
+  evidence; one-word STUTTERS across a period.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap Cap period median **0.474 ms**
+  (1106-word probe; ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 141:** origin/main at `6b44f54d` until this commit. Fresh Mac
+  history (prod 453, dev 443) hit `I'm. I'm a senior engineer` after Cap-aware cleanup. N197 and
+  N203 stay open; p19/p20/p41 still failing. Ranked findings: fixed Cap Cap period verbal
+  contraction restart; still open spoken email/URL ITN, don't-retry, mic-switch, speculative "?".
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation. Defer "a An" / "why Why" / "is Is" / Cap Cap "So So" / "Where where"
+/ one-word STUTTERS across a period / bare "it it's" / "hold on, hold on" until evidence is clean.
+Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTTERS. Cap Cap contraction across
+spaces/ellipsis stays refused.
+
+### Test on Jared's Mac (cycle 142)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate so Parakeet writes a Cap Cap contraction across a period: "I'm. I'm a senior
+   engineer" — it should type a single "I'm a senior engineer". Then "Don't. Don't push that" →
+   "Don't push that."
+3. Refuse checks: "I will go. I will go tomorrow" stays; "I'm I'm a senior" stays; "I'm... I'm a
+   senior" stays; "So. So we should ship" stays; "O'Brien. O'Brien said yes" stays; ADR 0257
+   "what's it what's it return" still collapses; ADR 0256 "should be. should be …" still collapses;
+   ADR 0254 "What's what's the meeting pass code" still collapses.
