@@ -12,7 +12,7 @@
   five-word Cap; general triple-any-word; ", okay" without unmarked evidence; one-word STUTTERS across a period.
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
 - **Latency:** release `cleanup_budget` Cap Cap MW period median **0.830 ms** (1186-word; ceiling 2 ms).
-- **SHA:** code `d70e3428`, ADR `d1a9c15e`, LOG/tuning TBD
+- **SHA:** code `d70e3428`, ADR `d1a9c15e`, LOG/tuning 
 
 ## 2026-11-06 — Cycle 142 (≈5:19–5:40 PT, polish): Cap Cap verbal contraction across a period (ADR 0258)
 
