@@ -3510,10 +3510,10 @@ evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTT
 
 ## 75. Cycle 140: Cap-then-lower / both-lower restart phrases across a period (ADR 0256)
 
-| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 139, 336 cases                         | **333 / 336** | **39 chars (0.32 % of 12036)** | 0           | 0 / 640             |
-| this cycle, 344 cases (+8 period-gap)        | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
+| Run                                   | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 139, 336 cases                  | **333 / 336** | **39 chars (0.32 % of 12036)** | 0           | 0 / 640             |
+| this cycle, 344 cases (+8 period-gap) | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
 
 - **Examples:** "And then the output should be. should be a simple lightweight React animation today" →
   "And then the output should be a simple lightweight React animation today."; "Thank you. thank you for
@@ -3556,3 +3556,56 @@ to STUTTERS.
    simple path" stays; "is that is that one good" stays both-lower after sentence cap; Cap Cap
    "Can you Can you host…" still collapses; ADR 0255 "Is that is that one good" still collapses;
    ADR 0254 "What's what's the meeting pass code" still collapses.
+
+## 76. Cycle 141: both-lower contraction-headed multi-word restart (ADR 0257)
+
+| Run                                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 140, 344 cases                                         | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
+| this cycle, 352 cases (+8 contraction-headed both-lower MW)  | **349 / 352** | **39 chars (0.31 % of 12582)** | 0           | 0 / 656             |
+
+- **Examples:** "Does a set timeout return a variable or what's it what's it return today" →
+  "Does a set timeout return a variable or what's it return today."; "don't know don't know the
+  answer today" → "Don't know the answer today."; "how's it how's it going for you today" →
+  "How's it going for you today?"; "what's it... what's it return today" → "What's it return
+  today?". Kept: "like a like a simple path today", "for the for the team meeting today",
+  "is that is that one good today", "what are the what are the options today", "it's it's ready
+  for review today", "don't don't push that change today".
+- **Rejected this cycle:** Cap Cap across period; Cap Cap "So So" / "Where where"; "a An"; adding
+  are/is/on/like/why/so/where to STUTTERS; "hold on, hold on" across a comma; content-word doubles;
+  both-lower one-word contractions; bare "it it's" (ADR 0249 missed-comma risk); email/URL ITN
+  (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch;
+  year ITN (k350); five-word Cap restart; general triple-any-word; ", okay"/, yeah/, huh/, eh/, no
+  without unmarked evidence; one-word STUTTERS across a period; Cap Cap contraction across period
+  (`I'm. I'm`).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: contraction-headed median **0.464 ms**
+  (1226-word probe; ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass,
+  insert unchanged.
+- **Dictation path review since cycle 140:** origin/main at `00993647` until this commit. Fresh Mac
+  history (prod 453, dev 443) hit `what's it what's it return` after Cap-aware cleanup. N197 and
+  N203 stay open; p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Cap Cap contraction across a period
+(`I'm. I'm`) only with its own keep set. Widen confirmation tags (", okay") only from a real
+unmarked dictation. Defer "a An" / "why Why" / "is Is" / Cap Cap "So So" / "Where where" / one-word
+STUTTERS across a period / bare "it it's" / "hold on, hold on" until evidence is clean. Do not add
+"are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTTERS.
+
+### Test on Jared's Mac (cycle 141)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate so Parakeet writes a both-lower contraction restart: "what's it what's it
+   return" — it should type a single "what's it return". Then "don't know don't know the answer" →
+   "Don't know the answer."
+3. Refuse checks: "like a like a simple path" stays; "is that is that one good" stays both-lower
+   after sentence cap; "it's it's ready" stays; Cap Cap "Can you Can you host…" still collapses;
+   ADR 0256 "should be. should be …" still collapses; ADR 0255 "Is that is that one good" still
+   collapses; ADR 0254 "What's what's the meeting pass code" still collapses.
+

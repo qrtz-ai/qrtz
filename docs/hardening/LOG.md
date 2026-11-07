@@ -1,3 +1,20 @@
+## 2026-11-06 — Cycle 141 (≈4:47–5:10 PM PT, polish): both-lower contraction-headed MW restart (ADR 0257)
+
+- **Focus:** polish. origin/main at `00993647` (cycle 140 / ADR 0256). Mac online; prod+dev talk history (453+443).
+- **Landed:** both-lower multi-word (2/3/4) also collapses across spaces/ellipsis when the first word of each
+  copy contains an apostrophe (contraction-headed). Period-gap both-lower (0256) unchanged. Space-only
+  non-contraction and both-lower one-word contractions stay. k638 retargeted to non-contraction
+  `what are the what are the`. Rust + TS twin, polish +8, keep +8, cleanup.json, hardening141 +
+  hardening139/60, cleanup_budget +1 text.
+- **Scores:** polish 341/344 → **349/352** exact, edit distance 39 (0.31 % of 12582), regressions 0; keep 0/656.
+- **Rejected:** Cap Cap across period; Cap Cap "So So" / "Where where"; "a An"; STUTTERS wideners;
+  "hold on, hold on"; content-word doubles; both-lower one-word contractions; "it it's" (ADR 0249);
+  email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap; general triple-any-word; ", okay";
+  one-word STUTTERS period; Cap Cap contraction across period ("I'm. I'm").
+- **Latency:** release `cleanup_budget` contraction-headed median **0.464 ms** (1226-word; ceiling 2 ms).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
+- **SHA:**  (code),  (ADR)
+
 ## 2026-11-06 — Cycle 140 (≈3:55–4:30 PM PT, polish): Cap-then-lower / both-lower across a period (ADR 0256)
 
 - **Focus:** polish. origin/main at `e9def823` (cycle 139 / ADR 0255). Mac online; prod+dev talk history (453+443).
