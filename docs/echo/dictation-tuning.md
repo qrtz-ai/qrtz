@@ -3557,6 +3557,59 @@ to STUTTERS.
    "Can you Can you host…" still collapses; ADR 0255 "Is that is that one good" still collapses;
    ADR 0254 "What's what's the meeting pass code" still collapses.
 
+## 78. Cycle 143: Cap Cap multi-word verbal across a period (ADR 0259)
+
+| Run                                                 | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| --------------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 142, 360 cases                                | **357 / 360** | **39 chars (0.30 % of 12854)** | 0           | 0 / 666             |
+| this cycle, 368 cases (+8 Cap Cap MW period verbal) | **365 / 368** | **39 chars (0.30 % of 13151)** | 0           | 0 / 674             |
+
+- **Examples:** "I don't. I don't know how to do all this stuff today" → "I don't know how to do
+  all this stuff today."; "you can't. You can't ship that without tests today" → "You can't ship
+  that without tests today."; "I don't really. I don't really like this idea today" → "I don't
+  really like this idea today."; "What's the. What's the meeting pass code today" → "What's the
+  meeting pass code today?". Kept: "I will go. I will go…", "I talk. I talk…", "I'm I'm…",
+  "I'm... I'm…", "So. So…".
+- **Rejected this cycle:** Cap Cap MW without verbal across period; Cap Cap contraction across
+  spaces/ellipsis; Cap Cap "So So" / "Where where"; "a An"; adding are/is/on/like/why/so/where to
+  STUTTERS; "hold on, hold on" across a comma; content-word doubles; both-lower one-word
+  contractions; bare "it it's" (ADR 0249 missed-comma risk); email/URL ITN (p19/p20, ADR 0223);
+  p41 (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN (k350);
+  five-word Cap restart; general triple-any-word; ", okay"/, yeah/, huh/, eh/, no without unmarked
+  evidence; one-word STUTTERS across a period.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap Cap MW period median **0.830 ms**
+  (1186-word probe; ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 142:** origin/main at `e6cdbfda` until this commit. Fresh Mac
+  history (prod 453, dev 443) hit `I don't. I don't know how…` and `you can't. You can't…` after
+  Cap Cap one-word cleanup. N197 and N203 stay open; p19/p20/p41 still failing. Ranked findings:
+  fixed Cap Cap MW period verbal restart; still open spoken email/URL ITN, don't-retry, mic-switch,
+  speculative "?".
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation. Defer Cap Cap MW without verbal across period / Cap Cap "So So" /
+"Where where" / one-word STUTTERS across a period / bare "it it's" / "hold on, hold on" until
+evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTTERS. Cap Cap
+contraction across spaces/ellipsis stays refused.
+
+### Test on Jared's Mac (cycle 143)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate so Parakeet writes a Cap Cap MW verbal across a period: "I don't. I don't
+   know how" — it should type a single "I don't know how". Then "You can't. You can't ship that" →
+   "You can't ship that."
+3. Refuse checks: "I will go. I will go tomorrow" stays; "I talk. I talk like I know" stays;
+   "I'm I'm a senior" stays; "I'm... I'm a senior" stays; "So. So we should ship" stays; ADR 0258
+   "I'm. I'm a senior" still collapses; ADR 0257 "what's it what's it return" still collapses;
+   ADR 0256 "should be. should be …" still collapses.
+
 ## 76. Cycle 141: both-lower contraction-headed multi-word restart (ADR 0257)
 
 | Run                                                         | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |

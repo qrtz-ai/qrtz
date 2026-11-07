@@ -1,3 +1,19 @@
+## 2026-11-06 — Cycle 143 (≈5:52–6:20 PM PT, polish): Cap Cap MW verbal across a period (ADR 0259)
+
+- **Focus:** polish. origin/main at `e6cdbfda` (cycle 142 / ADR 0258). Mac online; prod+dev talk history (453+443).
+- **Landed:** Cap Cap / Cap-second multi-word across a single period when the first copy contains a
+  verbal contraction — "I don't. I don't…" → "I don't…"; "you can't. You can't…" → "You can't…".
+  Cap Cap MW without verbal stays. Rust + TS twin, polish +8, keep retarget k613/k645 +8, cleanup.json,
+  hardening143 + hardening136/140 retarget + hardening60 oracle, cleanup_budget +1 text.
+- **Scores:** polish 357/360 → **365/368** exact, edit distance 39 (0.30 % of 13151), regressions 0; keep 0/674.
+- **Rejected:** Cap Cap MW without verbal across period; Cap Cap contraction across spaces/ellipsis;
+  Cap Cap "So So" / "Where where"; "a An"; STUTTERS wideners; "hold on, hold on"; content doubles;
+  both-lower one-word contractions; bare "it it's"; email/URL ITN; p41; unload; N203; N197; year ITN;
+  five-word Cap; general triple-any-word; ", okay" without unmarked evidence; one-word STUTTERS across a period.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` Cap Cap MW period median **0.830 ms** (1186-word; ceiling 2 ms).
+- **SHA:** code `d70e3428`, ADR `d1a9c15e`, LOG/tuning TBD
+
 ## 2026-11-06 — Cycle 142 (≈5:19–5:40 PT, polish): Cap Cap verbal contraction across a period (ADR 0258)
 
 - **Focus:** polish. origin/main at `6b44f54d` (cycle 141 / ADR 0257). Mac online; prod+dev talk history (453+443).
