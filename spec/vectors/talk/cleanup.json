@@ -5977,6 +5977,76 @@
       "raw": "We could just have we could just have our configuration today",
       "dict": false,
       "expect": "We could just have our configuration today."
+    },
+    {
+      "raw": "And then the output should be. should be a simple lightweight React animation today",
+      "dict": false,
+      "expect": "And then the output should be a simple lightweight React animation today."
+    },
+    {
+      "raw": "Thank you. thank you for the review today",
+      "dict": false,
+      "expect": "Thank you for the review today."
+    },
+    {
+      "raw": "Can you. can you host the prototype today",
+      "dict": false,
+      "expect": "Can you host the prototype today?"
+    },
+    {
+      "raw": "What's. what's the meeting pass code today",
+      "dict": false,
+      "expect": "What's the meeting pass code today?"
+    },
+    {
+      "raw": "Is that. is that one good today",
+      "dict": false,
+      "expect": "Is that one good today?"
+    },
+    {
+      "raw": "You have to. you have to ship it today",
+      "dict": false,
+      "expect": "You have to ship it today."
+    },
+    {
+      "raw": "How's it going. how's it going for you today",
+      "dict": false,
+      "expect": "How's it going for you today?"
+    },
+    {
+      "raw": "Let's just. let's just make the feature flag today",
+      "dict": false,
+      "expect": "Let's just make the feature flag today."
+    },
+    {
+      "raw": "I will go. I will go to the store today",
+      "dict": false,
+      "expect": "I will go. I will go to the store today."
+    },
+    {
+      "raw": "I don't really. I don't really want that today",
+      "dict": false,
+      "expect": "I don't really. I don't really want that today."
+    },
+    {
+      "raw": "like a like a simple path today",
+      "dict": false,
+      "expect": "Like a like a simple path today."
+    },
+    {
+      "raw": "No. no just push it for us today please",
+      "dict": false,
+      "expect": "No no just push it for us today please."
+    },
+    {
+      "raw": "Where where we put the snap summon today",
+      "dict": false,
+      "expect": "Where where we put the snap summon today."
+    },
+    {
+      "raw": "Is that... is that one good for us now",
+      "dict": false,
+      "expect": "Is that one good for us now?"
     }
   ],
   "dictionaryOnly": [

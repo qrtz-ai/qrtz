@@ -242,12 +242,11 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 (cycle 138) / ADR 0255 (cycle 139): Cap-then-lower doubles collapse in
-        // rule_cleanup before sentence caps — one-word contractions (0254) and multi-word
-        // restart phrases (0255). Detect pairs in `raw` (so keep-set both-lower
-        // "it's it's" / "is that is that" → post-cap forms are not treated as Cap-then-lower),
-        // then check that dropping the matching second copies from `old` yields `new`
-        // (allowing final "." → "?").
+        // ADR 0254 / ADR 0255 / ADR 0256: Cap-then-lower / period-gap doubles collapse in
+        // rule_cleanup before sentence caps — one-word contractions (0254), multi-word
+        // (0255), and Cap-then-lower / both-lower across a single period (0256). Detect pairs
+        // in `raw` (so keep-set space-only both-lower stays), then check that dropping the
+        // matching second copies from `old` yields `new` (allowing final "." → "?").
         let cap_then_lower = {
             let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
             let raw_spans: Vec<(usize, usize, &str)> = word_re
@@ -256,7 +255,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                 .collect();
             let only_space_tab =
                 |from: usize, to: usize| from <= to && raw[from..to].chars().all(|c| c == ' ' || c == '\t');
-            let gap_ok = |from: usize, to: usize| {
+            let gap_ok = |from: usize, to: usize, second_starts_lower: bool| {
                 if from > to {
                     return false;
                 }
@@ -275,10 +274,36 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     while j < g.len() && g[j] == b'.' {
                         j += 1;
                     }
-                    if j - start < 2 {
+                    let n = j - start;
+                    if n == 1 {
+                        if !second_starts_lower {
+                            return false;
+                        }
+                    } else if n < 2 {
                         return false;
                     }
                 } else {
+                    return false;
+                }
+                while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                    j += 1;
+                }
+                j == g.len()
+            };
+            let period_gap = |from: usize, to: usize| {
+                if from > to {
+                    return false;
+                }
+                let g = raw[from..to].as_bytes();
+                let mut j = 0usize;
+                while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
+                    j += 1;
+                }
+                if j >= g.len() || g[j] != b'.' {
+                    return false;
+                }
+                j += 1;
+                if j < g.len() && g[j] == b'.' {
                     return false;
                 }
                 while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
@@ -309,21 +334,28 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let (a5, b5, w5) = raw_spans[i + 5];
                     let (a6, b6, w6) = raw_spans[i + 6];
                     let (a7, _b7, w7) = raw_spans[i + 7];
+                    let cap_then_lower4 = w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w4.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w5)
+                        && middle_ok(w6)
+                        && w7.starts_with(|c: char| c.is_ascii_lowercase());
+                    let both_lower4 = w0.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w4.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w5)
+                        && middle_ok(w6)
+                        && w7.starts_with(|c: char| c.is_ascii_lowercase())
+                        && period_gap(b3, a4);
                     let ok4 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
                         && only_space_tab(b2, a3)
-                        && gap_ok(b3, a4)
+                        && gap_ok(b3, a4, w4.starts_with(|c: char| c.is_ascii_lowercase()))
                         && only_space_tab(b4, a5)
                         && only_space_tab(b5, a6)
                         && only_space_tab(b6, a7)
                         && middle_ok(w1)
                         && middle_ok(w2)
                         && letters_lower(w3)
-                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
-                        && w4.starts_with(|c: char| c.is_ascii_lowercase())
-                        && middle_ok(w5)
-                        && middle_ok(w6)
-                        && w7.starts_with(|c: char| c.is_ascii_lowercase())
+                        && (cap_then_lower4 || both_lower4)
                         && w0.eq_ignore_ascii_case(w4)
                         && w1.eq_ignore_ascii_case(w5)
                         && w2.eq_ignore_ascii_case(w6)
@@ -344,17 +376,23 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let (a3, b3, w3) = raw_spans[i + 3];
                     let (a4, b4, w4) = raw_spans[i + 4];
                     let (a5, _b5, w5) = raw_spans[i + 5];
+                    let cap_then_lower3 = w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w4)
+                        && w5.starts_with(|c: char| c.is_ascii_lowercase());
+                    let both_lower3 = w0.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                        && middle_ok(w4)
+                        && w5.starts_with(|c: char| c.is_ascii_lowercase())
+                        && period_gap(b2, a3);
                     let ok3 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
-                        && gap_ok(b2, a3)
+                        && gap_ok(b2, a3, w3.starts_with(|c: char| c.is_ascii_lowercase()))
                         && only_space_tab(b3, a4)
                         && only_space_tab(b4, a5)
                         && middle_ok(w1)
                         && letters_lower(w2)
-                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
-                        && w3.starts_with(|c: char| c.is_ascii_lowercase())
-                        && middle_ok(w4)
-                        && w5.starts_with(|c: char| c.is_ascii_lowercase())
+                        && (cap_then_lower3 || both_lower3)
                         && w0.eq_ignore_ascii_case(w3)
                         && w1.eq_ignore_ascii_case(w4)
                         && w2.eq_ignore_ascii_case(w5);
@@ -371,13 +409,18 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let (a1, b1, w1) = raw_spans[i + 1];
                     let (a2, b2, w2) = raw_spans[i + 2];
                     let (a3, _b3, w3) = raw_spans[i + 3];
-                    let ok2 = only_space_tab(b0, a1)
-                        && gap_ok(b1, a2)
-                        && only_space_tab(b2, a3)
-                        && letters_lower(w1)
-                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                    let cap_then_lower2 = w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w2.starts_with(|c: char| c.is_ascii_lowercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase());
+                    let both_lower2 = w0.starts_with(|c: char| c.is_ascii_lowercase())
                         && w2.starts_with(|c: char| c.is_ascii_lowercase())
                         && w3.starts_with(|c: char| c.is_ascii_lowercase())
+                        && period_gap(b1, a2);
+                    let ok2 = only_space_tab(b0, a1)
+                        && gap_ok(b1, a2, w2.starts_with(|c: char| c.is_ascii_lowercase()))
+                        && only_space_tab(b2, a3)
+                        && letters_lower(w1)
+                        && (cap_then_lower2 || both_lower2)
                         && w0.eq_ignore_ascii_case(w2)
                         && w1.eq_ignore_ascii_case(w3)
                         && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
@@ -392,7 +435,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let (_a0, b0, w0) = raw_spans[i];
                     let (a1, _b1, w1) = raw_spans[i + 1];
                     let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
-                    let ok1 = gap_ok(b0, a1)
+                    let ok1 = gap_ok(b0, a1, w1.starts_with(|c: char| c.is_ascii_lowercase()))
                         && has_apos
                         && w0.starts_with(|c: char| c.is_ascii_uppercase())
                         && w1.starts_with(|c: char| c.is_ascii_lowercase())
@@ -468,8 +511,82 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                 }
             }
         };
+        // ADR 0256: after continued_dot, STUTTERS doubles that become adjacent across
+        // spaces/tabs may collapse ("what. what" → "what"; also when filler removal
+        // creates the adjacency). If collapsing space/tab-separated STUTTERS doubles
+        // in `old` yields `new`, allow.
+        let post_dot_stutter = {
+            const STUTTERS: &[&str] = &[
+                "i", "a", "an", "the", "to", "and", "but", "or", "of", "at", "for", "with", "from", "we",
+                "you", "he", "she", "it", "they", "me", "our", "your", "his", "their", "this", "be", "would",
+                "can", "could", "should", "did", "have", "has", "if", "when", "what", "just",
+            ];
+            let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
+            let spans: Vec<(usize, usize, &str)> = word_re
+                .find_iter(&old)
+                .map(|m| (m.start(), m.end(), m.as_str()))
+                .collect();
+            let mut drop_idx = vec![false; spans.len()];
+            let mut i = 0usize;
+            let mut any = false;
+            while i + 1 < spans.len() {
+                let (_a0, b0, w0) = spans[i];
+                let (a1, _b1, w1) = spans[i + 1];
+                let gap_ok = old[b0..a1].chars().all(|c| c == ' ' || c == '\t');
+                let second_ok = !old[spans[i + 1].1..].starts_with('.')
+                    || old[spans[i + 1].1..]
+                        .chars()
+                        .nth(1)
+                        .is_none_or(|c| !c.is_ascii_alphabetic());
+                if gap_ok
+                    && second_ok
+                    && w0.eq_ignore_ascii_case(w1)
+                    && STUTTERS.contains(&w0.to_ascii_lowercase().as_str())
+                {
+                    drop_idx[i + 1] = true;
+                    any = true;
+                    i += 2;
+                    continue;
+                }
+                i += 1;
+            }
+            if !any {
+                false
+            } else {
+                let mut predicted = String::new();
+                let mut last = 0usize;
+                for (idx, &(a, b, _)) in spans.iter().enumerate() {
+                    if !drop_idx[idx] {
+                        continue;
+                    }
+                    let mut ws = a;
+                    while ws > last {
+                        let ch = old[..ws].chars().next_back().unwrap();
+                        if ch == ' ' || ch == '\t' {
+                            ws -= ch.len_utf8();
+                        } else {
+                            break;
+                        }
+                    }
+                    predicted.push_str(&old[last..ws]);
+                    last = b;
+                }
+                predicted.push_str(&old[last..]);
+                predicted == new
+                    || predicted
+                        .strip_suffix('.')
+                        .is_some_and(|body| new == format!("{body}?"))
+            }
+        };
         assert!(
-            list || opener || tag || imperative || date || wh_contraction || unmarked || cap_then_lower,
+            list || opener
+                || tag
+                || imperative
+                || date
+                || wh_contraction
+                || unmarked
+                || cap_then_lower
+                || post_dot_stutter,
             "rule_cleanup({raw:?}): {new:?} vs cycle 59 {old:?}"
         );
     }

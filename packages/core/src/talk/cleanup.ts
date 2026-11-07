@@ -2377,9 +2377,9 @@ function restartPhrase(s: string): string {
   // Spaces/tabs only within a copy: a newline between copies is a real sentence start, not a restart.
   const onlySpaceTab = (from: number, to: number) =>
     from <= to && /^[ \t]*$/.test(s.slice(from, to));
-  // ADR 0252: between copies, also allow an ellipsis (`...` / `…`) with surrounding spaces/tabs.
-  // A single `.` is a sentence boundary and must not match.
-  const copyGapOk = (from: number, to: number) => {
+  // ADR 0252 / ADR 0256: spaces/tabs, ellipsis (`...` / `…`), or a single `.` when the second
+  // copy starts lowercase (Cap Cap across a single period stays refused).
+  const copyGapOk = (from: number, to: number, secondStartsLower: boolean) => {
     if (from > to) return false;
     const gap = s.slice(from, to);
     let i = 0;
@@ -2390,10 +2390,27 @@ function restartPhrase(s: string): string {
     } else if (gap[i] === '.') {
       const start = i;
       while (i < gap.length && gap[i] === '.') i += 1;
-      if (i - start < 2) return false;
+      const n = i - start;
+      if (n === 1) {
+        if (!secondStartsLower) return false;
+      } else if (n < 2) {
+        return false;
+      }
     } else {
       return false;
     }
+    while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
+    return i === gap.length;
+  };
+  // ADR 0256: gap is exactly spaces/tabs around a single `.` (not ellipsis, not spaces-only).
+  const periodGap = (from: number, to: number) => {
+    if (from > to) return false;
+    const gap = s.slice(from, to);
+    let i = 0;
+    while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
+    if (i >= gap.length || gap[i] !== '.') return false;
+    i += 1;
+    if (i < gap.length && gap[i] === '.') return false;
     while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
     return i === gap.length;
   };
@@ -2419,7 +2436,7 @@ function restartPhrase(s: string): string {
         spans[i + 6],
         spans[i + 7],
       ];
-      // ADR 0255: Cap-second (w4 Cap) or Cap-then-lower (w0 Cap, w4 lower).
+      // ADR 0255 / ADR 0256: Cap-second, Cap-then-lower, or both-lower across a single period.
       const secondCap4 =
         /^[A-Z]/.test(w4.text) &&
         middleOk(w5.text) &&
@@ -2431,22 +2448,34 @@ function restartPhrase(s: string): string {
         middleOk(w5.text) &&
         middleOk(w6.text) &&
         /^[a-z]/.test(w7.text);
+      const bothLower4 =
+        /^[a-z]/.test(w0.text) &&
+        /^[a-z]/.test(w4.text) &&
+        middleOk(w5.text) &&
+        middleOk(w6.text) &&
+        /^[a-z]/.test(w7.text) &&
+        periodGap(w3.end, w4.start);
       const ok4 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
         onlySpaceTab(w2.end, w3.start) &&
-        copyGapOk(w3.end, w4.start) &&
+        copyGapOk(w3.end, w4.start, /^[a-z]/.test(w4.text)) &&
         onlySpaceTab(w4.end, w5.start) &&
         onlySpaceTab(w5.end, w6.start) &&
         onlySpaceTab(w6.end, w7.start) &&
         middleOk(w1.text) &&
         middleOk(w2.text) &&
         lettersLower(w3.text) &&
-        (secondCap4 || capThenLower4) &&
+        (secondCap4 || capThenLower4 || bothLower4) &&
         w0.text.toLowerCase() === w4.text.toLowerCase() &&
         w1.text.toLowerCase() === w5.text.toLowerCase() &&
         w2.text.toLowerCase() === w6.text.toLowerCase() &&
-        w3.text.toLowerCase() === w7.text.toLowerCase();
+        w3.text.toLowerCase() === w7.text.toLowerCase() &&
+        !(
+          w2.text.toLowerCase() === 'new' &&
+          (w3.text.toLowerCase() === 'line' ||
+            w3.text.toLowerCase() === 'paragraph')
+        );
       if (ok4) {
         drop[i + 4] = true;
         drop[i + 5] = true;
@@ -2465,7 +2494,7 @@ function restartPhrase(s: string): string {
         spans[i + 4],
         spans[i + 5],
       ];
-      // ADR 0255: Cap-second (w3 Cap) or Cap-then-lower (w0 Cap, w3 lower).
+      // ADR 0255 / ADR 0256: Cap-second, Cap-then-lower, or both-lower across a single period.
       const secondCap3 =
         /^[A-Z]/.test(w3.text) && middleOk(w4.text) && /^[a-z]/.test(w5.text);
       const capThenLower3 =
@@ -2473,18 +2502,29 @@ function restartPhrase(s: string): string {
         /^[a-z]/.test(w3.text) &&
         middleOk(w4.text) &&
         /^[a-z]/.test(w5.text);
+      const bothLower3 =
+        /^[a-z]/.test(w0.text) &&
+        /^[a-z]/.test(w3.text) &&
+        middleOk(w4.text) &&
+        /^[a-z]/.test(w5.text) &&
+        periodGap(w2.end, w3.start);
       const ok3 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
-        copyGapOk(w2.end, w3.start) &&
+        copyGapOk(w2.end, w3.start, /^[a-z]/.test(w3.text)) &&
         onlySpaceTab(w3.end, w4.start) &&
         onlySpaceTab(w4.end, w5.start) &&
         middleOk(w1.text) &&
         lettersLower(w2.text) &&
-        (secondCap3 || capThenLower3) &&
+        (secondCap3 || capThenLower3 || bothLower3) &&
         w0.text.toLowerCase() === w3.text.toLowerCase() &&
         w1.text.toLowerCase() === w4.text.toLowerCase() &&
-        w2.text.toLowerCase() === w5.text.toLowerCase();
+        w2.text.toLowerCase() === w5.text.toLowerCase() &&
+        !(
+          w1.text.toLowerCase() === 'new' &&
+          (w2.text.toLowerCase() === 'line' ||
+            w2.text.toLowerCase() === 'paragraph')
+        );
       if (ok3) {
         drop[i + 3] = true;
         drop[i + 4] = true;
@@ -2502,22 +2542,34 @@ function restartPhrase(s: string): string {
       ];
       // ADR 0247: Cap-second — first word of the first copy may be Title case ("Can you Can you").
       // ADR 0255: Cap-then-lower — first copy Cap, second lower ("Is that is that").
+      // ADR 0256: both-lower across a single period ("should be. should be").
       const secondCap2 = /^[A-Z]/.test(w2.text) && /^[a-z]/.test(w3.text);
       const capThenLower2 =
         /^[A-Z]/.test(w0.text) &&
         /^[a-z]/.test(w2.text) &&
         /^[a-z]/.test(w3.text);
+      const bothLower2 =
+        /^[a-z]/.test(w0.text) &&
+        /^[a-z]/.test(w2.text) &&
+        /^[a-z]/.test(w3.text) &&
+        periodGap(w1.end, w2.start);
       const ok2 =
         onlySpaceTab(w0.end, w1.start) &&
-        copyGapOk(w1.end, w2.start) &&
+        copyGapOk(w1.end, w2.start, /^[a-z]/.test(w2.text)) &&
         onlySpaceTab(w2.end, w3.start) &&
         lettersLower(w1.text) &&
-        (secondCap2 || capThenLower2) &&
+        (secondCap2 || capThenLower2 || bothLower2) &&
         w0.text.toLowerCase() === w2.text.toLowerCase() &&
         w1.text.toLowerCase() === w3.text.toLowerCase() &&
         !(
           w0.text.toLowerCase() === 'scratch' &&
           w1.text.toLowerCase() === 'that'
+        ) &&
+        // Layout commands: "new line" / "new paragraph" across a period stay.
+        !(
+          w0.text.toLowerCase() === 'new' &&
+          (w1.text.toLowerCase() === 'line' ||
+            w1.text.toLowerCase() === 'paragraph')
         );
       if (ok2) {
         drop[i + 2] = true;
@@ -2533,7 +2585,7 @@ function restartPhrase(s: string): string {
       const w1 = spans[i + 1];
       const hasApos = /['’]/.test(w0.text);
       const ok1 =
-        copyGapOk(w0.end, w1.start) &&
+        copyGapOk(w0.end, w1.start, /^[a-z]/.test(w1.text)) &&
         hasApos &&
         w0.text.toLowerCase() === w1.text.toLowerCase() &&
         ((/^[a-z]/.test(w0.text) && /^[A-Z]/.test(w1.text)) ||
@@ -2545,7 +2597,10 @@ function restartPhrase(s: string): string {
       }
       const isBareIt = w0.text === 'it';
       const isCapIts = w1.text === "It's" || w1.text === 'It’s';
-      const okIt = copyGapOk(w0.end, w1.start) && isBareIt && isCapIts;
+      const okIt =
+        copyGapOk(w0.end, w1.start, /^[a-z]/.test(w1.text)) &&
+        isBareIt &&
+        isCapIts;
       if (okIt) {
         drop[i] = true;
         i += 2;
@@ -2578,6 +2633,7 @@ function restartPhrase(s: string): string {
           dots += 1;
           at -= 1;
         }
+        // TEMP test
         if (dots >= 2) ws = at;
       }
       while (ws > last) {

@@ -461,4 +461,26 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("You have to you have to"), "{out}");
     assert!(!out.contains("How's it going how's it going"), "{out}");
     assert_fits_budget(&text, " with Cap-then-lower multi-word restarts");
+    // ADR 0256: Cap-then-lower / both-lower restart phrases across a single period.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} should be. should be ready now"));
+        body.push_str(&format!(" and Thank you. thank you for review {i} today"));
+    }
+    body.push_str(". And then Is that. is that one good for the team today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        out.contains("should be ready now") || out.contains("Should be ready now"),
+        "{out}"
+    );
+    assert!(
+        out.contains("Thank you for review") || out.contains("thank you for review"),
+        "{out}"
+    );
+    assert!(out.contains("Is that one good for the team today"), "{out}");
+    assert!(!out.contains("should be. should be"), "{out}");
+    assert!(!out.contains("Thank you. thank you"), "{out}");
+    assert!(!out.contains("Is that. is that"), "{out}");
+    assert_fits_budget(&text, " with period-gap restart phrases");
 }

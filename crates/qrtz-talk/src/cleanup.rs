@@ -1888,9 +1888,12 @@ fn collapse_repeats(s: &str) -> String {
 /// Prefers four- then three- then two- then one-word matches.
 ///
 /// Ellipsis between copies (ADR 0252): the gap between the last word of the first copy and the
-/// first word of the second may be spaces/tabs, or spaces/tabs around `...` / `…` (U+2026). A
-/// single `.` stays a sentence boundary. Within each copy, only spaces/tabs. Spoken "scratch that"
-/// across an ellipsis still stays (ADR 0186).
+/// first word of the second may be spaces/tabs, or spaces/tabs around `...` / `…` (U+2026).
+/// ADR 0256: a single `.` with surrounding spaces/tabs is also allowed when the second copy
+/// starts lowercase (false segment cut / Cap-then-lower or both-lower hesitation); Cap Cap
+/// across a single period stays refused. Within each copy, only spaces/tabs. Spoken "scratch that"
+/// across an ellipsis still stays (ADR 0186). Both-lower multi-word (2/3/4) collapses only when
+/// the between-copies gap is a single period (not spaces-only, not ellipsis-only).
 ///
 /// One-word (ADR 0248 / ADR 0254): a contracted word with an apostrophe, restarted with mixed
 /// Cap ("it's It's", "don't Don't", "What's what's", "It's it's"). Either the first copy starts
@@ -1988,9 +1991,10 @@ fn restart_phrase(s: &str) -> String {
     // ("scratch that\nScratch that"), not a restart.
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
-    // ADR 0252: between copies, also allow an ellipsis (`...` / `…`) with surrounding spaces/tabs.
-    // A single `.` is a sentence boundary and must not match.
-    let copy_gap_ok = |from: usize, to: usize| {
+    // ADR 0252 / ADR 0256: between copies, allow spaces/tabs, an ellipsis (`...` / `…`), or a
+    // single `.` with surrounding spaces/tabs when the second copy starts lowercase (Cap Cap
+    // across a single period stays refused).
+    let copy_gap_ok = |from: usize, to: usize, second_starts_lower: bool| {
         if from > to {
             return false;
         }
@@ -2009,11 +2013,38 @@ fn restart_phrase(s: &str) -> String {
             while i < gap.len() && gap[i] == b'.' {
                 i += 1;
             }
-            if i - start < 2 {
+            let n = i - start;
+            if n == 1 {
+                if !second_starts_lower {
+                    return false;
+                }
+            } else if n < 2 {
                 return false;
             }
         } else {
             return false;
+        }
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        i == gap.len()
+    };
+    // ADR 0256: gap is exactly spaces/tabs around a single `.` (not ellipsis, not spaces-only).
+    let period_gap = |from: usize, to: usize| {
+        if from > to {
+            return false;
+        }
+        let gap = s[from..to].as_bytes();
+        let mut i = 0usize;
+        while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
+            i += 1;
+        }
+        if i >= gap.len() || gap[i] != b'.' {
+            return false;
+        }
+        i += 1;
+        if i < gap.len() && gap[i] == b'.' {
+            return false; // ellipsis / multi-dot
         }
         while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
             i += 1;
@@ -2049,28 +2080,38 @@ fn restart_phrase(s: &str) -> String {
             let (a5, b5) = spans[i + 5];
             let (a6, b6) = spans[i + 6];
             let (a7, b7) = spans[i + 7];
-            // ADR 0255: Cap-second (a4 Cap) or Cap-then-lower (a0 Cap, a4 lower).
+            // ADR 0255 / ADR 0256: Cap-second (a4 Cap), Cap-then-lower (a0 Cap, a4 lower),
+            // or both-lower across a single period.
             let second_cap4 = starts_upper(a4) && middle_ok(a5, b5) && middle_ok(a6, b6) && starts_lower(a7);
             let cap_then_lower4 = starts_upper(a0)
                 && starts_lower(a4)
                 && middle_ok(a5, b5)
                 && middle_ok(a6, b6)
                 && starts_lower(a7);
+            let both_lower4 = starts_lower(a0)
+                && starts_lower(a4)
+                && middle_ok(a5, b5)
+                && middle_ok(a6, b6)
+                && starts_lower(a7)
+                && period_gap(b3, a4);
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
-                && copy_gap_ok(b3, a4)
+                && copy_gap_ok(b3, a4, starts_lower(a4))
                 && only_space_tab(b4, a5)
                 && only_space_tab(b5, a6)
                 && only_space_tab(b6, a7)
                 && middle_ok(a1, b1)
                 && middle_ok(a2, b2)
                 && letters_lower(a3, b3)
-                && (second_cap4 || cap_then_lower4)
+                && (second_cap4 || cap_then_lower4 || both_lower4)
                 && eq_ci(a0, b0, a4, b4)
                 && eq_ci(a1, b1, a5, b5)
                 && eq_ci(a2, b2, a6, b6)
-                && eq_ci(a3, b3, a7, b7);
+                && eq_ci(a3, b3, a7, b7)
+                && !(s[a2..b2].eq_ignore_ascii_case("new")
+                    && (s[a3..b3].eq_ignore_ascii_case("line")
+                        || s[a3..b3].eq_ignore_ascii_case("paragraph")));
             if ok4 {
                 drop[i + 4] = true;
                 drop[i + 5] = true;
@@ -2087,21 +2128,30 @@ fn restart_phrase(s: &str) -> String {
             let (a3, b3) = spans[i + 3];
             let (a4, b4) = spans[i + 4];
             let (a5, b5) = spans[i + 5];
-            // ADR 0255: Cap-second (a3 Cap) or Cap-then-lower (a0 Cap, a3 lower).
+            // ADR 0255 / ADR 0256: Cap-second, Cap-then-lower, or both-lower across a single period.
             let second_cap3 = starts_upper(a3) && middle_ok(a4, b4) && starts_lower(a5);
             let cap_then_lower3 =
                 starts_upper(a0) && starts_lower(a3) && middle_ok(a4, b4) && starts_lower(a5);
+            let both_lower3 = starts_lower(a0)
+                && starts_lower(a3)
+                && middle_ok(a4, b4)
+                && starts_lower(a5)
+                && period_gap(b2, a3);
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
-                && copy_gap_ok(b2, a3)
+                && copy_gap_ok(b2, a3, starts_lower(a3))
                 && only_space_tab(b3, a4)
                 && only_space_tab(b4, a5)
                 && middle_ok(a1, b1)
                 && letters_lower(a2, b2)
-                && (second_cap3 || cap_then_lower3)
+                && (second_cap3 || cap_then_lower3 || both_lower3)
                 && eq_ci(a0, b0, a3, b3)
                 && eq_ci(a1, b1, a4, b4)
-                && eq_ci(a2, b2, a5, b5);
+                && eq_ci(a2, b2, a5, b5)
+                // Layout commands: "... new line" / "... new paragraph" stay.
+                && !(s[a1..b1].eq_ignore_ascii_case("new")
+                    && (s[a2..b2].eq_ignore_ascii_case("line")
+                        || s[a2..b2].eq_ignore_ascii_case("paragraph")));
             if ok3 {
                 drop[i + 3] = true;
                 drop[i + 4] = true;
@@ -2117,17 +2167,23 @@ fn restart_phrase(s: &str) -> String {
             let (a3, b3) = spans[i + 3];
             // ADR 0247: Cap-second — first word of the first copy may be Title case ("Can you Can you").
             // ADR 0255: Cap-then-lower — first copy Cap, second lower ("Is that is that").
+            // ADR 0256: both-lower across a single period ("should be. should be").
             // Last word of each copy stays lowercase so "new york New York" is kept.
             let second_cap2 = starts_upper(a2) && starts_lower(a3);
             let cap_then_lower2 = starts_upper(a0) && starts_lower(a2) && starts_lower(a3);
+            let both_lower2 = starts_lower(a0) && starts_lower(a2) && starts_lower(a3) && period_gap(b1, a2);
             let ok2 = only_space_tab(b0, a1)
-                && copy_gap_ok(b1, a2)
+                && copy_gap_ok(b1, a2, starts_lower(a2))
                 && only_space_tab(b2, a3)
                 && letters_lower(a1, b1)
-                && (second_cap2 || cap_then_lower2)
+                && (second_cap2 || cap_then_lower2 || both_lower2)
                 && eq_ci(a0, b0, a2, b2)
                 && eq_ci(a1, b1, a3, b3)
-                && !(s[a0..b0].eq_ignore_ascii_case("scratch") && s[a1..b1].eq_ignore_ascii_case("that"));
+                && !(s[a0..b0].eq_ignore_ascii_case("scratch") && s[a1..b1].eq_ignore_ascii_case("that"))
+                // Layout commands (ADR 0101): "new line" / "new paragraph" across a period stay.
+                && !(s[a0..b0].eq_ignore_ascii_case("new")
+                    && (s[a1..b1].eq_ignore_ascii_case("line")
+                        || s[a1..b1].eq_ignore_ascii_case("paragraph")));
             if ok2 {
                 drop[i + 2] = true;
                 drop[i + 3] = true;
@@ -2141,7 +2197,7 @@ fn restart_phrase(s: &str) -> String {
             let (a0, b0) = spans[i];
             let (a1, b1) = spans[i + 1];
             let has_apos = s[a0..b0].contains('\'') || s[a0..b0].contains('\u{2019}');
-            let ok1 = copy_gap_ok(b0, a1)
+            let ok1 = copy_gap_ok(b0, a1, starts_lower(a1))
                 && has_apos
                 && eq_ci(a0, b0, a1, b1)
                 && ((starts_lower(a0) && starts_upper(a1)) || (starts_upper(a0) && starts_lower(a1)));
@@ -2153,7 +2209,7 @@ fn restart_phrase(s: &str) -> String {
             let is_bare_it = &s[a0..b0] == "it";
             let w1 = &s[a1..b1];
             let is_cap_its = w1 == "It's" || w1 == "It’s";
-            let ok_it = copy_gap_ok(b0, a1) && is_bare_it && is_cap_its;
+            let ok_it = copy_gap_ok(b0, a1, starts_lower(a1)) && is_bare_it && is_cap_its;
             if ok_it {
                 drop[i] = true;
                 i += 2;
@@ -2200,6 +2256,7 @@ fn restart_phrase(s: &str) -> String {
                         break;
                     }
                 }
+                // TEMP test
                 if dots >= 2 {
                     ws = at;
                 }

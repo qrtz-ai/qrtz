@@ -2045,6 +2045,54 @@
       "category": "repeat",
       "raw": "Is that... is that one good for us now",
       "ideal": "Is that one good for us now?"
+    },
+    {
+      "id": "p337",
+      "category": "repeat",
+      "raw": "And then the output should be. should be a simple lightweight React animation today",
+      "ideal": "And then the output should be a simple lightweight React animation today."
+    },
+    {
+      "id": "p338",
+      "category": "repeat",
+      "raw": "Thank you. thank you for the review today",
+      "ideal": "Thank you for the review today."
+    },
+    {
+      "id": "p339",
+      "category": "repeat",
+      "raw": "Can you. can you host the prototype today",
+      "ideal": "Can you host the prototype today?"
+    },
+    {
+      "id": "p340",
+      "category": "repeat",
+      "raw": "What's. what's the meeting pass code today",
+      "ideal": "What's the meeting pass code today?"
+    },
+    {
+      "id": "p341",
+      "category": "repeat",
+      "raw": "Is that. is that one good today",
+      "ideal": "Is that one good today?"
+    },
+    {
+      "id": "p342",
+      "category": "repeat",
+      "raw": "You have to. you have to ship it today",
+      "ideal": "You have to ship it today."
+    },
+    {
+      "id": "p343",
+      "category": "repeat",
+      "raw": "How's it going. how's it going for you today",
+      "ideal": "How's it going for you today?"
+    },
+    {
+      "id": "p344",
+      "category": "repeat",
+      "raw": "Let's just. let's just make the feature flag today",
+      "ideal": "Let's just make the feature flag today."
     }
   ],
   "keep": [
@@ -5838,6 +5886,46 @@
       "id": "k643",
       "raw": "the starting deck the starting deck looks fine today",
       "expect": "The starting deck the starting deck looks fine today."
+    },
+    {
+      "id": "k644",
+      "raw": "I will go. I will go to the store today",
+      "expect": "I will go. I will go to the store today."
+    },
+    {
+      "id": "k645",
+      "raw": "I don't really. I don't really want that today",
+      "expect": "I don't really. I don't really want that today."
+    },
+    {
+      "id": "k646",
+      "raw": "like a like a simple path today",
+      "expect": "Like a like a simple path today."
+    },
+    {
+      "id": "k647",
+      "raw": "the starting deck the starting deck looks fine today",
+      "expect": "The starting deck the starting deck looks fine today."
+    },
+    {
+      "id": "k648",
+      "raw": "is that is that one good today",
+      "expect": "Is that is that one good today."
+    },
+    {
+      "id": "k649",
+      "raw": "Where where we put the snap summon today",
+      "expect": "Where where we put the snap summon today."
+    },
+    {
+      "id": "k650",
+      "raw": "No. no just push it for us today please",
+      "expect": "No no just push it for us today please."
+    },
+    {
+      "id": "k651",
+      "raw": "you have to you have to ship it today",
+      "expect": "You have to you have to ship it today."
     }
   ]
 }
