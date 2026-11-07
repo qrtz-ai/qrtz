@@ -2001,7 +2001,7 @@ fn restart_phrase(s: &str) -> String {
         if from > to {
             return false;
         }
-        let gap = s[from..to].as_bytes();
+        let gap = &s.as_bytes()[from..to];
         let mut i = 0usize;
         while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
             i += 1;
@@ -2037,7 +2037,7 @@ fn restart_phrase(s: &str) -> String {
         if from > to {
             return false;
         }
-        let gap = s[from..to].as_bytes();
+        let gap = &s.as_bytes()[from..to];
         let mut i = 0usize;
         while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
             i += 1;

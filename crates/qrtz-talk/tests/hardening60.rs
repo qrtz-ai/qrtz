@@ -261,7 +261,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                 if from > to {
                     return false;
                 }
-                let g = raw[from..to].as_bytes();
+                let g = &raw.as_bytes()[from..to];
                 let mut j = 0usize;
                 while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
                     j += 1;
@@ -296,7 +296,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                 if from > to {
                     return false;
                 }
-                let g = raw[from..to].as_bytes();
+                let g = &raw.as_bytes()[from..to];
                 let mut j = 0usize;
                 while j < g.len() && (g[j] == b' ' || g[j] == b'\t') {
                     j += 1;
@@ -744,8 +744,8 @@ fn without_triple_stutters(s: &str) -> String {
             j += 1;
         }
         if j - i >= 3 {
-            for k in i + 1..j {
-                drop[k] = true;
+            for d in drop.iter_mut().take(j).skip(i + 1) {
+                *d = true;
             }
         }
         i = j;
@@ -789,7 +789,7 @@ fn without_restart_phrase(s: &str) -> String {
         if from > to {
             return false;
         }
-        let gap = s[from..to].as_bytes();
+        let gap = &s.as_bytes()[from..to];
         let mut i = 0usize;
         while i < gap.len() && (gap[i] == b' ' || gap[i] == b'\t') {
             i += 1;

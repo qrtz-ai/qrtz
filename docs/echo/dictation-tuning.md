@@ -3559,10 +3559,10 @@ to STUTTERS.
 
 ## 76. Cycle 141: both-lower contraction-headed multi-word restart (ADR 0257)
 
-| Run                                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| ------------------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 140, 344 cases                                         | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
-| this cycle, 352 cases (+8 contraction-headed both-lower MW)  | **349 / 352** | **39 chars (0.31 % of 12582)** | 0           | 0 / 656             |
+| Run                                                         | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ----------------------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 140, 344 cases                                        | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
+| this cycle, 352 cases (+8 contraction-headed both-lower MW) | **349 / 352** | **39 chars (0.31 % of 12582)** | 0           | 0 / 656             |
 
 - **Examples:** "Does a set timeout return a variable or what's it what's it return today" →
   "Does a set timeout return a variable or what's it return today."; "don't know don't know the
@@ -3608,4 +3608,3 @@ STUTTERS across a period / bare "it it's" / "hold on, hold on" until evidence is
    after sentence cap; "it's it's ready" stays; Cap Cap "Can you Can you host…" still collapses;
    ADR 0256 "should be. should be …" still collapses; ADR 0255 "Is that is that one good" still
    collapses; ADR 0254 "What's what's the meeting pass code" still collapses.
-
