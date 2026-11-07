@@ -1890,8 +1890,10 @@ fn collapse_repeats(s: &str) -> String {
 /// Ellipsis between copies (ADR 0252): the gap between the last word of the first copy and the
 /// first word of the second may be spaces/tabs, or spaces/tabs around `...` / `…` (U+2026).
 /// ADR 0256: a single `.` with surrounding spaces/tabs is also allowed when the second copy
-/// starts lowercase (false segment cut / Cap-then-lower or both-lower hesitation); Cap Cap
-/// across a single period stays refused. Within each copy, only spaces/tabs. Spoken "scratch that"
+/// starts lowercase (false segment cut / Cap-then-lower or both-lower hesitation). ADR 0259:
+/// Cap Cap / Cap-second across a single period also collapses when the first copy contains a
+/// verbal contraction ("I don't. I don't"); Cap Cap MW without a verbal contraction stays
+/// (`I will go. I will go`, `I talk. I talk`). Within each copy, only spaces/tabs. Spoken "scratch that"
 /// across an ellipsis still stays (ADR 0186). Both-lower multi-word (2/3/4) collapses when the
 /// between-copies gap is a single period (ADR 0256), **or** when the first word of each copy
 /// contains an apostrophe (contraction-headed, ADR 0257) across spaces/tabs or ellipsis — so
@@ -1995,10 +1997,11 @@ fn restart_phrase(s: &str) -> String {
     // ("scratch that\nScratch that"), not a restart.
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
-    // ADR 0252 / ADR 0256: between copies, allow spaces/tabs, an ellipsis (`...` / `…`), or a
-    // single `.` with surrounding spaces/tabs when the second copy starts lowercase. Cap Cap
-    // across a single period is refused here; ADR 0258 handles Cap Cap one-word contractions
-    // via `period_gap` separately.
+    // ADR 0252 / ADR 0256 / ADR 0259: between copies, allow spaces/tabs, an ellipsis (`...` /
+    // `…`), or a single `.` with surrounding spaces/tabs when the second copy starts lowercase.
+    // Cap Cap / Cap-second across a single period is refused in `copy_gap_ok`; ADR 0258 handles
+    // Cap Cap one-word verbal contractions, and ADR 0259 Cap Cap MW with a verbal contraction
+    // in the first copy, via `period_gap` separately.
     let copy_gap_ok = |from: usize, to: usize, second_starts_lower: bool| {
         if from > to {
             return false;
@@ -2136,10 +2139,18 @@ fn restart_phrase(s: &str) -> String {
                 && middle_ok(a6, b6)
                 && starts_lower(a7)
                 && (period_gap(b3, a4) || word_has_apos(a0, b0));
+            // ADR 0259: Cap Cap / Cap-second across a single period when the first copy
+            // contains a verbal contraction ("I don't. I don't", "What's the. What's the").
+            let verbal4 = is_verbal_contraction(a0, b0)
+                || is_verbal_contraction(a1, b1)
+                || is_verbal_contraction(a2, b2)
+                || is_verbal_contraction(a3, b3);
+            let gap4 =
+                copy_gap_ok(b3, a4, starts_lower(a4)) || (period_gap(b3, a4) && starts_upper(a4) && verbal4);
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
-                && copy_gap_ok(b3, a4, starts_lower(a4))
+                && gap4
                 && only_space_tab(b4, a5)
                 && only_space_tab(b5, a6)
                 && only_space_tab(b6, a7)
@@ -2180,9 +2191,16 @@ fn restart_phrase(s: &str) -> String {
                 && middle_ok(a4, b4)
                 && starts_lower(a5)
                 && (period_gap(b2, a3) || word_has_apos(a0, b0));
+            // ADR 0259: Cap Cap / Cap-second across a single period with a verbal contraction
+            // in the first copy ("I don't really. I don't really").
+            let verbal3 = is_verbal_contraction(a0, b0)
+                || is_verbal_contraction(a1, b1)
+                || is_verbal_contraction(a2, b2);
+            let gap3 =
+                copy_gap_ok(b2, a3, starts_lower(a3)) || (period_gap(b2, a3) && starts_upper(a3) && verbal3);
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
-                && copy_gap_ok(b2, a3, starts_lower(a3))
+                && gap3
                 && only_space_tab(b3, a4)
                 && only_space_tab(b4, a5)
                 && middle_ok(a1, b1)
@@ -2219,8 +2237,13 @@ fn restart_phrase(s: &str) -> String {
                 && starts_lower(a2)
                 && starts_lower(a3)
                 && (period_gap(b1, a2) || word_has_apos(a0, b0));
+            // ADR 0259: Cap Cap / Cap-second across a single period with a verbal contraction
+            // in the first copy ("I don't. I don't", "you can't. You can't").
+            let verbal2 = is_verbal_contraction(a0, b0) || is_verbal_contraction(a1, b1);
+            let gap2 =
+                copy_gap_ok(b1, a2, starts_lower(a2)) || (period_gap(b1, a2) && starts_upper(a2) && verbal2);
             let ok2 = only_space_tab(b0, a1)
-                && copy_gap_ok(b1, a2, starts_lower(a2))
+                && gap2
                 && only_space_tab(b2, a3)
                 && letters_lower(a1, b1)
                 && (second_cap2 || cap_then_lower2 || both_lower2)
@@ -2327,10 +2350,11 @@ fn restart_phrase(s: &str) -> String {
                 if dots >= 2 {
                     ws = at;
                 } else if dots == 1 {
+                    // ADR 0258: Cap Cap one-word contraction. ADR 0259: Cap Cap MW may drop a
+                    // Cap word without an apostrophe ("I" in "I don't. I don't") — strip here so
+                    // the result does not depend on continued_dot.
                     let dropped = &s[a..b];
-                    if dropped.starts_with(|c: char| c.is_ascii_uppercase())
-                        && (dropped.contains('\'') || dropped.contains('\u{2019}'))
-                    {
+                    if dropped.starts_with(|c: char| c.is_ascii_uppercase()) {
                         ws = at;
                     }
                 }

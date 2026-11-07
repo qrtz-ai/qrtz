@@ -242,14 +242,16 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257 / ADR 0258: Cap-then-lower / period-gap /
-        // contraction-headed both-lower / Cap Cap period-contraction doubles collapse in
-        // rule_cleanup before sentence caps — one-word contractions (0254), multi-word (0255),
-        // Cap-then-lower / both-lower across a single period (0256), both-lower multi-word when
-        // the first word has an apostrophe (0257), and Cap Cap one-word verbal contractions
-        // across a single period (0258). Detect pairs in `raw` (so keep-set space-only
-        // non-contraction both-lower stays), then check that dropping the matching second
-        // copies from `old` yields `new` (allowing final "." → "?").
+        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257 / ADR 0258 / ADR 0259: Cap-then-lower /
+        // period-gap / contraction-headed both-lower / Cap Cap period-contraction doubles
+        // collapse in rule_cleanup before sentence caps — one-word contractions (0254),
+        // multi-word (0255), Cap-then-lower / both-lower across a single period (0256),
+        // both-lower multi-word when the first word has an apostrophe (0257), Cap Cap one-word
+        // verbal contractions across a single period (0258), and Cap Cap / Cap-second MW across
+        // a single period when the first copy contains a verbal contraction (0259). Detect
+        // pairs in `raw` (so keep-set space-only non-contraction both-lower stays), then check
+        // that dropping the matching second copies from `old` yields `new` (allowing final
+        // "." → "?").
         let cap_then_lower = {
             let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
             let raw_spans: Vec<(usize, usize, &str)> = word_re
@@ -379,17 +381,29 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         && middle_ok(w6)
                         && w7.starts_with(|c: char| c.is_ascii_lowercase())
                         && (period_gap(b3, a4) || w0.contains('\'') || w0.contains('\u{2019}'));
+                    let second_cap4 = w4.starts_with(|c: char| c.is_ascii_uppercase())
+                        && middle_ok(w5)
+                        && middle_ok(w6)
+                        && w7.starts_with(|c: char| c.is_ascii_lowercase());
+                    let verbal4 = is_verbal_contraction(w0)
+                        || is_verbal_contraction(w1)
+                        || is_verbal_contraction(w2)
+                        || is_verbal_contraction(w3);
+                    let gap4 = gap_ok(b3, a4, w4.starts_with(|c: char| c.is_ascii_lowercase()))
+                        || (period_gap(b3, a4)
+                            && w4.starts_with(|c: char| c.is_ascii_uppercase())
+                            && verbal4);
                     let ok4 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
                         && only_space_tab(b2, a3)
-                        && gap_ok(b3, a4, w4.starts_with(|c: char| c.is_ascii_lowercase()))
+                        && gap4
                         && only_space_tab(b4, a5)
                         && only_space_tab(b5, a6)
                         && only_space_tab(b6, a7)
                         && middle_ok(w1)
                         && middle_ok(w2)
                         && letters_lower(w3)
-                        && (cap_then_lower4 || both_lower4)
+                        && (second_cap4 || cap_then_lower4 || both_lower4)
                         && w0.eq_ignore_ascii_case(w4)
                         && w1.eq_ignore_ascii_case(w5)
                         && w2.eq_ignore_ascii_case(w6)
@@ -419,14 +433,23 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         && middle_ok(w4)
                         && w5.starts_with(|c: char| c.is_ascii_lowercase())
                         && (period_gap(b2, a3) || w0.contains('\'') || w0.contains('\u{2019}'));
+                    let second_cap3 = w3.starts_with(|c: char| c.is_ascii_uppercase())
+                        && middle_ok(w4)
+                        && w5.starts_with(|c: char| c.is_ascii_lowercase());
+                    let verbal3 =
+                        is_verbal_contraction(w0) || is_verbal_contraction(w1) || is_verbal_contraction(w2);
+                    let gap3 = gap_ok(b2, a3, w3.starts_with(|c: char| c.is_ascii_lowercase()))
+                        || (period_gap(b2, a3)
+                            && w3.starts_with(|c: char| c.is_ascii_uppercase())
+                            && verbal3);
                     let ok3 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
-                        && gap_ok(b2, a3, w3.starts_with(|c: char| c.is_ascii_lowercase()))
+                        && gap3
                         && only_space_tab(b3, a4)
                         && only_space_tab(b4, a5)
                         && middle_ok(w1)
                         && letters_lower(w2)
-                        && (cap_then_lower3 || both_lower3)
+                        && (second_cap3 || cap_then_lower3 || both_lower3)
                         && w0.eq_ignore_ascii_case(w3)
                         && w1.eq_ignore_ascii_case(w4)
                         && w2.eq_ignore_ascii_case(w5);
@@ -450,11 +473,18 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         && w2.starts_with(|c: char| c.is_ascii_lowercase())
                         && w3.starts_with(|c: char| c.is_ascii_lowercase())
                         && (period_gap(b1, a2) || w0.contains('\'') || w0.contains('\u{2019}'));
+                    let second_cap2 = w2.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w3.starts_with(|c: char| c.is_ascii_lowercase());
+                    let verbal2 = is_verbal_contraction(w0) || is_verbal_contraction(w1);
+                    let gap2 = gap_ok(b1, a2, w2.starts_with(|c: char| c.is_ascii_lowercase()))
+                        || (period_gap(b1, a2)
+                            && w2.starts_with(|c: char| c.is_ascii_uppercase())
+                            && verbal2);
                     let ok2 = only_space_tab(b0, a1)
-                        && gap_ok(b1, a2, w2.starts_with(|c: char| c.is_ascii_lowercase()))
+                        && gap2
                         && only_space_tab(b2, a3)
                         && letters_lower(w1)
-                        && (cap_then_lower2 || both_lower2)
+                        && (second_cap2 || cap_then_lower2 || both_lower2)
                         && w0.eq_ignore_ascii_case(w2)
                         && w1.eq_ignore_ascii_case(w3)
                         && !(w0.eq_ignore_ascii_case("scratch") && w1.eq_ignore_ascii_case("that"));
@@ -539,10 +569,9 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                                 if dots >= 2 {
                                     ws = at;
                                 } else if dots == 1 {
+                                    // ADR 0258 / ADR 0259: Cap-starting dropped copy across a period.
                                     let dropped = &old[a..b];
-                                    if dropped.starts_with(|c: char| c.is_ascii_uppercase())
-                                        && (dropped.contains('\'') || dropped.contains('\u{2019}'))
-                                    {
+                                    if dropped.starts_with(|c: char| c.is_ascii_uppercase()) {
                                         ws = at;
                                     }
                                 }

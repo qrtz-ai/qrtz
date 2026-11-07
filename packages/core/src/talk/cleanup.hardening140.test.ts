@@ -47,8 +47,8 @@ describe('ADR 0256 period-gap Cap-then-lower / both-lower restart', () => {
         'I will go. I will go to the store today.',
       ],
       [
-        "I don't really. I don't really want that today",
-        "I don't really. I don't really want that today.",
+        'I talk clearly. I talk clearly about that today',
+        'I talk clearly. I talk clearly about that today.',
       ],
       ['like a like a simple path today', 'Like a like a simple path today.'],
       [

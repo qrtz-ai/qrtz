@@ -525,4 +525,23 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("It's. It's"), "{out}");
     assert!(!out.contains("Don't. Don't"), "{out}");
     assert_fits_budget(&text, " with Cap Cap period contraction restarts");
+    // ADR 0259: Cap Cap MW verbal contraction across a single period on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} I don't. I don't know yet"));
+        body.push_str(&format!(" and What's the. What's the status {i} today"));
+    }
+    body.push_str(". And then We can't. We can't ship without the tests today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("I don't know yet"), "{out}");
+    assert!(
+        out.contains("What's the status") || out.contains("what's the status"),
+        "{out}"
+    );
+    assert!(out.contains("We can't ship without the tests today"), "{out}");
+    assert!(!out.contains("I don't. I don't"), "{out}");
+    assert!(!out.contains("What's the. What's the"), "{out}");
+    assert!(!out.contains("We can't. We can't"), "{out}");
+    assert_fits_budget(&text, " with Cap Cap MW period verbal contraction restarts");
 }

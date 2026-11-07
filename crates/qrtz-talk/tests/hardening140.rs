@@ -58,8 +58,8 @@ fn period_gap_0256_refusals_stay() {
             "I will go. I will go to the store today.",
         ),
         (
-            "I don't really. I don't really want that today",
-            "I don't really. I don't really want that today.",
+            "I talk clearly. I talk clearly about that today",
+            "I talk clearly. I talk clearly about that today.",
         ),
         // Space-only both-lower MW stays.
         (

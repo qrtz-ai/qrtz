@@ -70,8 +70,8 @@ fn ellipsis_cap_restart_0252_refusals_stay() {
             "I'll use it. It needs to work correctly today.",
         ),
         (
-            "I don't really. I don't really like this idea",
-            "I don't really. I don't really like this idea.",
+            "I talk clearly. I talk clearly about this idea",
+            "I talk clearly. I talk clearly about this idea.",
         ),
         (
             "new york... New York looks nice today",

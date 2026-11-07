@@ -2377,9 +2377,10 @@ function restartPhrase(s: string): string {
   // Spaces/tabs only within a copy: a newline between copies is a real sentence start, not a restart.
   const onlySpaceTab = (from: number, to: number) =>
     from <= to && /^[ \t]*$/.test(s.slice(from, to));
-  // ADR 0252 / ADR 0256: spaces/tabs, ellipsis (`...` / `…`), or a single `.` when the second
-  // copy starts lowercase. Cap Cap across a single period is refused here; ADR 0258 handles Cap
-  // Cap one-word contractions via `periodGap` separately.
+  // ADR 0252 / ADR 0256 / ADR 0259: spaces/tabs, ellipsis (`...` / `…`), or a single `.` when
+  // the second copy starts lowercase. Cap Cap / Cap-second across a single period is refused in
+  // `copyGapOk`; ADR 0258 handles Cap Cap one-word verbal contractions, and ADR 0259 Cap Cap MW
+  // with a verbal contraction in the first copy, via `periodGap` separately.
   const copyGapOk = (from: number, to: number, secondStartsLower: boolean) => {
     if (from > to) return false;
     const gap = s.slice(from, to);
@@ -2493,11 +2494,21 @@ function restartPhrase(s: string): string {
         middleOk(w6.text) &&
         /^[a-z]/.test(w7.text) &&
         (periodGap(w3.end, w4.start) || /['’]/.test(w0.text));
+      // ADR 0259: Cap Cap / Cap-second across a single period when the first copy contains a
+      // verbal contraction.
+      const verbal4 =
+        isVerbalContraction(w0.text) ||
+        isVerbalContraction(w1.text) ||
+        isVerbalContraction(w2.text) ||
+        isVerbalContraction(w3.text);
+      const gap4 =
+        copyGapOk(w3.end, w4.start, /^[a-z]/.test(w4.text)) ||
+        (periodGap(w3.end, w4.start) && /^[A-Z]/.test(w4.text) && verbal4);
       const ok4 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
         onlySpaceTab(w2.end, w3.start) &&
-        copyGapOk(w3.end, w4.start, /^[a-z]/.test(w4.text)) &&
+        gap4 &&
         onlySpaceTab(w4.end, w5.start) &&
         onlySpaceTab(w5.end, w6.start) &&
         onlySpaceTab(w6.end, w7.start) &&
@@ -2547,10 +2558,19 @@ function restartPhrase(s: string): string {
         middleOk(w4.text) &&
         /^[a-z]/.test(w5.text) &&
         (periodGap(w2.end, w3.start) || /['’]/.test(w0.text));
+      // ADR 0259: Cap Cap / Cap-second across a single period with a verbal contraction in the
+      // first copy.
+      const verbal3 =
+        isVerbalContraction(w0.text) ||
+        isVerbalContraction(w1.text) ||
+        isVerbalContraction(w2.text);
+      const gap3 =
+        copyGapOk(w2.end, w3.start, /^[a-z]/.test(w3.text)) ||
+        (periodGap(w2.end, w3.start) && /^[A-Z]/.test(w3.text) && verbal3);
       const ok3 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
-        copyGapOk(w2.end, w3.start, /^[a-z]/.test(w3.text)) &&
+        gap3 &&
         onlySpaceTab(w3.end, w4.start) &&
         onlySpaceTab(w4.end, w5.start) &&
         middleOk(w1.text) &&
@@ -2594,9 +2614,16 @@ function restartPhrase(s: string): string {
         /^[a-z]/.test(w2.text) &&
         /^[a-z]/.test(w3.text) &&
         (periodGap(w1.end, w2.start) || /['’]/.test(w0.text));
+      // ADR 0259: Cap Cap / Cap-second across a single period with a verbal contraction in the
+      // first copy ("I don't. I don't", "you can't. You can't").
+      const verbal2 =
+        isVerbalContraction(w0.text) || isVerbalContraction(w1.text);
+      const gap2 =
+        copyGapOk(w1.end, w2.start, /^[a-z]/.test(w2.text)) ||
+        (periodGap(w1.end, w2.start) && /^[A-Z]/.test(w2.text) && verbal2);
       const ok2 =
         onlySpaceTab(w0.end, w1.start) &&
-        copyGapOk(w1.end, w2.start, /^[a-z]/.test(w2.text)) &&
+        gap2 &&
         onlySpaceTab(w2.end, w3.start) &&
         lettersLower(w1.text) &&
         (secondCap2 || capThenLower2 || bothLower2) &&
@@ -2691,14 +2718,10 @@ function restartPhrase(s: string): string {
           dots += 1;
           at -= 1;
         }
-        // Ellipsis (ADR 0252). ADR 0258: also strip a single period when the dropped Cap Cap
-        // contraction sat across it.
+        // Ellipsis (ADR 0252). ADR 0258 / ADR 0259: strip a single period when the dropped
+        // Cap-starting copy sat across it (one-word contraction or MW Cap Cap verbal).
         if (dots >= 2) ws = at;
-        else if (
-          dots === 1 &&
-          /^[A-Z]/.test(s.slice(start, end)) &&
-          /['’]/.test(s.slice(start, end))
-        ) {
+        else if (dots === 1 && /^[A-Z]/.test(s.slice(start, end))) {
           ws = at;
         }
       }
