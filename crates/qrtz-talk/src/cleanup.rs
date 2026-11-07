@@ -1863,7 +1863,7 @@ fn collapse_repeats(s: &str) -> String {
     out
 }
 
-/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0255: a phrase the recogniser restarts
+/// ADR 0246 / ADR 0247 / ADR 0248 / ADR 0249 / ADR 0250 / ADR 0255 / ADR 0257: a phrase the recogniser restarts
 /// mid-sentence with a capital on the first word of the second copy collapses to one copy.
 ///
 /// Two-word (ADR 0246, widened in ADR 0247 / ADR 0255): "as a As a", "in the In the", "Can you
@@ -1892,8 +1892,11 @@ fn collapse_repeats(s: &str) -> String {
 /// ADR 0256: a single `.` with surrounding spaces/tabs is also allowed when the second copy
 /// starts lowercase (false segment cut / Cap-then-lower or both-lower hesitation); Cap Cap
 /// across a single period stays refused. Within each copy, only spaces/tabs. Spoken "scratch that"
-/// across an ellipsis still stays (ADR 0186). Both-lower multi-word (2/3/4) collapses only when
-/// the between-copies gap is a single period (not spaces-only, not ellipsis-only).
+/// across an ellipsis still stays (ADR 0186). Both-lower multi-word (2/3/4) collapses when the
+/// between-copies gap is a single period (ADR 0256), **or** when the first word of each copy
+/// contains an apostrophe (contraction-headed, ADR 0257) across spaces/tabs or ellipsis — so
+/// "what's it what's it" / "don't know don't know" collapse while space-only non-contraction
+/// keeps like "like a like a" / "is that is that" stay.
 ///
 /// One-word (ADR 0248 / ADR 0254): a contracted word with an apostrophe, restarted with mixed
 /// Cap ("it's It's", "don't Don't", "What's what's", "It's it's"). Either the first copy starts
@@ -2066,6 +2069,8 @@ fn restart_phrase(s: &str) -> String {
     };
     // Middle word of a three-word phrase: lowercase, or the pronoun "I" / a contracted "I".
     let middle_ok = |a: usize, b: usize| letters_lower(a, b) || is_i_word(a, b);
+    // ADR 0257: first word of a copy contains an ASCII / curly apostrophe (contraction head).
+    let word_has_apos = |a: usize, b: usize| s[a..b].contains('\'') || s[a..b].contains('\u{2019}');
 
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
@@ -2088,12 +2093,13 @@ fn restart_phrase(s: &str) -> String {
                 && middle_ok(a5, b5)
                 && middle_ok(a6, b6)
                 && starts_lower(a7);
+            // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
             let both_lower4 = starts_lower(a0)
                 && starts_lower(a4)
                 && middle_ok(a5, b5)
                 && middle_ok(a6, b6)
                 && starts_lower(a7)
-                && period_gap(b3, a4);
+                && (period_gap(b3, a4) || word_has_apos(a0, b0));
             let ok4 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && only_space_tab(b2, a3)
@@ -2132,11 +2138,12 @@ fn restart_phrase(s: &str) -> String {
             let second_cap3 = starts_upper(a3) && middle_ok(a4, b4) && starts_lower(a5);
             let cap_then_lower3 =
                 starts_upper(a0) && starts_lower(a3) && middle_ok(a4, b4) && starts_lower(a5);
+            // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
             let both_lower3 = starts_lower(a0)
                 && starts_lower(a3)
                 && middle_ok(a4, b4)
                 && starts_lower(a5)
-                && period_gap(b2, a3);
+                && (period_gap(b2, a3) || word_has_apos(a0, b0));
             let ok3 = only_space_tab(b0, a1)
                 && only_space_tab(b1, a2)
                 && copy_gap_ok(b2, a3, starts_lower(a3))
@@ -2171,7 +2178,11 @@ fn restart_phrase(s: &str) -> String {
             // Last word of each copy stays lowercase so "new york New York" is kept.
             let second_cap2 = starts_upper(a2) && starts_lower(a3);
             let cap_then_lower2 = starts_upper(a0) && starts_lower(a2) && starts_lower(a3);
-            let both_lower2 = starts_lower(a0) && starts_lower(a2) && starts_lower(a3) && period_gap(b1, a2);
+            // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
+            let both_lower2 = starts_lower(a0)
+                && starts_lower(a2)
+                && starts_lower(a3)
+                && (period_gap(b1, a2) || word_has_apos(a0, b0));
             let ok2 = only_space_tab(b0, a1)
                 && copy_gap_ok(b1, a2, starts_lower(a2))
                 && only_space_tab(b2, a3)

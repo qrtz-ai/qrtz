@@ -242,11 +242,13 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 / ADR 0255 / ADR 0256: Cap-then-lower / period-gap doubles collapse in
-        // rule_cleanup before sentence caps — one-word contractions (0254), multi-word
-        // (0255), and Cap-then-lower / both-lower across a single period (0256). Detect pairs
-        // in `raw` (so keep-set space-only both-lower stays), then check that dropping the
-        // matching second copies from `old` yields `new` (allowing final "." → "?").
+        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257: Cap-then-lower / period-gap /
+        // contraction-headed both-lower doubles collapse in rule_cleanup before sentence
+        // caps — one-word contractions (0254), multi-word (0255), Cap-then-lower / both-lower
+        // across a single period (0256), and both-lower multi-word when the first word has an
+        // apostrophe (0257). Detect pairs in `raw` (so keep-set space-only non-contraction
+        // both-lower stays), then check that dropping the matching second copies from `old`
+        // yields `new` (allowing final "." → "?").
         let cap_then_lower = {
             let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
             let raw_spans: Vec<(usize, usize, &str)> = word_re
@@ -344,7 +346,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         && middle_ok(w5)
                         && middle_ok(w6)
                         && w7.starts_with(|c: char| c.is_ascii_lowercase())
-                        && period_gap(b3, a4);
+                        && (period_gap(b3, a4) || w0.contains('\'') || w0.contains('\u{2019}'));
                     let ok4 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
                         && only_space_tab(b2, a3)
@@ -384,7 +386,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         && w3.starts_with(|c: char| c.is_ascii_lowercase())
                         && middle_ok(w4)
                         && w5.starts_with(|c: char| c.is_ascii_lowercase())
-                        && period_gap(b2, a3);
+                        && (period_gap(b2, a3) || w0.contains('\'') || w0.contains('\u{2019}'));
                     let ok3 = only_space_tab(b0, a1)
                         && only_space_tab(b1, a2)
                         && gap_ok(b2, a3, w3.starts_with(|c: char| c.is_ascii_lowercase()))
@@ -415,7 +417,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let both_lower2 = w0.starts_with(|c: char| c.is_ascii_lowercase())
                         && w2.starts_with(|c: char| c.is_ascii_lowercase())
                         && w3.starts_with(|c: char| c.is_ascii_lowercase())
-                        && period_gap(b1, a2);
+                        && (period_gap(b1, a2) || w0.contains('\'') || w0.contains('\u{2019}'));
                     let ok2 = only_space_tab(b0, a1)
                         && gap_ok(b1, a2, w2.starts_with(|c: char| c.is_ascii_lowercase()))
                         && only_space_tab(b2, a3)

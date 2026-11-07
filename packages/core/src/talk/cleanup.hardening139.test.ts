@@ -56,8 +56,8 @@ describe('ADR 0255 Cap-then-lower multi-word restart', () => {
         'You have to you have to ship it today.',
       ],
       [
-        "how's it going how's it going for you today",
-        "How's it going how's it going for you today.",
+        'what are the what are the options today',
+        'What are the what are the options today.',
       ],
       [
         'can we can we try that again today',

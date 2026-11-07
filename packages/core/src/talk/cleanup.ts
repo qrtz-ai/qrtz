@@ -2448,13 +2448,14 @@ function restartPhrase(s: string): string {
         middleOk(w5.text) &&
         middleOk(w6.text) &&
         /^[a-z]/.test(w7.text);
+      // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
       const bothLower4 =
         /^[a-z]/.test(w0.text) &&
         /^[a-z]/.test(w4.text) &&
         middleOk(w5.text) &&
         middleOk(w6.text) &&
         /^[a-z]/.test(w7.text) &&
-        periodGap(w3.end, w4.start);
+        (periodGap(w3.end, w4.start) || /['’]/.test(w0.text));
       const ok4 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
@@ -2502,12 +2503,13 @@ function restartPhrase(s: string): string {
         /^[a-z]/.test(w3.text) &&
         middleOk(w4.text) &&
         /^[a-z]/.test(w5.text);
+      // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
       const bothLower3 =
         /^[a-z]/.test(w0.text) &&
         /^[a-z]/.test(w3.text) &&
         middleOk(w4.text) &&
         /^[a-z]/.test(w5.text) &&
-        periodGap(w2.end, w3.start);
+        (periodGap(w2.end, w3.start) || /['’]/.test(w0.text));
       const ok3 =
         onlySpaceTab(w0.end, w1.start) &&
         onlySpaceTab(w1.end, w2.start) &&
@@ -2543,16 +2545,18 @@ function restartPhrase(s: string): string {
       // ADR 0247: Cap-second — first word of the first copy may be Title case ("Can you Can you").
       // ADR 0255: Cap-then-lower — first copy Cap, second lower ("Is that is that").
       // ADR 0256: both-lower across a single period ("should be. should be").
+      // ADR 0257: both-lower contraction-headed across spaces/ellipsis ("what's it what's it").
       const secondCap2 = /^[A-Z]/.test(w2.text) && /^[a-z]/.test(w3.text);
       const capThenLower2 =
         /^[A-Z]/.test(w0.text) &&
         /^[a-z]/.test(w2.text) &&
         /^[a-z]/.test(w3.text);
+      // ADR 0256 period-gap, or ADR 0257 contraction-headed (spaces/ellipsis ok).
       const bothLower2 =
         /^[a-z]/.test(w0.text) &&
         /^[a-z]/.test(w2.text) &&
         /^[a-z]/.test(w3.text) &&
-        periodGap(w1.end, w2.start);
+        (periodGap(w1.end, w2.start) || /['’]/.test(w0.text));
       const ok2 =
         onlySpaceTab(w0.end, w1.start) &&
         copyGapOk(w1.end, w2.start, /^[a-z]/.test(w2.text)) &&

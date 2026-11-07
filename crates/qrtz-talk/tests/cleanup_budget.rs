@@ -483,4 +483,30 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("Thank you. thank you"), "{out}");
     assert!(!out.contains("Is that. is that"), "{out}");
     assert_fits_budget(&text, " with period-gap restart phrases");
+    // ADR 0257: both-lower contraction-headed multi-word restarts on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} what's it what's it return now"));
+        body.push_str(&format!(" and don't know don't know the answer {i} today"));
+    }
+    body.push_str(". And then how's it how's it going for the team today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(
+        out.contains("what's it return now") || out.contains("What's it return now"),
+        "{out}"
+    );
+    assert!(
+        out.contains("don't know the answer") || out.contains("Don't know the answer"),
+        "{out}"
+    );
+    assert!(
+        out.contains("how's it going for the team today")
+            || out.contains("How's it going for the team today"),
+        "{out}"
+    );
+    assert!(!out.contains("what's it what's it"), "{out}");
+    assert!(!out.contains("don't know don't know"), "{out}");
+    assert!(!out.contains("how's it how's it"), "{out}");
+    assert_fits_budget(&text, " with contraction-headed both-lower multi-word restarts");
 }
