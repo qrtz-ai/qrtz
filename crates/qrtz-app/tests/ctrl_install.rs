@@ -1,6 +1,6 @@
 //! Run 41: ADR 0169 / ADR 0171 for ctrl, end to end on a local signed index. ADR 0237: ctrl is built into qrtz.app
 //! and is never a package (planning it is refused); `model.laya` stays an ADR 0212 read-only package it reads
-//! (`BUNDLED_PACKAGE_READS`), installed under one consent, one progress. Its files come only from their pinned Hugging
+//! (`extension.packageReads`), installed under one consent, one progress. Its files come only from their pinned Hugging
 //! Face URL (never from the package host), and with no answer recorded in ctrl's settings the installed model is
 //! ctrl's yes: `CtrlLayaModel::consent()` hands the helper the read-only, store-linked `.mlmodelc` inside
 //! `packages/model.laya/<version>/` (ADR 0157 §9), with no separate download and no helper view under `models/`.

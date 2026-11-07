@@ -165,6 +165,15 @@ pub struct Extension {
     /// the process read-only store paths for exactly these ([`crate::resolve::extension_grants`]).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub reads: Vec<String>,
+    /// QRT-367: of [`Self::reads`], the subset that install as read-only `model.*` packages the process is granted
+    /// when this extension is bundled in qrtz.app. Speech-set names may stay in `reads` for the orphan check while
+    /// loading from `<data>/models/<set>/` instead of the package store. Empty = no package grants (ADR 0237).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub package_reads: Vec<String>,
+    /// QRT-367: when true, package reads reach the helper in a host message, never as `QRTZ_READ_MODELS` (that env
+    /// makes the helper use no other dir, which would cut a speech set under `<data>/models/` off).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub reads_via_message: bool,
 }
 
 /// A sandboxed XPC service (ADR 0144 §2, 0157 §7): no network, no TCC, models only by handle.
@@ -290,6 +299,27 @@ impl PackageManifest {
                         format!("{r}: one of its model dependencies"),
                     ));
                 }
+            }
+            // QRT-367: packageReads is a subset of reads (each one once).
+            for (i, r) in e.package_reads.iter().enumerate() {
+                if e.package_reads[..i].contains(r) {
+                    return Err(ModuleError::invalid(
+                        "extension.packageReads",
+                        format!("{r}: listed twice"),
+                    ));
+                }
+                if !e.reads.contains(r) {
+                    return Err(ModuleError::invalid(
+                        "extension.packageReads",
+                        format!("{r}: one of extension.reads"),
+                    ));
+                }
+            }
+            if e.reads_via_message && e.package_reads.is_empty() {
+                return Err(ModuleError::invalid(
+                    "extension.readsViaMessage",
+                    "needs a non-empty extension.packageReads",
+                ));
             }
         }
         if let Some(s) = &self.service {

@@ -1341,6 +1341,13 @@ const GRANT_LOGIC: &[(&str, Option<&str>)] = &[
     ("crates/qrtz-modules/src/install.rs", None),
     ("crates/qrtz-modules/src/qrtz_json.rs", None),
     ("crates/qrtz-modules/src/index.rs", None),
+    // QRT-367: grant helpers derived from manifests (no package/model name literals).
+    ("crates/qrtz-modules/src/grants.rs", None),
+    // lib.rs inventory constants (MODULE_IDS, …) are not grant logic; scan only declared_reads.
+    (
+        "crates/qrtz-modules/src/lib.rs",
+        Some("    pub fn declared_reads()"),
+    ),
     ("crates/qrtz-app/src/local_models.rs", None),
     (
         "crates/qrtz-app/src/installed.rs",

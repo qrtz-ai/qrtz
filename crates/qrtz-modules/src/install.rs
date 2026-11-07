@@ -1871,10 +1871,9 @@ impl Installer {
     /// [`Self::extension_read_path`] checks. A model that isn't installed (yet) is left out; nothing else is ever in it.
     pub fn process_reads(&self, extension: &str) -> Result<Vec<(String, PathBuf)>, InstallError> {
         let lock = self.lock()?;
-        if !lock.workspace.resolved.contains_key(extension)
-            && crate::BUNDLED_PACKAGE_READS.contains(&extension)
-        {
-            // ADR 0237: bundled ctrl isn't in the lock; its compiled-in manifest's declared reads are the grants.
+        if !lock.workspace.resolved.contains_key(extension) && crate::bundled_has_package_reads(extension) {
+            // ADR 0237: a bundled helper with packageReads isn't in the lock; its compiled-in manifest's
+            // declared package reads are the grants.
             let mut out = vec![];
             for (_, reads) in crate::bundled::declared_reads()
                 .into_iter()

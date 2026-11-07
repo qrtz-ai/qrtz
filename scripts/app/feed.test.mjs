@@ -119,7 +119,7 @@ describe('scripts/app/feed.mjs', () => {
         'utf8',
       ),
     );
-    expect(minimumSystemVersion(conf)).toBe('14.2');
+    expect(minimumSystemVersion(conf)).toBe('15.0');
     expect(() => minimumSystemVersion({})).toThrow(/minimumSystemVersion/);
     for (const [name, min] of [
       ['0.3.0', '15.0'],

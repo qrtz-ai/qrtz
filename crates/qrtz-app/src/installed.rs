@@ -327,8 +327,12 @@ pub const READ_MODELS_ENV: &str = "QRTZ_READ_MODELS";
 /// [`qrtz_modules::resolve::grants_in_lock`] derives for its own process from `qrtz.lock`, each dir checked
 /// read-only by [`qrtz_modules::install::Installer::extension_read_path`]. `None` for a bundled module.
 pub fn read_models_env(root: &Path, module: &str) -> Option<String> {
-    // ADR 0237: a bundled module reads no package, except ctrl's laya (`BUNDLED_PACKAGE_READS`).
-    if qrtz_modules::is_bundled_extension(module) && !qrtz_modules::BUNDLED_PACKAGE_READS.contains(&module) {
+    // ADR 0237 / QRT-367: a bundled module with no packageReads gets no var. When readsViaMessage is set, the host
+    // hands package paths in a message instead — setting QRTZ_READ_MODELS would make the helper use no other dir.
+    if qrtz_modules::is_bundled_extension(module) && !qrtz_modules::bundled_has_package_reads(module) {
+        return None;
+    }
+    if qrtz_modules::bundled_reads_via_message(module) {
         return None;
     }
     let installer =

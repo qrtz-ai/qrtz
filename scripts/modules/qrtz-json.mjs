@@ -1,7 +1,7 @@
 // modules/<m>/qrtz.json is generated from modules/<m>/module.json (the source of truth: the signed bundled
 // manifest, ADR 0146). The one hand-written field is `description`, kept from the existing qrtz.json.
 // Model dependencies: module.json names a pinned set by its dir (`model:<dir>`); the package the runtime
-// resolves is the set's `package` in crates/qrtz-app/src/local_models.json or ctrl_laya_model.json.
+// resolves is the set's `package` in crates/qrtz-app/src/local_models.json, ctrl_laya_model.json or echo_phonon_model.json.
 //   bun scripts/modules/qrtz-json.mjs           write every qrtz.json
 //   bun scripts/modules/qrtz-json.mjs --check   exit 1 if any qrtz.json drifts from its module.json
 import fs from 'node:fs';
@@ -20,6 +20,7 @@ export function modelPackages(root = ROOT) {
   for (const f of [
     'crates/qrtz-app/src/local_models.json',
     'crates/qrtz-app/src/ctrl_laya_model.json',
+    'crates/qrtz-app/src/echo_phonon_model.json',
   ]) {
     for (const s of JSON.parse(fs.readFileSync(path.join(root, f), 'utf8'))
       .sets) {
@@ -35,7 +36,7 @@ export function generate(module, description, packages = modelPackages()) {
       const name = packages.get(d.id);
       if (!name)
         throw new Error(`${module.id}: ${d.id} is no pinned model set`);
-      return [name, `^${d.version}`];
+      return [name, `^${d.version}`, !!d.optional];
     })
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   const l = module.launch;
@@ -49,14 +50,25 @@ export function generate(module, description, packages = modelPackages()) {
     permissions: module.permissions,
     settings: module.settings,
   };
+  // ADR 0212: every model dependency is listed in reads (orphan check). QRT-367: optional model deps are the
+  // package reads a bundled helper is granted; required ones stay speech sets under <data>/models/.
   if (deps.length) extension.reads = deps.map(([n]) => n);
+  const packageReads = deps
+    .filter(([, , optional]) => optional)
+    .map(([n]) => n);
+  if (packageReads.length) extension.packageReads = packageReads;
+  // When a bundled helper also keeps required speech-set deps, package reads go by host message so
+  // QRTZ_READ_MODELS does not cut those sets off.
+  const hasRequired = deps.some(([, , optional]) => !optional);
+  if (packageReads.length && hasRequired) extension.readsViaMessage = true;
   const q = {
     name: module.name,
     version: module.version,
     kind: 'extension',
     description,
   };
-  if (deps.length) q.dependencies = Object.fromEntries(deps);
+  if (deps.length)
+    q.dependencies = Object.fromEntries(deps.map(([n, v]) => [n, v]));
   q.extension = extension;
   return q;
 }

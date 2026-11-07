@@ -14,7 +14,11 @@
     "views": ["ctrl"],
     "capabilities": ["ctrl.read", "ctrl.write", "module.settings"],
     "permissions": ["accessibility"],
-    "settings": { "namespace": "ctrl", "legacySections": [] },
-    "reads": ["model.laya"]
+    "settings": {
+      "namespace": "ctrl",
+      "legacySections": []
+    },
+    "reads": ["model.laya"],
+    "packageReads": ["model.laya"]
   }
 }
