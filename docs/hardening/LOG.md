@@ -5,7 +5,7 @@
 - **Polish:** 365/368 → **373/376** exact, edit distance **39** (0.29 % of 13520), regressions **0**, keep **0/683**.
 - **Latency:** release `cleanup_budget` Cap Cap I period median **0.861 ms** (1187-word probe; ceiling 2 ms).
 - **Rejected:** Cap Cap MW without verbal; Cap Cap contraction across spaces/ellipsis; Cap Cap "So So" / "Where where"; full-STUTTERS period (`What. What`, `Will. Will`, `The. The`, `A. A`); "a An"; adding are/is/on/like/why/so/where to STUTTERS; "hold on, hold on"; content doubles; both-lower one-word contractions; bare "it it's"; email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap; general triple-any-word; ", okay" without unmarked evidence.
-- **SHAs:** code , docs TBD
+- **SHAs:** code `e5c23b9d`, docs `e7478adb`
 
 ## 2026-11-06 — Cycle 143 (≈5:52–6:20 PM PT, polish): Cap Cap MW verbal across a period (ADR 0259)
 
