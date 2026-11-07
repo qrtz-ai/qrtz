@@ -1,3 +1,12 @@
+## 2026-11-06 — Cycle 145 (≈6:48–7:00 PM PT, polish): Cap Cap pronoun "I" across a period (ADR 0260)
+
+- **Focus:** polish. origin/main at `65bd5526` (cycle 143 / ADR 0259; cycle 144 landed nothing). Mac online; prod+dev talk history still (453+443).
+- **Landed:** widen `restart_phrase` — Cap Cap pronoun "I" across a single period ("I. I", "But I. I") collapses (ADR 0260). Narrower than full STUTTERS period (keeps Will. Will / What. What / The. The / A. A / So. So). Rust + TS twin, polish +8, keep −k668 +10, cleanup.json, hardening145 + hardening142/60 retarget, cleanup_budget +1 text.
+- **Polish:** 365/368 → **373/376** exact, edit distance **39** (0.29 % of 13520), regressions **0**, keep **0/683**.
+- **Latency:** release `cleanup_budget` Cap Cap I period median **0.861 ms** (1187-word probe; ceiling 2 ms).
+- **Rejected:** Cap Cap MW without verbal; Cap Cap contraction across spaces/ellipsis; Cap Cap "So So" / "Where where"; full-STUTTERS period (`What. What`, `Will. Will`, `The. The`, `A. A`); "a An"; adding are/is/on/like/why/so/where to STUTTERS; "hold on, hold on"; content doubles; both-lower one-word contractions; bare "it it's"; email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap; general triple-any-word; ", okay" without unmarked evidence.
+- **SHAs:** code , docs TBD
+
 ## 2026-11-06 — Cycle 143 (≈5:52–6:20 PM PT, polish): Cap Cap MW verbal across a period (ADR 0259)
 
 - **Focus:** polish. origin/main at `e6cdbfda` (cycle 142 / ADR 0258). Mac online; prod+dev talk history (453+443).

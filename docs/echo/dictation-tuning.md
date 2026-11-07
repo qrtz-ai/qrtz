@@ -3610,6 +3610,58 @@ contraction across spaces/ellipsis stays refused.
    "I'm. I'm a senior" still collapses; ADR 0257 "what's it what's it return" still collapses;
    ADR 0256 "should be. should be …" still collapses.
 
+
+## 79. Cycle 145: Cap Cap pronoun "I" across a period (ADR 0260)
+
+| Run                                                    | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 143, 368 cases                                   | **365 / 368** | **39 chars (0.30 % of 13151)** | 0           | 0 / 674             |
+| this cycle, 376 cases (+8 Cap Cap I period)            | **373 / 376** | **39 chars (0.29 % of 13520)** | 0           | 0 / 683             |
+
+- **Examples:** "But I. I just feel like a moron today" → "But I just feel like a moron today.";
+  "I. I think that works for the team today" → "I think that works for the team today.";
+  "Yeah I. I agree with the privacy review today" → "Yeah I agree with the privacy review today.".
+  Kept: "So. So…", "What. What…", "Will. Will…", "The. The…", "A. A…", "I... I…",
+  "I talk. I talk…", "I'm I'm…".
+- **Rejected this cycle:** Cap Cap MW without verbal across period; Cap Cap contraction across
+  spaces/ellipsis; Cap Cap "So So" / "Where where"; full-STUTTERS period collapse; "a An"; adding
+  are/is/on/like/why/so/where to STUTTERS; "hold on, hold on" across a comma; content-word doubles;
+  both-lower one-word contractions; bare "it it's"; email/URL ITN (p19/p20, ADR 0223); p41
+  (ADR 0188's "don't retry"); unload; speculative N203; N197 mic-switch; year ITN (k350);
+  five-word Cap; general triple-any-word; ", okay"/, yeah/, huh/, eh/, no without unmarked
+  evidence.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: Cap Cap I period median **0.861 ms**
+  (1187-word probe; ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 143:** origin/main at `65bd5526` until this commit. Fresh Mac
+  history (prod 453, dev 443 — unchanged since cycle 143/144) still hit `But I. I just feel like a
+  moron` after Cap Cap verbal cleanup. N197 and N203 stay open; p19/p20/p41 still failing. Ranked
+  findings: fixed Cap Cap pronoun I period restart; still open spoken email/URL ITN, don't-retry,
+  mic-switch, speculative "?".
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation. Defer Cap Cap MW without verbal across period / Cap Cap "So So" /
+"Where where" / full-STUTTERS period (`What. What`, `Will. Will`) / bare "it it's" / "hold on, hold
+on" / "a An" until evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to
+STUTTERS. Cap Cap contraction across spaces/ellipsis stays refused.
+
+### Test on Jared's Mac (cycle 145)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate so Parakeet writes Cap Cap "I" across a period: "But I. I just feel like a
+   moron" — it should type a single "But I just feel like a moron". Then "I. I think that works" →
+   "I think that works."
+3. Refuse checks: "So. So we should ship" stays; "What. What is the release" stays; "Will. Will you
+   join" stays; "I... I think" stays; "I talk. I talk like I know" stays; ADR 0259 "I don't. I don't
+   know how" still collapses; ADR 0258 "I'm. I'm a senior" still collapses.
+
 ## 76. Cycle 141: both-lower contraction-headed multi-word restart (ADR 0257)
 
 | Run                                                         | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
