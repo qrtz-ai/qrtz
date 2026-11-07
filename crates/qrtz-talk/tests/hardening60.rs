@@ -242,13 +242,14 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257 / ADR 0258 / ADR 0259: Cap-then-lower /
+        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257 / ADR 0258 / ADR 0259 / ADR 0260: Cap-then-lower /
         // period-gap / contraction-headed both-lower / Cap Cap period-contraction doubles
         // collapse in rule_cleanup before sentence caps — one-word contractions (0254),
         // multi-word (0255), Cap-then-lower / both-lower across a single period (0256),
         // both-lower multi-word when the first word has an apostrophe (0257), Cap Cap one-word
-        // verbal contractions across a single period (0258), and Cap Cap / Cap-second MW across
-        // a single period when the first copy contains a verbal contraction (0259). Detect
+        // verbal contractions across a single period (0258), Cap Cap / Cap-second MW across
+        // a single period when the first copy contains a verbal contraction (0259), and Cap Cap
+        // pronoun "I" across a single period (0260). Detect
         // pairs in `raw` (so keep-set space-only non-contraction both-lower stays), then check
         // that dropping the matching second copies from `old` yields `new` (allowing final
         // "." → "?").
@@ -524,6 +525,19 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                         i += 2;
                         continue;
                     }
+                    // ADR 0260: Cap Cap pronoun "I" across a single period.
+                    let ok_cap_cap_i_period = period_gap(b0, a1)
+                        && !has_apos
+                        && !has_apos1
+                        && w0.eq_ignore_ascii_case("i")
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w1.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w0.eq_ignore_ascii_case(w1);
+                    if ok_cap_cap_i_period {
+                        drop_idx[i + 1] = true;
+                        i += 2;
+                        continue;
+                    }
                 }
                 i += 1;
             }
@@ -569,7 +583,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                                 if dots >= 2 {
                                     ws = at;
                                 } else if dots == 1 {
-                                    // ADR 0258 / ADR 0259: Cap-starting dropped copy across a period.
+                                    // ADR 0258 / ADR 0259 / ADR 0260: Cap-starting dropped copy across a period.
                                     let dropped = &old[a..b];
                                     if dropped.starts_with(|c: char| c.is_ascii_uppercase()) {
                                         ws = at;

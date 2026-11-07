@@ -544,4 +544,21 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(!out.contains("What's the. What's the"), "{out}");
     assert!(!out.contains("We can't. We can't"), "{out}");
     assert_fits_budget(&text, " with Cap Cap MW period verbal contraction restarts");
+    // ADR 0260: Cap Cap pronoun "I" across a single period on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(" Please confirm item{i} I. I am ready now"));
+        body.push_str(&format!(" and Yeah I. I agree with that {i} today"));
+    }
+    body.push_str(". And then But I. I just feel fine with the team today");
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(out.contains("I am ready now"), "{out}");
+    assert!(
+        out.contains("Yeah I agree with that") || out.contains("yeah I agree with that"),
+        "{out}"
+    );
+    assert!(out.contains("But I just feel fine with the team today"), "{out}");
+    assert!(!out.contains("I. I"), "{out}");
+    assert_fits_budget(&text, " with Cap Cap I period restarts");
 }

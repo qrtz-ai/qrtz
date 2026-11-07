@@ -2648,6 +2648,7 @@ function restartPhrase(s: string): string {
     }
     // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
     // ADR 0258: Cap Cap one-word contraction across a single period ("I'm. I'm").
+    // ADR 0260: Cap Cap pronoun "I" across a single period ("I. I").
     // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
     if (i + 1 < spans.length) {
       const w0 = spans[i];
@@ -2676,6 +2677,21 @@ function restartPhrase(s: string): string {
         /^[A-Z]/.test(w0.text) &&
         /^[A-Z]/.test(w1.text);
       if (okCapCapPeriod) {
+        drop[i + 1] = true;
+        i += 2;
+        continue;
+      }
+      // ADR 0260: Cap Cap pronoun "I" across a single period ("I. I") — false segment cut.
+      // Narrower than full STUTTERS (keeps Will. Will / What. What / The. The / So. So / A. A).
+      const okCapCapIPeriod =
+        periodGap(w0.end, w1.start) &&
+        !hasApos &&
+        !hasApos1 &&
+        w0.text.toLowerCase() === w1.text.toLowerCase() &&
+        /^[A-Z]/.test(w0.text) &&
+        /^[A-Z]/.test(w1.text) &&
+        w0.text.toLowerCase() === 'i';
+      if (okCapCapIPeriod) {
         drop[i + 1] = true;
         i += 2;
         continue;
@@ -2719,7 +2735,7 @@ function restartPhrase(s: string): string {
           at -= 1;
         }
         // Ellipsis (ADR 0252). ADR 0258 / ADR 0259: strip a single period when the dropped
-        // Cap-starting copy sat across it (one-word contraction or MW Cap Cap verbal).
+        // Cap-starting copy sat across it (one-word contraction, MW Cap Cap verbal, or I. I).
         if (dots >= 2) ws = at;
         else if (dots === 1 && /^[A-Z]/.test(s.slice(start, end))) {
           ws = at;

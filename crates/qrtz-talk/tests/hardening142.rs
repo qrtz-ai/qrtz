@@ -72,10 +72,7 @@ fn cap_cap_period_0258_refusals_stay() {
             "Yes. Yes I can do that with the team today",
             "Yes. Yes I can do that with the team today.",
         ),
-        (
-            "I. I think that works for the team today",
-            "I. I think that works for the team today.",
-        ),
+        // ADR 0260: Cap Cap "I. I" across a period now collapses (moved to hardening145).
         (
             "Where. Where is the release for the team today",
             "Where. Where is the release for the team today?",

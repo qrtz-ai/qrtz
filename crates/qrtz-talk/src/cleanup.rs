@@ -1900,9 +1900,11 @@ fn collapse_repeats(s: &str) -> String {
 /// "what's it what's it" / "don't know don't know" collapse while space-only non-contraction
 /// keeps like "like a like a" / "is that is that" stay.
 ///
-/// One-word (ADR 0248 / ADR 0254 / ADR 0258): a contracted word with an apostrophe, restarted with
+/// One-word (ADR 0248 / ADR 0254 / ADR 0258 / ADR 0260): a contracted word with an apostrophe, restarted with
 /// mixed Cap ("it's It's", "don't Don't", "What's what's", "It's it's"), or Cap Cap across a
-/// single period ("I'm. I'm", "It's. It's") — false segment cut (ADR 0258). Either the first copy
+/// single period ("I'm. I'm", "It's. It's") — false segment cut (ADR 0258). ADR 0260: Cap Cap
+/// pronoun "I" across a single period ("I. I") also collapses; other Cap Cap non-contractions
+/// ("So. So", "What. What", "Will. Will") stay. Either the first copy
 /// starts lowercase and the second uppercase (mid-sentence Cap restart), or the first starts
 /// uppercase and the second lowercase (sentence-start Cap then lower restart); eq_ignore_ascii_case.
 /// Plain words without an apostrophe stay with [`collapse_repeats`] / STUTTERS ("it It", "the The")
@@ -2263,7 +2265,8 @@ fn restart_phrase(s: &str) -> String {
         }
         // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
         // ADR 0258: Cap Cap one-word contraction across a single period ("I'm. I'm") — false
-        // segment cut; Cap Cap across spaces/ellipsis and Cap Cap without an apostrophe stay.
+        // segment cut; Cap Cap across spaces/ellipsis stays. ADR 0260: Cap Cap "I. I" across a
+        // single period collapses; other Cap Cap without an apostrophe stay.
         // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
         if i + 1 < spans.len() {
             let (a0, b0) = spans[i];
@@ -2289,6 +2292,21 @@ fn restart_phrase(s: &str) -> String {
                 && starts_upper(a0)
                 && starts_upper(a1);
             if ok_cap_cap_period {
+                drop[i + 1] = true;
+                i += 2;
+                continue;
+            }
+            // ADR 0260: Cap Cap pronoun "I" across a single period ("I. I") — false segment
+            // cut. Narrower than full STUTTERS (keeps Will. Will / What. What / The. The /
+            // So. So / A. A). Plain "I" only, not I'm / I'd (0258 covers verbal forms).
+            let ok_cap_cap_i_period = period_gap(b0, a1)
+                && !has_apos
+                && !has_apos1
+                && eq_ci(a0, b0, a1, b1)
+                && starts_upper(a0)
+                && starts_upper(a1)
+                && s[a0..b0].eq_ignore_ascii_case("i");
+            if ok_cap_cap_i_period {
                 drop[i + 1] = true;
                 i += 2;
                 continue;
@@ -2351,8 +2369,9 @@ fn restart_phrase(s: &str) -> String {
                     ws = at;
                 } else if dots == 1 {
                     // ADR 0258: Cap Cap one-word contraction. ADR 0259: Cap Cap MW may drop a
-                    // Cap word without an apostrophe ("I" in "I don't. I don't") — strip here so
-                    // the result does not depend on continued_dot.
+                    // Cap word without an apostrophe ("I" in "I don't. I don't"). ADR 0260: Cap
+                    // Cap "I. I" also drops a Cap "I" — strip here so the result does not depend
+                    // on continued_dot.
                     let dropped = &s[a..b];
                     if dropped.starts_with(|c: char| c.is_ascii_uppercase()) {
                         ws = at;
