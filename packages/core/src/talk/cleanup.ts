@@ -2378,7 +2378,8 @@ function restartPhrase(s: string): string {
   const onlySpaceTab = (from: number, to: number) =>
     from <= to && /^[ \t]*$/.test(s.slice(from, to));
   // ADR 0252 / ADR 0256: spaces/tabs, ellipsis (`...` / `…`), or a single `.` when the second
-  // copy starts lowercase (Cap Cap across a single period stays refused).
+  // copy starts lowercase. Cap Cap across a single period is refused here; ADR 0258 handles Cap
+  // Cap one-word contractions via `periodGap` separately.
   const copyGapOk = (from: number, to: number, secondStartsLower: boolean) => {
     if (from > to) return false;
     const gap = s.slice(from, to);
@@ -2413,6 +2414,42 @@ function restartPhrase(s: string): string {
     if (i < gap.length && gap[i] === '.') return false;
     while (i < gap.length && (gap[i] === ' ' || gap[i] === '\t')) i += 1;
     return i === gap.length;
+  };
+  // ADR 0258: verbal / aux contractions only (not O'Brien / Bob's).
+  const isVerbalContraction = (w: string) => {
+    const lower = w.replace(/\u2019/g, "'").toLowerCase();
+    if (lower.endsWith("n't")) return true;
+    const i = lower.lastIndexOf("'");
+    if (i < 0) return false;
+    const stem = lower.slice(0, i);
+    const suf = lower.slice(i + 1);
+    if (
+      suf === 'm' ||
+      suf === 're' ||
+      suf === 've' ||
+      suf === 'll' ||
+      suf === 'd' ||
+      suf === 't'
+    )
+      return true;
+    if (suf === 's') {
+      return [
+        'it',
+        'that',
+        'what',
+        'who',
+        'where',
+        'when',
+        'why',
+        'how',
+        'there',
+        'here',
+        'he',
+        'she',
+        'let',
+      ].includes(stem);
+    }
+    return false;
   };
   const lettersLower = (w: string) =>
     [...w]
@@ -2583,11 +2620,13 @@ function restartPhrase(s: string): string {
       }
     }
     // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
+    // ADR 0258: Cap Cap one-word contraction across a single period ("I'm. I'm").
     // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
     if (i + 1 < spans.length) {
       const w0 = spans[i];
       const w1 = spans[i + 1];
       const hasApos = /['’]/.test(w0.text);
+      const hasApos1 = /['’]/.test(w1.text);
       const ok1 =
         copyGapOk(w0.end, w1.start, /^[a-z]/.test(w1.text)) &&
         hasApos &&
@@ -2595,6 +2634,21 @@ function restartPhrase(s: string): string {
         ((/^[a-z]/.test(w0.text) && /^[A-Z]/.test(w1.text)) ||
           (/^[A-Z]/.test(w0.text) && /^[a-z]/.test(w1.text)));
       if (ok1) {
+        drop[i + 1] = true;
+        i += 2;
+        continue;
+      }
+      // ADR 0258: both Cap, both verbal contractions, single-period gap only.
+      const okCapCapPeriod =
+        periodGap(w0.end, w1.start) &&
+        hasApos &&
+        hasApos1 &&
+        isVerbalContraction(w0.text) &&
+        isVerbalContraction(w1.text) &&
+        w0.text.toLowerCase() === w1.text.toLowerCase() &&
+        /^[A-Z]/.test(w0.text) &&
+        /^[A-Z]/.test(w1.text);
+      if (okCapCapPeriod) {
         drop[i + 1] = true;
         i += 2;
         continue;
@@ -2637,8 +2691,16 @@ function restartPhrase(s: string): string {
           dots += 1;
           at -= 1;
         }
-        // TEMP test
+        // Ellipsis (ADR 0252). ADR 0258: also strip a single period when the dropped Cap Cap
+        // contraction sat across it.
         if (dots >= 2) ws = at;
+        else if (
+          dots === 1 &&
+          /^[A-Z]/.test(s.slice(start, end)) &&
+          /['’]/.test(s.slice(start, end))
+        ) {
+          ws = at;
+        }
       }
       while (ws > last) {
         const ch = s[ws - 1];

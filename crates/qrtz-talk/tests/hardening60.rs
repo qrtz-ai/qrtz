@@ -242,13 +242,14 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     })
                 })
         });
-        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257: Cap-then-lower / period-gap /
-        // contraction-headed both-lower doubles collapse in rule_cleanup before sentence
-        // caps — one-word contractions (0254), multi-word (0255), Cap-then-lower / both-lower
-        // across a single period (0256), and both-lower multi-word when the first word has an
-        // apostrophe (0257). Detect pairs in `raw` (so keep-set space-only non-contraction
-        // both-lower stays), then check that dropping the matching second copies from `old`
-        // yields `new` (allowing final "." → "?").
+        // ADR 0254 / ADR 0255 / ADR 0256 / ADR 0257 / ADR 0258: Cap-then-lower / period-gap /
+        // contraction-headed both-lower / Cap Cap period-contraction doubles collapse in
+        // rule_cleanup before sentence caps — one-word contractions (0254), multi-word (0255),
+        // Cap-then-lower / both-lower across a single period (0256), both-lower multi-word when
+        // the first word has an apostrophe (0257), and Cap Cap one-word verbal contractions
+        // across a single period (0258). Detect pairs in `raw` (so keep-set space-only
+        // non-contraction both-lower stays), then check that dropping the matching second
+        // copies from `old` yields `new` (allowing final "." → "?").
         let cap_then_lower = {
             let word_re = regex::Regex::new(r"[A-Za-z]+(?:['\u{2019}][A-Za-z]+)*").unwrap();
             let raw_spans: Vec<(usize, usize, &str)> = word_re
@@ -323,6 +324,37 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                 matches!(low.as_str(), "i" | "i'd" | "i'm" | "i've" | "i'll")
             };
             let middle_ok = |w: &str| letters_lower(w) || is_i_word(w);
+            // ADR 0258: verbal / aux contractions only (not O'Brien / Bob's).
+            let is_verbal_contraction = |w: &str| {
+                let lower = w.replace('\u{2019}', "'").to_ascii_lowercase();
+                if lower.ends_with("n't") {
+                    return true;
+                }
+                let Some(i) = lower.rfind('\'') else {
+                    return false;
+                };
+                let (stem, rest) = lower.split_at(i);
+                let suf = &rest[1..];
+                match suf {
+                    "m" | "re" | "ve" | "ll" | "d" | "t" => true,
+                    "s" => matches!(
+                        stem,
+                        "it" | "that"
+                            | "what"
+                            | "who"
+                            | "where"
+                            | "when"
+                            | "why"
+                            | "how"
+                            | "there"
+                            | "here"
+                            | "he"
+                            | "she"
+                            | "let"
+                    ),
+                    _ => false,
+                }
+            };
             let mut drop_idx = vec![false; raw_spans.len()];
             let mut i = 0usize;
             while i < raw_spans.len() {
@@ -437,12 +469,27 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                     let (_a0, b0, w0) = raw_spans[i];
                     let (a1, _b1, w1) = raw_spans[i + 1];
                     let has_apos = w0.contains('\'') || w0.contains('\u{2019}');
+                    let has_apos1 = w1.contains('\'') || w1.contains('\u{2019}');
                     let ok1 = gap_ok(b0, a1, w1.starts_with(|c: char| c.is_ascii_lowercase()))
                         && has_apos
                         && w0.starts_with(|c: char| c.is_ascii_uppercase())
                         && w1.starts_with(|c: char| c.is_ascii_lowercase())
                         && w0.eq_ignore_ascii_case(w1);
                     if ok1 {
+                        drop_idx[i + 1] = true;
+                        i += 2;
+                        continue;
+                    }
+                    // ADR 0258: Cap Cap verbal contraction across a single period.
+                    let ok_cap_cap_period = period_gap(b0, a1)
+                        && has_apos
+                        && has_apos1
+                        && is_verbal_contraction(w0)
+                        && is_verbal_contraction(w1)
+                        && w0.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w1.starts_with(|c: char| c.is_ascii_uppercase())
+                        && w0.eq_ignore_ascii_case(w1);
+                    if ok_cap_cap_period {
                         drop_idx[i + 1] = true;
                         i += 2;
                         continue;
@@ -491,6 +538,13 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
                                 }
                                 if dots >= 2 {
                                     ws = at;
+                                } else if dots == 1 {
+                                    let dropped = &old[a..b];
+                                    if dropped.starts_with(|c: char| c.is_ascii_uppercase())
+                                        && (dropped.contains('\'') || dropped.contains('\u{2019}'))
+                                    {
+                                        ws = at;
+                                    }
                                 }
                             }
                             while ws > last {

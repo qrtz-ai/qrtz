@@ -2141,6 +2141,54 @@
       "category": "repeat",
       "raw": "what's it... what's it return today",
       "ideal": "What's it return today?"
+    },
+    {
+      "id": "p353",
+      "category": "repeat",
+      "raw": "Like, I'm. I'm a senior engineer now today",
+      "ideal": "Like, I'm a senior engineer now today."
+    },
+    {
+      "id": "p354",
+      "category": "repeat",
+      "raw": "It's. It's the top two things today",
+      "ideal": "It's the top two things today."
+    },
+    {
+      "id": "p355",
+      "category": "repeat",
+      "raw": "Don't. Don't push that change today",
+      "ideal": "Don't push that change today."
+    },
+    {
+      "id": "p356",
+      "category": "repeat",
+      "raw": "What's. What's the meeting pass code today",
+      "ideal": "What's the meeting pass code today?"
+    },
+    {
+      "id": "p357",
+      "category": "repeat",
+      "raw": "Can't. Can't we just ship the flag today",
+      "ideal": "Can't we just ship the flag today."
+    },
+    {
+      "id": "p358",
+      "category": "repeat",
+      "raw": "We're. We're late to the standup today",
+      "ideal": "We're late to the standup today."
+    },
+    {
+      "id": "p359",
+      "category": "repeat",
+      "raw": "That's. That's not true about the release today",
+      "ideal": "That's not true about the release today."
+    },
+    {
+      "id": "p360",
+      "category": "repeat",
+      "raw": "How's. How's it going for the team today",
+      "ideal": "How's it going for the team today?"
     }
   ],
   "keep": [
@@ -6014,6 +6062,56 @@
       "id": "k659",
       "raw": "had had enough of that already today",
       "expect": "Had had enough of that already today."
+    },
+    {
+      "id": "k660",
+      "raw": "I will go. I will go tomorrow with the team",
+      "expect": "I will go. I will go tomorrow with the team."
+    },
+    {
+      "id": "k661",
+      "raw": "I'm I'm a senior engineer on the team today",
+      "expect": "I'm I'm a senior engineer on the team today."
+    },
+    {
+      "id": "k662",
+      "raw": "I'm... I'm a senior engineer on the team today",
+      "expect": "I'm... I'm a senior engineer on the team today."
+    },
+    {
+      "id": "k663",
+      "raw": "It's It's ready for review with the team today",
+      "expect": "It's It's ready for review with the team today."
+    },
+    {
+      "id": "k664",
+      "raw": "So. So we should ship the flag today",
+      "expect": "So. So we should ship the flag today."
+    },
+    {
+      "id": "k665",
+      "raw": "Yes. Yes I can do that with the team today",
+      "expect": "Yes. Yes I can do that with the team today."
+    },
+    {
+      "id": "k666",
+      "raw": "Talk to O'Brien. O'Brien said yes about the release today",
+      "expect": "Talk to O'Brien. O'Brien said yes about the release today."
+    },
+    {
+      "id": "k667",
+      "raw": "Bob's. Bob's car is ready for the drive today",
+      "expect": "Bob's. Bob's car is ready for the drive today."
+    },
+    {
+      "id": "k668",
+      "raw": "I. I think that works for the team today",
+      "expect": "I. I think that works for the team today."
+    },
+    {
+      "id": "k669",
+      "raw": "Where. Where is the release for the team today",
+      "expect": "Where. Where is the release for the team today?"
     }
   ]
 }

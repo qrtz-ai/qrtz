@@ -1898,13 +1898,14 @@ fn collapse_repeats(s: &str) -> String {
 /// "what's it what's it" / "don't know don't know" collapse while space-only non-contraction
 /// keeps like "like a like a" / "is that is that" stay.
 ///
-/// One-word (ADR 0248 / ADR 0254): a contracted word with an apostrophe, restarted with mixed
-/// Cap ("it's It's", "don't Don't", "What's what's", "It's it's"). Either the first copy starts
-/// lowercase and the second uppercase (mid-sentence Cap restart), or the first starts uppercase
-/// and the second lowercase (sentence-start Cap then lower restart); eq_ignore_ascii_case. Plain
-/// words without an apostrophe stay with [`collapse_repeats`] / STUTTERS ("it It", "the The") or
-/// are refused ("like Like", "will Will"). Both-Cap "It's It's" / "O'Brien O'Brien" and both-lower
-/// "it's it's" / "don't don't" stay.
+/// One-word (ADR 0248 / ADR 0254 / ADR 0258): a contracted word with an apostrophe, restarted with
+/// mixed Cap ("it's It's", "don't Don't", "What's what's", "It's it's"), or Cap Cap across a
+/// single period ("I'm. I'm", "It's. It's") — false segment cut (ADR 0258). Either the first copy
+/// starts lowercase and the second uppercase (mid-sentence Cap restart), or the first starts
+/// uppercase and the second lowercase (sentence-start Cap then lower restart); eq_ignore_ascii_case.
+/// Plain words without an apostrophe stay with [`collapse_repeats`] / STUTTERS ("it It", "the The")
+/// or are refused ("like Like", "will Will", "So. So"). Both-Cap across spaces/ellipsis
+/// ("It's It's" / "O'Brien O'Brien" / "I'm... I'm") and both-lower ("it's it's" / "don't don't") stay.
 ///
 /// One-word (ADR 0249): bare lowercase "it" before Cap contraction "It's" / "It’s" drops the
 /// bare "it" and keeps the Cap form ("Like it It's" → "Like It's"). Both-lower "it it's" stays
@@ -1995,8 +1996,9 @@ fn restart_phrase(s: &str) -> String {
     let only_space_tab =
         |from: usize, to: usize| from <= to && s[from..to].chars().all(|c| c == ' ' || c == '\t');
     // ADR 0252 / ADR 0256: between copies, allow spaces/tabs, an ellipsis (`...` / `…`), or a
-    // single `.` with surrounding spaces/tabs when the second copy starts lowercase (Cap Cap
-    // across a single period stays refused).
+    // single `.` with surrounding spaces/tabs when the second copy starts lowercase. Cap Cap
+    // across a single period is refused here; ADR 0258 handles Cap Cap one-word contractions
+    // via `period_gap` separately.
     let copy_gap_ok = |from: usize, to: usize, second_starts_lower: bool| {
         if from > to {
             return false;
@@ -2071,6 +2073,40 @@ fn restart_phrase(s: &str) -> String {
     let middle_ok = |a: usize, b: usize| letters_lower(a, b) || is_i_word(a, b);
     // ADR 0257: first word of a copy contains an ASCII / curly apostrophe (contraction head).
     let word_has_apos = |a: usize, b: usize| s[a..b].contains('\'') || s[a..b].contains('\u{2019}');
+    // ADR 0258: Cap Cap across a period only for verbal / aux contractions — not names
+    // (O'Brien) or arbitrary possessives (Bob's). Suffix must be a clitic; for 's the stem
+    // is a closed verbal/'s list.
+    let is_verbal_contraction = |a: usize, b: usize| {
+        let w = s[a..b].replace('\u{2019}', "'");
+        let lower = w.to_ascii_lowercase();
+        if lower.ends_with("n't") {
+            return true;
+        }
+        let Some(i) = lower.rfind('\'') else {
+            return false;
+        };
+        let (stem, rest) = lower.split_at(i);
+        let suf = &rest[1..];
+        match suf {
+            "m" | "re" | "ve" | "ll" | "d" | "t" => true,
+            "s" => matches!(
+                stem,
+                "it" | "that"
+                    | "what"
+                    | "who"
+                    | "where"
+                    | "when"
+                    | "why"
+                    | "how"
+                    | "there"
+                    | "here"
+                    | "he"
+                    | "she"
+                    | "let"
+            ),
+            _ => false,
+        }
+    };
 
     let mut drop = vec![false; spans.len()];
     let mut i = 0;
@@ -2203,16 +2239,33 @@ fn restart_phrase(s: &str) -> String {
             }
         }
         // ADR 0248 / ADR 0254: one-word mixed-Cap contraction restart ("it's It's", "What's what's").
+        // ADR 0258: Cap Cap one-word contraction across a single period ("I'm. I'm") — false
+        // segment cut; Cap Cap across spaces/ellipsis and Cap Cap without an apostrophe stay.
         // ADR 0249: bare lowercase "it" before Cap "It's" / curly-apos form — drop "it", keep Cap.
         if i + 1 < spans.len() {
             let (a0, b0) = spans[i];
             let (a1, b1) = spans[i + 1];
             let has_apos = s[a0..b0].contains('\'') || s[a0..b0].contains('\u{2019}');
+            let has_apos1 = s[a1..b1].contains('\'') || s[a1..b1].contains('\u{2019}');
             let ok1 = copy_gap_ok(b0, a1, starts_lower(a1))
                 && has_apos
                 && eq_ci(a0, b0, a1, b1)
                 && ((starts_lower(a0) && starts_upper(a1)) || (starts_upper(a0) && starts_lower(a1)));
             if ok1 {
+                drop[i + 1] = true;
+                i += 2;
+                continue;
+            }
+            // ADR 0258: both Cap, both verbal contractions, single-period gap only.
+            let ok_cap_cap_period = period_gap(b0, a1)
+                && has_apos
+                && has_apos1
+                && is_verbal_contraction(a0, b0)
+                && is_verbal_contraction(a1, b1)
+                && eq_ci(a0, b0, a1, b1)
+                && starts_upper(a0)
+                && starts_upper(a1);
+            if ok_cap_cap_period {
                 drop[i + 1] = true;
                 i += 2;
                 continue;
@@ -2267,9 +2320,19 @@ fn restart_phrase(s: &str) -> String {
                         break;
                     }
                 }
-                // TEMP test
+                // Ellipsis (ADR 0252). ADR 0258: also strip a single period when the dropped
+                // Cap Cap contraction sat across it (continued_dot would, once the second Cap
+                // is gone and a lowercase continuation follows; strip here so Cap Cap period
+                // does not depend on that).
                 if dots >= 2 {
                     ws = at;
+                } else if dots == 1 {
+                    let dropped = &s[a..b];
+                    if dropped.starts_with(|c: char| c.is_ascii_uppercase())
+                        && (dropped.contains('\'') || dropped.contains('\u{2019}'))
+                    {
+                        ws = at;
+                    }
                 }
             }
             while ws > last {

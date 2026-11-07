@@ -6127,6 +6127,86 @@
       "raw": "had had enough of that already today",
       "dict": false,
       "expect": "Had had enough of that already today."
+    },
+    {
+      "raw": "Like, I'm. I'm a senior engineer now today",
+      "dict": false,
+      "expect": "Like, I'm a senior engineer now today."
+    },
+    {
+      "raw": "It's. It's the top two things today",
+      "dict": false,
+      "expect": "It's the top two things today."
+    },
+    {
+      "raw": "Don't. Don't push that change today",
+      "dict": false,
+      "expect": "Don't push that change today."
+    },
+    {
+      "raw": "What's. What's the meeting pass code today",
+      "dict": false,
+      "expect": "What's the meeting pass code today?"
+    },
+    {
+      "raw": "Can't. Can't we just ship the flag today",
+      "dict": false,
+      "expect": "Can't we just ship the flag today."
+    },
+    {
+      "raw": "We're. We're late to the standup today",
+      "dict": false,
+      "expect": "We're late to the standup today."
+    },
+    {
+      "raw": "That's. That's not true about the release today",
+      "dict": false,
+      "expect": "That's not true about the release today."
+    },
+    {
+      "raw": "How's. How's it going for the team today",
+      "dict": false,
+      "expect": "How's it going for the team today?"
+    },
+    {
+      "raw": "I will go. I will go tomorrow with the team",
+      "dict": false,
+      "expect": "I will go. I will go tomorrow with the team."
+    },
+    {
+      "raw": "I'm I'm a senior engineer on the team today",
+      "dict": false,
+      "expect": "I'm I'm a senior engineer on the team today."
+    },
+    {
+      "raw": "I'm... I'm a senior engineer on the team today",
+      "dict": false,
+      "expect": "I'm... I'm a senior engineer on the team today."
+    },
+    {
+      "raw": "It's It's ready for review with the team today",
+      "dict": false,
+      "expect": "It's It's ready for review with the team today."
+    },
+    {
+      "raw": "So. So we should ship the flag today",
+      "dict": false,
+      "expect": "So. So we should ship the flag today."
+    },
+    {
+      "raw": "Talk to O'Brien. O'Brien said yes about the release today",
+      "dict": false,
+      "expect": "Talk to O'Brien. O'Brien said yes about the release today."
+    },
+    {
+      "raw": "Bob's. Bob's car is ready for the drive today",
+      "dict": false,
+      "expect": "Bob's. Bob's car is ready for the drive today."
+    },
+    {
+      "raw": "I. I think that works for the team today",
+      "dict": false,
+      "expect": "I. I think that works for the team today."
     }
   ],
   "dictionaryOnly": [
