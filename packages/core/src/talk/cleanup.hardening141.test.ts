@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, it } from 'vitest';
 import { ruleCleanup } from './cleanup';
 
 describe('ADR 0257 contraction-headed both-lower multi-word restart', () => {
-  test('collapses', () => {
+  it('collapses', () => {
     const cases: Array<[string, string]> = [
       [
         "Does a set timeout return a variable or what's it what's it return today",
@@ -38,7 +38,7 @@ describe('ADR 0257 contraction-headed both-lower multi-word restart', () => {
     }
   });
 
-  test('refusals stay', () => {
+  it('refusals stay', () => {
     const cases: Array<[string, string]> = [
       ['like a like a simple path today', 'Like a like a simple path today.'],
       [
