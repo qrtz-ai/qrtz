@@ -14,7 +14,7 @@
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
 - **Note:** `hardening60` `generated_text_is_byte_identical_to_cycle_59` already fails on origin/main at
   `e9def823` (same `\u{2028}` / cue-arts fixture); `every_vector` green. Not introduced this cycle.
-- **SHA:** `86eab151` (code), (docs follow)
+- **SHA:** `86eab151` (code), `83ee3be6` (ADR), `8042e815` (LOG)
 
 ## 2026-11-06 — Cycle 139 (≈3:21–3:35 PM PT, polish): Cap-then-lower multi-word restart collapses (ADR 0255)
 
