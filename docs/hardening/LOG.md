@@ -1,3 +1,21 @@
+## 2026-11-06 — Cycle 140 (≈3:55–4:30 PM PT, polish): Cap-then-lower / both-lower across a period (ADR 0256)
+
+- **Focus:** polish. origin/main at `e9def823` (cycle 139 / ADR 0255). Mac online; prod+dev talk history (453+443).
+- **Landed:** `copy_gap_ok` allows a single `.` when the second copy starts lowercase; both-lower MW (2/3/4)
+  collapses only across a single period; Cap-then-lower / Cap-second work across that gap. Layout `new line` /
+  `new paragraph` stay. Leftover single period cleaned by `continued_dot` when raw has Cap. One-word STUTTERS
+  period collapse deferred. Rust + TS twin, polish +8, keep +8, cleanup.json, hardening140 + hardening60,
+  cleanup_budget +1 text.
+- **Scores:** polish 333/336 → **341/344** exact, edit distance 39 (0.32 % of 12325), regressions 0; keep 0/648.
+- **Rejected:** Cap Cap across period; space-only both-lower MW; Cap Cap "So So" / "Where where"; "a An";
+  STUTTERS wideners; "hold on, hold on"; email/URL ITN; p41; unload; N203; N197; year ITN; five-word Cap;
+  general triple-any-word; ", okay"; one-word STUTTERS period (deferred).
+- **Latency:** release `cleanup_budget` period-gap median **0.437 ms** (1227-word; ceiling 2 ms).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188 don't retry).
+- **Note:** `hardening60` `generated_text_is_byte_identical_to_cycle_59` already fails on origin/main at
+  `e9def823` (same `\u{2028}` / cue-arts fixture); `every_vector` green. Not introduced this cycle.
+- **SHA:** `86eab151` (code), (docs follow)
+
 ## 2026-11-06 — Cycle 139 (≈3:21–3:35 PM PT, polish): Cap-then-lower multi-word restart collapses (ADR 0255)
 
 - **Focus:** polish. origin/main at `3ebea9ae` (cycle 138 / ADR 0254). Mac online; prod+dev talk history (453+443).

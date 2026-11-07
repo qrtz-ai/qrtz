@@ -3507,3 +3507,52 @@ evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where" to STUTT
    that…"); "New York New York is the place" stays; Cap Cap "Can you Can you host…" still collapses;
    ADR 0254 "What's what's the meeting pass code" still collapses; ADR 0253 "on on On the replay
    modal" still collapses.
+
+## 75. Cycle 140: Cap-then-lower / both-lower restart phrases across a period (ADR 0256)
+
+| Run                                          | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| -------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 139, 336 cases                         | **333 / 336** | **39 chars (0.32 % of 12036)** | 0           | 0 / 640             |
+| this cycle, 344 cases (+8 period-gap)        | **341 / 344** | **39 chars (0.32 % of 12325)** | 0           | 0 / 648             |
+
+- **Examples:** "And then the output should be. should be a simple lightweight React animation today" →
+  "And then the output should be a simple lightweight React animation today."; "Thank you. thank you for
+  the review today" → "Thank you for the review today."; "Is that. is that one good today" → "Is that one
+  good today?"; "What's. what's the meeting pass code today" → "What's the meeting pass code today?".
+  Kept: "I will go. I will go to the store today", "like a like a simple path today", "is that is that one
+  good today", "Where where we put the snap summon today", "No. no just push it…" (period dropped only).
+- **Rejected this cycle:** Cap Cap across period; space-only both-lower MW; Cap Cap "So So" / "Where where";
+  "a An"; adding are/is/on/like/why/so/where to STUTTERS; "hold on, hold on" across a comma; content-word
+  doubles; email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188's "don't retry"); unload; speculative N203;
+  N197 mic-switch; year ITN (k350); five-word Cap restart; general triple-any-word; ", okay"/, yeah/, huh/,
+  eh/, no without unmarked evidence; one-word STUTTERS across a period (`what. what` → single `what`) —
+  deferred (re-collapse after continued_dot / in-continued_dot drop hit contraction/newline false hits).
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` on the box: period-gap median **0.437 ms** (1227-word probe;
+  ceiling 2 ms). Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 139:** origin/main at `e9def823` until this commit. Fresh Mac history
+  (prod 453, dev 443) hit `should be. should be` after Cap-aware continued_dot. N197 and N203 stay open;
+  p19/p20/p41 still failing.
+
+### Production-readiness backlog after this cycle
+
+P5 / P7 recorded (§58–§59). Unload stays blocked. P6 remaining helper side and N195/N196 stay with
+Bobs. N197 still needs a quiet mic-switch window.
+
+Next: p19/p20 only with a closed ITN that clears the keep set; N203 if real dictations show it; N197
+when a quiet window allows; then P6's remaining helper side. Widen confirmation tags (", okay") only
+from a real unmarked dictation with its own keep set. Defer "a An" / "why Why" / "is Is" /
+lowercase multi-word restarts / Cap-then-lower one-word without apostrophe ("Where where") / one-word
+STUTTERS across a period until evidence is clean. Do not add "are"/"is"/"on"/"like"/"why"/"so"/"where"
+to STUTTERS.
+
+### Test on Jared's Mac (cycle 140)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate so Parakeet writes Cap then a period-gap restart: "should be. should be a simple
+   path" (or the real history line with React) — it should type a single "should be …". Then
+   "Thank you. thank you for the review" → "Thank you for the review."
+3. Refuse checks: "I will go. I will go to the store" stays Cap Cap across the period; "like a like a
+   simple path" stays; "is that is that one good" stays both-lower after sentence cap; Cap Cap
+   "Can you Can you host…" still collapses; ADR 0255 "Is that is that one good" still collapses;
+   ADR 0254 "What's what's the meeting pass code" still collapses.
