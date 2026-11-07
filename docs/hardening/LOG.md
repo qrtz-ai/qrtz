@@ -12,7 +12,7 @@
   STUTTERS across a period.
 - **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
 - **Latency:** release `cleanup_budget` Cap Cap period median **0.474 ms** (1106-word; ceiling 2 ms).
-- **SHA:** (fill after push)
+- **SHA:** code `c0f8c75c`, ADR `3d580a1b`, LOG/tuning `13ebece2`
 
 ## 2026-11-06 — Cycle 141 (≈4:47–5:10 PM PT, polish): both-lower contraction-headed MW restart (ADR 0257)
 
