@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.4.6 (2026-11-06)
+
+- Fix: echo spoken list "comma" / "period" become "," / ".".
+- Fix: echo confirmation tags (", right" / ", correct", and "…. Right" / "…. Correct") end with "?".
+- Fix: echo keeps the sentence mark when a filler opens the next sentence after a period.
+- Fix: echo collapses restart phrases (Cap / Cap-then-lower / both-lower, including contractions and Cap Cap verbal contractions, mid-sentence and across an ellipsis or a single period) and triple "are" / "on" / "like" stutters.
+- Fix: Linux CI (clippy `sliced_string_as_bytes` in echo cleanup, oxfmt on dictation-tuning, vitest import in hardening141).
+
 ## 0.4.5 (2026-11-05)
 
 - Fix: echo drops a comma that sits only before a sentence mark, so "Yeah, also, uh." types "Yeah, also." and "So, um. Next we go" types "So. Next we go."
