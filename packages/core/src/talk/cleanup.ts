@@ -50,6 +50,11 @@ const STUTTERS = new Set([
 const COMMA_STUTTERS = new Set(['i', 'a', 'an', 'the']);
 // ADR 0251 / ADR 0253: 3+ of these collapse; doubles stay; never in STUTTERS.
 const TRIPLE_STUTTERS = new Set(['are', 'on', 'like']);
+// ADR 0261: collapse only when every copy is lowercase and only spaces/tabs separate them ("than than" -> "than");
+// a Cap copy may be a name ("than Than Shwe"). Never in STUTTERS. Same list as cleanup.rs.
+const LOWER_STUTTERS = new Set(['than']);
+const lowerStutter = (w: string, all: string): boolean =>
+  LOWER_STUTTERS.has(w) && /^[a-z \t]+$/.test(all);
 // ADR 0205 / ADR 0207: "we, we" / "they, they" collapses before a plain or negated modal (or "cannot"), with the
 // first pronoun opening its sentence (alone or after one opener): "So we, we can ship it" / "So we, we can't" ->
 // "So we can ship it" / "So we can't". Curly apostrophe folds to ASCII for the lookup. Same lists as cleanup.rs.
@@ -2787,6 +2792,7 @@ export function ruleCleanup(
   // ADR 0251 / ADR 0253: triple+ are/on/like (space/tab-separated, any case) collapses; doubles stay; never across commas.
   t = t.replace(REPEATS, (all: string, w: string, at: number, src: string) =>
     (all.includes(',') ? COMMA_STUTTERS : STUTTERS).has(w.toLowerCase()) ||
+    lowerStutter(w, all) ||
     subjectStutter(all, w, at, src) ||
     (!all.includes(',') &&
       TRIPLE_STUTTERS.has(w.toLowerCase()) &&

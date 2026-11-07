@@ -6387,6 +6387,61 @@
       "raw": "When. When is the release for the team today",
       "dict": false,
       "expect": "When. When is the release for the team today?"
+    },
+    {
+      "raw": "It's more of a symbolic representation than than an actual list today",
+      "dict": false,
+      "expect": "It's more of a symbolic representation than an actual list today."
+    },
+    {
+      "raw": "This is way faster than than the old build today",
+      "dict": false,
+      "expect": "This is way faster than the old build today."
+    },
+    {
+      "raw": "I would rather walk than than drive to the office today",
+      "dict": false,
+      "expect": "I would rather walk than drive to the office today."
+    },
+    {
+      "raw": "It costs more than than than we planned today",
+      "dict": false,
+      "expect": "It costs more than we planned today."
+    },
+    {
+      "raw": "It is faster than Than Shwe expected today",
+      "dict": false,
+      "expect": "It is faster than Than Shwe expected today."
+    },
+    {
+      "raw": "It is bigger than, than the other one today",
+      "dict": false,
+      "expect": "It is bigger than, than the other one today."
+    },
+    {
+      "raw": "Than than is not a word today",
+      "dict": false,
+      "expect": "Than than is not a word today."
+    },
+    {
+      "raw": "It's more than thanks today",
+      "dict": false,
+      "expect": "It's more than thanks today."
+    },
+    {
+      "raw": "I said than THAN on purpose today",
+      "dict": false,
+      "expect": "I said than THAN on purpose today."
+    },
+    {
+      "raw": "It is more then than before today",
+      "dict": false,
+      "expect": "It is more then than before today."
+    },
+    {
+      "raw": "It is more than\tthan before today",
+      "dict": false,
+      "expect": "It is more than before today."
     }
   ],
   "dictionaryOnly": [

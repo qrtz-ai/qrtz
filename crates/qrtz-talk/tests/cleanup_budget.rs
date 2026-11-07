@@ -561,4 +561,16 @@ fn the_cleanup_chain_fits_its_budget_on_a_long_dictation() {
     assert!(out.contains("But I just feel fine with the team today"), "{out}");
     assert!(!out.contains("I. I"), "{out}");
     assert_fits_budget(&text, " with Cap Cap I period restarts");
+    // ADR 0261: lowercase "than than" stutters on a long dictation.
+    let mut body = long_dictation();
+    for i in 0..40 {
+        body.push_str(&format!(
+            " it is faster than than item{i} and bigger than Than Shwe"
+        ));
+    }
+    let text = body;
+    let out = cleanup_dictation(&text, &dictionary(), true).text;
+    assert!(!out.contains("than than"), "{out}");
+    assert!(out.contains("than Than Shwe"), "{out}");
+    assert_fits_budget(&text, " with lowercase than stutters");
 }

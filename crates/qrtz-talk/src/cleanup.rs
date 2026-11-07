@@ -2524,6 +2524,17 @@ fn lone_i(s: &str) -> String {
 /// whatever" never lose the second copy). Never collapses across commas. Do **not** put these
 /// words in [`STUTTERS`].
 const TRIPLE_STUTTERS: &[&str] = &["are", "on", "like"];
+/// ADR 0261: words whose repeat collapses only when every copy is lowercase and the copies are
+/// separated by spaces/tabs alone ("more than than an actual" → "more than an actual"). A Cap copy
+/// may be a name ("than Than Shwe"), so any capital, comma, or line break keeps the run. Do **not**
+/// put these words in [`STUTTERS`].
+const LOWER_STUTTERS: &[&str] = &["than"];
+fn lower_stutter(word: &str, all: &str) -> bool {
+    LOWER_STUTTERS.contains(&word)
+        && all
+            .bytes()
+            .all(|c| c.is_ascii_lowercase() || c == b' ' || c == b'\t')
+}
 fn collapses(word: &str, all: &str) -> bool {
     let w = word.to_ascii_lowercase();
     let list = if all.contains(',') {
@@ -2531,7 +2542,7 @@ fn collapses(word: &str, all: &str) -> bool {
     } else {
         STUTTERS
     };
-    if list.contains(&w.as_str()) {
+    if list.contains(&w.as_str()) || lower_stutter(word, all) {
         return true;
     }
     // ADR 0251 / ADR 0253: triple+ allowlist only (not in STUTTERS — doubles must stay).

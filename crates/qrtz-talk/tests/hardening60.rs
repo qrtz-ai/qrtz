@@ -116,6 +116,8 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
     let old = without_restart_phrase(&old);
     // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ space/tab-separated are/on/like collapses to the first copy.
     let old = without_triple_stutters(&old);
+    // ADR 0261 (cycle 154): an all-lowercase space/tab-separated "than than" run collapses to one.
+    let old = without_lower_than(&old);
     let old = with_titles_from(&old, &new);
     let old = if new != old && new == without_subject_repeats(&old) {
         new.clone()
@@ -142,6 +144,7 @@ fn same(raw: &str, dict: &[DictionaryEntry]) {
         // ADR 0246–0250 / 0252 (cycles 130–134, 136): restart phrases — see without_restart_phrase on old.
         // ADR 0254 / ADR 0255 Cap-then-lower — see cap_then_lower allowed diff below.
         // ADR 0251 / ADR 0253 (cycles 135, 137): triple+ are/on/like — see without_triple_stutters on old.
+        // ADR 0261 (cycle 154): lowercase "than than" — see without_lower_than on old.
         let tag = old.strip_suffix('.').is_some_and(|body| {
             new == format!("{body}?")
                 && (body.rsplit_once(", ").is_some_and(|(_, t)| {
@@ -1900,4 +1903,28 @@ fn days_as_words(t: &str) -> String {
         }
     }
     out.join(" ")
+}
+
+/// ADR 0261's lowercase "than" stutter edit, made on the text (written independently of cleanup.rs):
+/// two or more exactly-lowercase "than" separated only by spaces/tabs keep the first copy. Any
+/// capital, comma, or line break between copies refuses the collapse.
+fn without_lower_than(s: &str) -> String {
+    let word_re = regex::Regex::new(r"[A-Za-z]+").unwrap();
+    let spans: Vec<(usize, usize, bool)> = word_re
+        .find_iter(s)
+        .map(|m| (m.start(), m.end(), m.as_str() == "than"))
+        .collect();
+    let gap_ok = |from: usize, to: usize| s[from..to].chars().all(|c| c == ' ' || c == '\t');
+    let mut out = String::with_capacity(s.len());
+    let mut last = 0;
+    for k in 1..spans.len() {
+        let (prev, cur) = (spans[k - 1], spans[k]);
+        // `prev` may itself have been dropped; its end still marks the run.
+        if prev.2 && cur.2 && gap_ok(prev.1, cur.0) {
+            out.push_str(&s[last..prev.1]);
+            last = cur.1;
+        }
+    }
+    out.push_str(&s[last..]);
+    out
 }

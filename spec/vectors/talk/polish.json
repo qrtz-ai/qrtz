@@ -2285,6 +2285,30 @@
       "category": "repeat",
       "raw": "Sorry I. I actually want the card mechanics today",
       "ideal": "Sorry I actually want the card mechanics today."
+    },
+    {
+      "id": "p377",
+      "category": "repeat",
+      "raw": "It's more of a symbolic representation than than an actual list today",
+      "ideal": "It's more of a symbolic representation than an actual list today."
+    },
+    {
+      "id": "p378",
+      "category": "repeat",
+      "raw": "This is way faster than than the old build today",
+      "ideal": "This is way faster than the old build today."
+    },
+    {
+      "id": "p379",
+      "category": "repeat",
+      "raw": "I would rather walk than than drive to the office today",
+      "ideal": "I would rather walk than drive to the office today."
+    },
+    {
+      "id": "p380",
+      "category": "repeat",
+      "raw": "It costs more than than than we planned today",
+      "ideal": "It costs more than we planned today."
     }
   ],
   "keep": [
@@ -6293,6 +6317,36 @@
       "id": "k687",
       "raw": "When. When is the release for the team today",
       "expect": "When. When is the release for the team today?"
+    },
+    {
+      "id": "k688",
+      "raw": "It is faster than Than Shwe expected today",
+      "expect": "It is faster than Than Shwe expected today."
+    },
+    {
+      "id": "k689",
+      "raw": "It is bigger than, than the other one today",
+      "expect": "It is bigger than, than the other one today."
+    },
+    {
+      "id": "k690",
+      "raw": "Than than is not a word today",
+      "expect": "Than than is not a word today."
+    },
+    {
+      "id": "k691",
+      "raw": "It's more than thanks today",
+      "expect": "It's more than thanks today."
+    },
+    {
+      "id": "k692",
+      "raw": "I said than THAN on purpose today",
+      "expect": "I said than THAN on purpose today."
+    },
+    {
+      "id": "k693",
+      "raw": "It is more then than before today",
+      "expect": "It is more then than before today."
     }
   ]
 }
