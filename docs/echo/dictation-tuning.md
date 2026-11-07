@@ -3610,13 +3610,12 @@ contraction across spaces/ellipsis stays refused.
    "I'm. I'm a senior" still collapses; ADR 0257 "what's it what's it return" still collapses;
    ADR 0256 "should be. should be …" still collapses.
 
-
 ## 79. Cycle 145: Cap Cap pronoun "I" across a period (ADR 0260)
 
-| Run                                                    | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
-| ------------------------------------------------------ | ------------- | ------------------------------ | ----------- | ------------------- |
-| cycle 143, 368 cases                                   | **365 / 368** | **39 chars (0.30 % of 13151)** | 0           | 0 / 674             |
-| this cycle, 376 cases (+8 Cap Cap I period)            | **373 / 376** | **39 chars (0.29 % of 13520)** | 0           | 0 / 683             |
+| Run                                         | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 143, 368 cases                        | **365 / 368** | **39 chars (0.30 % of 13151)** | 0           | 0 / 674             |
+| this cycle, 376 cases (+8 Cap Cap I period) | **373 / 376** | **39 chars (0.29 % of 13520)** | 0           | 0 / 683             |
 
 - **Examples:** "But I. I just feel like a moron today" → "But I just feel like a moron today.";
   "I. I think that works for the team today" → "I think that works for the team today.";
@@ -3661,6 +3660,35 @@ STUTTERS. Cap Cap contraction across spaces/ellipsis stays refused.
 3. Refuse checks: "So. So we should ship" stays; "What. What is the release" stays; "Will. Will you
    join" stays; "I... I think" stays; "I talk. I talk like I know" stays; ADR 0259 "I don't. I don't
    know how" still collapses; ADR 0258 "I'm. I'm a senior" still collapses.
+
+## 80. Cycle 154: lowercase "than than" stutter (ADR 0261)
+
+| Run                                         | Exact         | Edit distance                  | Regressions | Keep set (hits / n) |
+| ------------------------------------------- | ------------- | ------------------------------ | ----------- | ------------------- |
+| cycle 145, 380 cases (before the fix)       | **373 / 380** | **64 chars (0.47 % of 13716)** | 0           | 0 / 689             |
+| this cycle, 380 cases (+4 lowercase "than") | **377 / 380** | **39 chars (0.28 % of 13716)** | 0           | 0 / 689             |
+
+- **Examples:** "It's more of a symbolic representation than than an actual list today" → "It's more of a
+  symbolic representation than an actual list today."; "It costs more than than than we planned today" → "It
+  costs more than we planned today.". Kept: "than Than Shwe", "Than than is not a word", "than THAN",
+  "than, than", "than thanks", "then than".
+- **Rejected this cycle:** content-word doubles ("every every", "make make", "edge edge", "multiple
+  multiple"); "it it's"; "hold on, hold on"; "a An"; "So So"; "is Is" / "why Why" / "like Like"; mid-sentence
+  "..." Cap continuation; email/URL ITN (p19/p20, ADR 0223); p41 (ADR 0188); unload; N203; N197; year ITN.
+- **Still failing (3):** p19 / p20 spoken email and URL (ADR 0223), p41 (ADR 0188's "don't retry").
+- **Latency:** release `cleanup_budget` lowercase-than median **0.82–0.86 ms** (935-word probe; ceiling 2 ms).
+  Capture, VAD / segmenting, model config, drain / final pass, insert unchanged.
+- **Dictation path review since cycle 145:** origin/main at `a4aef70f` until this commit. Macs offline; cached
+  history (prod 453, dev 445) re-scanned: the change rewrites exactly one raw ("representation than than an
+  actual"). N197 and N203 stay open; p19/p20/p41 still failing.
+
+### Test on Jared's Mac (cycle 154)
+
+1. `cd ~/code/qrtz && git pull` (main at or after this cycle's SHA), build and run the app as usual.
+2. Hold fn and dictate "this is way faster than than the old build" — it should type "This is way faster than
+   the old build."
+3. Refuse checks: "it's faster than, than the old one" keeps both copies; a capitalised name after "than"
+   ("better than Than Shwe") stays.
 
 ## 76. Cycle 141: both-lower contraction-headed multi-word restart (ADR 0257)
 

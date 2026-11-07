@@ -1,3 +1,12 @@
+## 2026-11-06 — Cycle 154 (≈11:26–11:50 PM PT, polish): a lowercase "than than" stutter collapses (ADR 0261)
+
+- **Focus:** polish. origin/main at `a4aef70f` (cycle 145 / ADR 0260; cycles 146–153 landed nothing). Macs offline; cached prod+dev talk history (453+445, 855 unique raws) re-scanned with the current cleanup.
+- **Landed:** `LOWER_STUTTERS = ["than"]` — two or more all-lowercase "than" separated only by spaces/tabs keep the first copy (ADR 0261). Any capital, comma, or line break keeps the run; "than" stays out of STUTTERS. Rust + TS twin, polish +4, keep +6, cleanup.json +11, hardening154 + hardening60 oracle, cleanup_budget +1 text. Rewrites exactly 1 of 855 cached raws.
+- **Polish:** 373/380 → **377/380** exact, edit distance 64 → **39** (0.28 % of 13716), regressions **0**, keep **0/689**.
+- **Latency:** release `cleanup_budget` lowercase-than median **0.82–0.86 ms** (935-word probe; ceiling 2 ms); 495-word median 0.457 ms (0.468 ms before).
+- **Rejected:** content-word doubles ("every every", "make make", "edge edge"); "it it's"; "hold on, hold on"; "a An"; "So So"; "is Is" / "why Why" / "like Like"; mid-sentence "..." Cap continuation; email/URL ITN; p41; unload; N203; N197; year ITN.
+- **SHAs:** code `TBD`, docs `TBD`
+
 ## 2026-11-06 — Cycle 145 (≈6:48–7:00 PM PT, polish): Cap Cap pronoun "I" across a period (ADR 0260)
 
 - **Focus:** polish. origin/main at `65bd5526` (cycle 143 / ADR 0259; cycle 144 landed nothing). Mac online; prod+dev talk history still (453+443).
