@@ -768,3 +768,50 @@ async fn pausing_while_waiting_for_the_install_lock_pauses_at_once() {
     assert!(t0.elapsed() < Duration::from_secs(1), "{:?}", t0.elapsed());
     assert!(!echo.installed());
 }
+
+/// QRT-376: on a fresh Mac the bar sat at "downloading 100%" while the install verified and linked the files, which
+/// read as frozen. Once every byte is in, the status says "installing" until the models are in place.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_finished_download_says_installing_until_the_models_are_in_place() {
+    let tmp = tempfile::tempdir().unwrap();
+    let srv = Server::start().await;
+    let m = serve(&srv);
+    let events = Events::new();
+    let mut rx = events.subscribe();
+    let mgr = SpeechManager::with_local(
+        None,
+        Some(LocalModels::with_manifest(
+            tmp.path().join("models"),
+            m,
+            Some(srv.base.clone()),
+        )),
+        events,
+    );
+    mgr.download(false).unwrap();
+    let mut seen: Vec<String> = vec![];
+    loop {
+        let (name, v) = tokio::time::timeout(Duration::from_secs(30), rx.recv())
+            .await
+            .expect("a speech:status event")
+            .unwrap();
+        if name != "speech:status" {
+            continue;
+        }
+        let st = v["download"]["state"].as_str().unwrap().to_owned();
+        if seen.last() != Some(&st) {
+            seen.push(st.clone());
+        }
+        if st == "idle" && !v["installed"].is_null() {
+            break;
+        }
+        assert_ne!(st, "error", "{v}");
+    }
+    let at = |s: &str| seen.iter().position(|x| x == s);
+    let (dl, inst, idle) = (
+        at("downloading"),
+        at("installing"),
+        seen.iter().rposition(|x| x == "idle"),
+    );
+    assert!(dl.is_some() && inst.is_some() && idle.is_some(), "{seen:?}");
+    assert!(dl < inst && inst < idle, "{seen:?}");
+}

@@ -499,14 +499,18 @@ impl SpeechManager {
             let (mut local, mut force) = (local, force);
             loop {
                 let me2 = me.clone();
+                // QRT-376: once every byte is in, the install still verifies and links the files (hundreds of MB,
+                // seconds on a fresh Mac). Say "installing" then, like the module path, instead of a bar parked at
+                // "downloading 100%" that looks frozen; that event always goes out.
                 let on_progress = move |p: Progress| {
+                    let installing = p.total > 0 && p.done >= p.total;
                     *me2.dl.lock().unwrap() = Dl {
-                        state: "downloading",
+                        state: if installing { "installing" } else { "downloading" },
                         done: p.done,
                         total: p.total,
                         ..Default::default()
                     };
-                    me2.emit(false);
+                    me2.emit(installing);
                 };
                 let r = local.download(force, &me.ctl, &on_progress).await;
                 match me.end_local(r, &local) {
