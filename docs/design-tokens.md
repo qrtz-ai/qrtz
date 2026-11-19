@@ -63,8 +63,9 @@ Dark is the qrtz.ai brand default. Light is an opt-in palette with the same role
 
 | Token | CSS variable | Value |
 |---|---|---|
-| `font.family` | `--q-font-family` | `'Geist Pixel Square', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace` |
-| `font.weight` | `--q-font-weight` | `500` |
+| `font.family` | `--q-font-family` | `'Allo', ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif` |
+| `font.mono` | `--q-font-mono` | `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace` |
+| `font.weight` | `--q-font-weight` | `400` |
 
 ## Motion
 
@@ -119,4 +120,4 @@ Feather icons only, through `<Icon name size>` (or `icon=` on `Button`/`IconButt
 | `z.toast` | `--q-z-toast` | `60` |
 | `z.tooltip` | `--q-z-tooltip` | `70` |
 
-_178 CSS variables in total._
+_190 CSS variables in total._

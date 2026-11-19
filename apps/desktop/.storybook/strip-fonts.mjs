@@ -1,4 +1,4 @@
-// Storybook ships Nunito Sans for its own chrome; qrtz pages loads only Geist Pixel Square, so drop it from the build.
+// Storybook ships Nunito Sans for its own chrome; qrtz pages load only Allo, so drop it from the build.
 import fs from 'node:fs';
 import path from 'node:path';
 

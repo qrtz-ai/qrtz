@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Feature: qrtz's type is now Allo (by Josh Puckett, SIL OFL-1.1), with real weights for headings and labels; code and numbers in code use the system monospace.
 - Fix: once flow's speech model has finished downloading it says installing… while it's checked and put in place, instead of sitting at 100% looking frozen.
 - Feature: echo is now called flow, in the app and on qrtz.ai. Your settings, dictation history, dictionary and downloaded speech model stay as they are.
 - Breaking: nano and ctrl are gone from qrtz: no sidebar row, apps page entry, palette command, menu bar rows, shortcuts or experimental apps switch, and they stay off even if you had experimental apps on. Your notes and settings stay on disk. Dev builds still show them behind experimental apps.

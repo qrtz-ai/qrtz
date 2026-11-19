@@ -28,10 +28,12 @@ the tokens are derived from the site's Tailwind/shadcn class names and its visua
 
 ## One font, one scale (redesign)
 
-Everything renders in **Geist Pixel Square** (OFL-1.1, `GeistPixel-Square.woff2`, bundled from the `geist` npm package into
-`packages/ui/src/fonts`). It has one weight, so every weight token is 500 and `font-synthesis: none`
-stops fake bold. Sizes sit on the font's pixel grid (13.158px = one device pixel per font pixel on
-Retina), so nothing renders below 13.158px. Hierarchy comes from size, color, case and tracking.
+Everything renders in **Allo** by Josh Puckett (OFL-1.1, `AlloVariable.woff2`, from
+github.com/joshpuckett/allo 1.0.3, bundled in `packages/ui/src/fonts` with `OFL-Allo.txt`). It is one
+variable file (wght 100-900, opsz 9-32), so each type style carries its own real weight and
+`font-synthesis: none` still stops fake bold. Code and mono text use the system monospace. Hierarchy
+comes from size, weight and color; headings tighten their tracking. (QRT-377; the Swift pill keeps
+Geist Pixel until its native font is regenerated.)
 See Storybook's **foundations → type scale** and `docs/design-tokens.md`.
 
 Use `Text variant=…`, `Heading level=…`, `Label`, `Code`/`Mono` and `Link`.
