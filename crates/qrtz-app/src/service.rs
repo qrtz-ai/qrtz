@@ -1119,6 +1119,18 @@ impl AppService {
                 ErrorCode::Validation,
                 "onboarding is finished from the onboarding screen, not through config",
             )),
+            // QRT-375: a release build never stores experimental apps on (nano and ctrl stay hidden).
+            "config:set"
+                if qrtz_modules::settings::refuses_experiments_patch(
+                    qrtz_modules::settings::EXPERIMENTS_ALLOWED,
+                    &p["patch"],
+                ) =>
+            {
+                Err(AppError::new(
+                    ErrorCode::Validation,
+                    "experimental apps are only available in development builds",
+                ))
+            }
             "config:set" => self.set_config(&p["patch"]),
             "onboarding:finish" => {
                 let cfg = self.set_config(&crate::onboarding::finish_patch())?;
