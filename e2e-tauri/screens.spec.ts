@@ -284,7 +284,14 @@ test("note points to nano's models and echo offers its own download in place whi
   await expect(
     page.getByTestId('app-modal').getByTestId('models-nano-panel'),
   ).toBeVisible();
-  await page.keyboard.press('Escape');
+  // Escape can land while the modal is still moving focus in (seen on CI); retry it until the modal is gone so
+  // its scrim never sits over the sidebar.
+  await expect(async () => {
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('app-modal')).toHaveCount(0, {
+      timeout: 1_000,
+    });
+  }).toPass({ timeout: 10_000 });
   // echo (on by default) offers parakeet in place, with the consent beside it.
   await tab(page, 'talk').click();
   const talk = page.locator('[data-subapp="talk"]');
