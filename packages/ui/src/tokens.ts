@@ -1,7 +1,7 @@
 /**
  * qrtz design tokens, derived from qrtz.ai (see docs/design-system.md, reference in docs/design-tokens.md):
- * neutral palette (shadcn "neutral"), geometric sans + mono accents, thin 1px borders instead of shadows,
- * small radii, fast ease-out motion. Dark is the brand default; light is an opt-in palette with the same roles.
+ * neutral palette (shadcn "neutral"), Allo, soft radii, hairline borders with quiet layered shadows, frosted
+ * floating panels and smooth ease-out motion (QRT-378). Dark is the brand default; light is an opt-in palette with the same roles.
  */
 const darkColor = {
   bg: '#0a0a0a', // hsl(0 0% 3.9%)  — background
@@ -78,7 +78,15 @@ export const tokens = {
   mode: 'dark' as ThemeMode,
   color: darkColor as Record<keyof typeof darkColor, string>,
   space,
-  radius: { xs: '2px', sm: '4px', md: '6px', lg: '8px', full: '9999px' },
+  /** Soft, rounded corners (QRT-378): controls md, cards lg, dialogs xl. */
+  radius: {
+    xs: '4px',
+    sm: '6px',
+    md: '10px',
+    lg: '14px',
+    xl: '18px',
+    full: '9999px',
+  },
   /**
    * One family everywhere: Allo by Josh Puckett (github.com/joshpuckett/allo, v1.0.3, SIL OFL-1.1; the license
    * ships next to it as packages/ui/src/fonts/OFL-Allo.txt). It is bundled locally as one variable font (wght
@@ -132,16 +140,16 @@ export const tokens = {
     code: { size: '12px', lineHeight: '20px', tracking: '0em', weight: 400 },
   },
   motion: {
-    fast: '120ms',
-    normal: '180ms',
-    slow: '280ms',
-    easeOut: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    fast: '140ms',
+    normal: '200ms',
+    slow: '320ms',
+    easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
     easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
     /** Durations by intent; components use these instead of raw ms. */
     instant: '0ms',
-    hover: '120ms',
-    enter: '180ms',
-    exit: '120ms',
+    hover: '160ms',
+    enter: '240ms',
+    exit: '160ms',
     pulse: '1400ms',
     blink: '1100ms',
     spin: '700ms',
@@ -153,8 +161,16 @@ export const tokens = {
   },
   /** One focus ring everywhere: keyboard focus shows a 2px ring in `color.ring`, offset 2px. */
   focus: { width: '2px', offset: '2px', style: 'solid' },
-  /** The one shadow, for things that float over content (dialog, menu, toast). Everything else uses 1px borders. */
-  shadow: { overlay: '0 12px 32px rgba(0,0,0,0.35)' },
+  /**
+   * Layered, low-contrast shadows (QRT-378): `card` lifts resting surfaces a hair, `raised` is for hover and
+   * pressed controls, `overlay` for things that float over content (dialog, menu, toast).
+   */
+  shadow: {
+    card: '0 1px 2px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.06)',
+    raised: '0 2px 6px -1px rgba(0,0,0,0.16), 0 1px 2px rgba(0,0,0,0.10)',
+    overlay:
+      '0 24px 48px -12px rgba(0,0,0,0.45), 0 8px 16px -8px rgba(0,0,0,0.25)',
+  },
   /**
    * The notch is always a black hardware surface, in every theme and contrast mode,
    * so it has its own fixed on-black palette instead of following `color`.
@@ -222,7 +238,11 @@ export const tokens = {
     underlineOffset: '3px',
   },
   opacity: { disabled: 0.5, muted: 0.6 },
-  blur: { overlay: 'blur(2px)', blocked: 'blur(6px)' },
+  blur: {
+    overlay: 'blur(8px)',
+    blocked: 'blur(6px)',
+    panel: 'blur(20px) saturate(160%)',
+  },
   /**
    * The opts grid on every page: label left, control in a fixed right column, one row height, and the gaps
    * between a section's heading and its rows and between rows (sections themselves are PAGE.gap apart).
@@ -327,6 +347,7 @@ h1,h2,h3,h4,h5,h6,strong,b,th{font-weight:inherit;}
 @keyframes q-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes q-spin{to{transform:rotate(360deg)}}
 @keyframes q-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes q-pop-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes q-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 html,body,#root{height:100%;margin:0;}
 .q-drag{position:fixed;inset:0 0 auto 0;height:32px;z-index:1;-webkit-app-region:drag;}

@@ -1,5 +1,5 @@
 import { lowerTitle } from './case';
-import { typeStyle, tokens } from './tokens';
+import { transition, typeStyle, tokens } from './tokens';
 import type { ButtonHTMLAttributes, CSSProperties } from 'react';
 import { useTheme } from './theme';
 import { Spinner } from './Spinner';
@@ -35,11 +35,13 @@ export function Button({
       background: t.color.primary,
       color: t.color.primaryText,
       borderColor: t.color.primary,
+      boxShadow: t.shadow.raised,
     },
     secondary: {
       background: t.color.accent,
       color: t.color.text,
       borderColor: t.color.border,
+      boxShadow: t.shadow.card,
     },
     ghost: {
       background: 'transparent',
@@ -50,6 +52,7 @@ export function Button({
       background: t.color.dangerSolid,
       color: t.color.dangerSolidText,
       borderColor: t.color.dangerSolid,
+      boxShadow: t.shadow.raised,
     },
   };
   const s: Record<ButtonSize, CSSProperties> = {
@@ -91,7 +94,17 @@ export function Button({
           borderRadius: t.radius.md,
           border: `${tokens.border.hairline} solid`,
           whiteSpace: 'nowrap',
-          transition: `opacity ${t.motion.fast} ${t.motion.easeOut}, background ${t.motion.fast} ${t.motion.easeOut}`,
+          transition: transition(
+            [
+              'opacity',
+              'background',
+              'border-color',
+              'box-shadow',
+              'transform',
+            ],
+            'hover',
+            t,
+          ),
           WebkitAppRegion: 'no-drag',
           ...v[variant],
           ...s[size],

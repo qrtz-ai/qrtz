@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Feature: a softer, more modern look across qrtz: rounder corners, quiet layered shadows, frosted menus, and smoother motion on dialogs, menus and buttons.
 - Feature: qrtz's type is now Allo (by Josh Puckett, SIL OFL-1.1), with real weights for headings and labels; code and numbers in code use the system monospace.
 - Fix: once flow's speech model has finished downloading it says installing… while it's checked and put in place, instead of sitting at 100% looking frozen.
 - Feature: echo is now called flow, in the app and on qrtz.ai. Your settings, dictation history, dictionary and downloaded speech model stay as they are.

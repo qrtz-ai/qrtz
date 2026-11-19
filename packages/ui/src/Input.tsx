@@ -1,7 +1,7 @@
 import { Children, cloneElement, isValidElement, type ReactNode } from 'react';
 import { lowerTitle } from './case';
 import { Text } from './Text';
-import { typeStyle, tokens } from './tokens';
+import { transition, typeStyle, tokens } from './tokens';
 import {
   forwardRef,
   type InputHTMLAttributes,
@@ -19,6 +19,8 @@ const useFieldStyle = () => {
     border: `${tokens.border.hairline} solid ${t.color.border}`,
     background: t.color.bg,
     color: t.color.text,
+    boxShadow: t.shadow.card,
+    transition: transition(['border-color', 'box-shadow'], 'hover', t),
     ...typeStyle('body', t),
   } as const;
 };

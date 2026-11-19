@@ -159,10 +159,13 @@ export function menuPanelStyle(t: Tokens): CSSProperties {
     display: 'grid',
     gap: t.space[0.5],
     padding: t.space[1],
-    background: t.color.surface,
+    background: `color-mix(in srgb, ${t.color.surface} 88%, transparent)`,
+    backdropFilter: t.blur.panel,
+    WebkitBackdropFilter: t.blur.panel,
     border: `${t.border.hairline} solid ${t.color.borderStrong}`,
-    borderRadius: t.radius.md,
+    borderRadius: t.radius.lg,
     boxShadow: t.shadow.overlay,
+    animation: `q-pop-in ${t.motion.enter} ${t.motion.easeOut}`,
   };
 }
 
