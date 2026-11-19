@@ -665,7 +665,7 @@ describe('shared models and services', () => {
   // Jared, 2026-10-18: the shared section said "used by nothing" for the four speech models while clean up said
   // there was nothing to clean up. They are the models the app pinned for echo and nano (workspace requests, no
   // extension row in qrtz.lock), and the label now reads the host's usedBy, the answer prune keeps by.
-  it('names echo and nano as the users of their pinned models and offers no clean up', async () => {
+  it('names flow (echo) and nano as the users of their pinned models and offers no clean up', async () => {
     const pinned = (name: string, sizeBytes: number, usedBy: string[]) => ({
       name,
       version: '1.0.0',
@@ -691,7 +691,7 @@ describe('shared models and services', () => {
     await render(f.client);
     const shared = q('module-shared')?.textContent ?? '';
     expect(shared).not.toContain('used by nothing');
-    expect(shared).toContain('464 mb · used by echo');
+    expect(shared).toContain('464 mb · used by flow');
     expect(shared).toContain('626 mb · used by nano');
     expect(shared).toContain('199 mb · used by nano');
     expect(shared).toContain('20 mb · used by nano');
@@ -725,8 +725,8 @@ describe('shared models and services', () => {
       });
       await render(f.client);
       const shared = q('module-shared')?.textContent ?? '';
-      expect(shared).toContain('464 mb · used by echo');
-      expect(shared).toContain('10 mb · used by echo');
+      expect(shared).toContain('464 mb · used by flow');
+      expect(shared).toContain('10 mb · used by flow');
       expect(shared).not.toContain('nemotron');
       expect(shared).not.toContain('nano');
     } finally {

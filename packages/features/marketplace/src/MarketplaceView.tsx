@@ -106,7 +106,7 @@ export const STORE_UNAVAILABLE =
  */
 export const usedByLine = (r: PackageRow) =>
   r.usedBy.length
-    ? `used by ${r.usedBy.join(', ')}`
+    ? `used by ${r.usedBy.map(appLabel).join(', ')}`
     : r.requested
       ? 'you installed it'
       : 'used by nothing';
