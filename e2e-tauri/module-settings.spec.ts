@@ -41,7 +41,7 @@ test('echo, nano and ctrl each open their own settings; the global settings keep
   const echo = page.locator('[data-subapp="talk"]');
   await page.getByTestId('nav-talk-opts').click();
   const echoPage = echo.getByTestId('talk-settings');
-  await expect(echoPage.getByText('echo opts')).toBeVisible();
+  await expect(echoPage.getByText('flow opts')).toBeVisible();
   await expect(echoPage.getByTestId('auto-record')).toHaveCount(0);
   const pill = (await config(page)).talk.showPill;
   await echoPage.getByRole('switch', { name: 'floating pill' }).click();

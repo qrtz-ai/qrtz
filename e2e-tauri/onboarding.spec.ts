@@ -165,6 +165,6 @@ test('after onboarding qrtz opens on the top sidebar app; the apps page rows pas
   const echo = page.getByTestId('app-open-echo');
   const name = await echo.evaluate((b) => b.getAttribute('aria-label'));
   expect(name).toBeNull();
-  await expect(echo).toHaveAccessibleName(/^echo .* details$/);
+  await expect(echo).toHaveAccessibleName(/^flow .* details$/);
   await clean(page, 'qrtz-page');
 });
