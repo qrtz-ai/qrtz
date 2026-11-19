@@ -1140,7 +1140,9 @@ impl Installer {
                 }
             }
         }
-        self.swap(plan.wants.values().collect(), &next)?;
+        // QRT-376: staging re-hashes every model file and links or copies hundreds of MB: blocking work, kept off
+        // the async worker so the rest of qrtz (IPC, status events) keeps answering while it runs.
+        off_the_runtime(|| self.swap(plan.wants.values().collect(), &next))?;
         Ok(Applied {
             changes: plan.changes.clone(),
             stale_revocation: !fresh,
@@ -2052,9 +2054,53 @@ pub fn newest(index: &Index, name: &str) -> Option<String> {
     index.latest(name).map(|(v, _)| v.to_owned())
 }
 
+/// QRT-376: run blocking file work (hashing, linking, renaming) without holding up a multi-threaded runtime's worker
+/// (`block_in_place`); inline on a current-thread runtime or outside one, where `block_in_place` isn't allowed.
+pub fn off_the_runtime<T>(f: impl FnOnce() -> T) -> T {
+    match tokio::runtime::Handle::try_current() {
+        Ok(h) if h.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+            tokio::task::block_in_place(f)
+        }
+        _ => f(),
+    }
+}
+
 #[cfg(test)]
 mod in_use_tests {
     use super::*;
+
+    /// QRT-376: `off_the_runtime` never panics on a current-thread runtime or outside one, and on a multi-threaded
+    /// runtime other tasks keep running while it blocks.
+    #[test]
+    fn off_the_runtime_runs_everywhere_and_frees_the_worker() {
+        assert_eq!(off_the_runtime(|| 1), 1);
+        let ct = tokio::runtime::Builder::new_current_thread().build().unwrap();
+        assert_eq!(ct.block_on(async { off_the_runtime(|| 2) }), 2);
+        let mt = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_time()
+            .build()
+            .unwrap();
+        mt.block_on(async {
+            let ticks = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+            let t = ticks.clone();
+            let ticker = tokio::spawn(async move {
+                for _ in 0..20 {
+                    tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+                    t.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                }
+            });
+            let blocked = tokio::spawn(async {
+                off_the_runtime(|| std::thread::sleep(std::time::Duration::from_millis(300)))
+            });
+            blocked.await.unwrap();
+            assert!(
+                ticks.load(std::sync::atomic::Ordering::SeqCst) >= 10,
+                "the other task was held up"
+            );
+            ticker.await.unwrap();
+        });
+    }
 
     #[test]
     fn the_in_use_file_names_only_package_dirs_and_empty_removes_it() {
