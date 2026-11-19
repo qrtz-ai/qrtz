@@ -9,7 +9,7 @@ import {
   userError,
   type UserError,
 } from '@qrtz/ui';
-import type { SpeechSetupStatus } from '@qrtz/core';
+import { appLabel, type SpeechSetupStatus } from '@qrtz/core';
 import { useQrtz } from '@qrtz/core/react';
 import { keptFor, type ModelApp } from './catalog';
 
@@ -31,6 +31,8 @@ export function AppModels({
   on: readonly string[];
 }) {
   const qrtz = useQrtz();
+  // QRT-374: what the user reads (echo is flow); ids, scopes and test ids keep the app id.
+  const label = appLabel(app);
   const [status, setStatus] = useState<SpeechSetupStatus | null>(null);
   const [error, setError] = useState<UserError | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -40,7 +42,7 @@ export function AppModels({
       qrtz
         .invoke('speech:status', { extensions: [app] })
         .then(setStatus, (e: unknown) =>
-          setError(userError(e, `read ${app}'s models`)),
+          setError(userError(e, `read ${label}'s models`)),
         ),
     [qrtz, app],
   );
@@ -89,10 +91,12 @@ export function AppModels({
       <Dialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        title={`delete ${app}'s models`}
+        title={`delete ${label}'s models`}
       >
         <Stack gap={4} pad={5} data-testid={`models-${app}-confirm`}>
-          <Text muted>{`${app} can't run until you download them again.`}</Text>
+          <Text
+            muted
+          >{`${label} can't run until you download them again.`}</Text>
           {kept.length ? (
             <Text
               variant="caption"
@@ -101,7 +105,8 @@ export function AppModels({
             >
               {kept
                 .map(
-                  (s) => `${s.name} is kept, used by ${s.keptFor.join(', ')}`,
+                  (s) =>
+                    `${s.name} is kept, used by ${s.keptFor.map(appLabel).join(', ')}`,
                 )
                 .join('. ')}
               .

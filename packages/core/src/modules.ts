@@ -223,7 +223,13 @@ export function isHiddenExperiment(
  */
 export function isViewOn(cfg: Pick<Config, 'modules'>, view: string): boolean {
   const m = moduleOfView(view);
-  return m === undefined || isBundledModule(m) || isModuleOn(cfg, m);
+  if (m === undefined) return true;
+  // QRT-375: an experimental app's view (nano, ctrl) shows only in a dev build with it switched on; the
+  // bundled "row stays while off" rule doesn't apply to it, so a packaged build never has its sidebar row,
+  // route or palette commands, whatever config says.
+  if ((EXPERIMENTAL_MODULES as readonly string[]).includes(m))
+    return experimentsAllowed() && isModuleOn(cfg, m);
+  return isBundledModule(m) || isModuleOn(cfg, m);
 }
 
 /** A whole config section (`['talk']`) or one key of a section (`['privacy', 'excludedApps']`). */

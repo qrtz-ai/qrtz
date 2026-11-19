@@ -6,6 +6,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { createTauriTransport } from '@qrtz/core';
 import { createMockBridge } from '../mock/backend';
 
+// A dev build (?dev=1): nano and ctrl are reachable there (QRT-375); packaged builds are covered in modules.test.ts.
+history.replaceState(null, '', '/?dev=1');
+
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigSchema, defaultConfig } from './config';
 import {
   appLabel,
@@ -137,6 +137,9 @@ describe('module manifests (ADR 0146)', () => {
 });
 
 describe('bundled modules (ADR 0174, ADR 0237)', () => {
+  // A dev build (?dev=1): nano and ctrl are reachable there.
+  beforeEach(() => vi.stubGlobal('location', { search: '?dev=1' }));
+  afterEach(() => vi.unstubAllGlobals());
   it('keep their views in the sidebar while off: every first-party module is built in', () => {
     const cfg = ConfigSchema.parse({
       modules: {
@@ -152,12 +155,15 @@ describe('bundled modules (ADR 0174, ADR 0237)', () => {
       expect(isModuleOn(cfg, id)).toBe(false);
     }
     expect(isBundledModule('demo')).toBe(false);
-    for (const v of ['talk', 'note', 'ctrl', 'snap'])
-      expect(isViewOn(cfg, v)).toBe(true);
+    for (const v of ['talk', 'snap']) expect(isViewOn(cfg, v)).toBe(true);
+    // QRT-375: an experimental app's view goes while it is off (it is always off with experimental apps off).
+    for (const v of ['note', 'ctrl']) expect(isViewOn(cfg, v)).toBe(false);
   });
 });
 
 describe('global module switches', () => {
+  beforeEach(() => vi.stubGlobal('location', { search: '?dev=1' }));
+  afterEach(() => vi.unstubAllGlobals());
   it('default to on, so nothing changes until someone turns one off', () => {
     const cfg = defaultConfig();
     for (const id of MODULE_IDS) expect(isModuleOn(cfg, id)).toBe(true);
@@ -169,14 +175,22 @@ describe('global module switches', () => {
     const cfg = ConfigSchema.parse({ modules: { nano: { enabled: false } } });
     expect(isModuleOn(cfg, 'nano')).toBe(false);
     expect(isModuleOn(cfg, 'echo')).toBe(true);
-    // ADR 0237: nano is built in, so its view stays (showing the off state).
-    expect(isViewOn(cfg, 'note')).toBe(true);
+    // QRT-375: nano is experimental, so switched off its view goes (echo and snap keep theirs while off).
+    expect(isViewOn(cfg, 'note')).toBe(false);
     const off = ConfigSchema.parse({
       modules: { enabled: false, echo: { enabled: true } },
     });
     expect(isModuleOn(off, 'echo')).toBe(false);
     expect(isViewOn(off, 'settings')).toBe(true);
     expect(moduleOfView('settings')).toBeUndefined();
+  });
+
+  it('QRT-375: a packaged build has no nano or ctrl view, even switched on', () => {
+    vi.unstubAllGlobals();
+    const cfg = ConfigSchema.parse({ app: { experimentalApps: true } });
+    for (const v of ['note', 'ctrl']) expect(isViewOn(cfg, v)).toBe(false);
+    for (const v of ['talk', 'snap', 'settings'])
+      expect(isViewOn(cfg, v)).toBe(true);
   });
 });
 
