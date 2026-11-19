@@ -146,6 +146,12 @@ pub fn check_view_speech_call(
 ) -> Result<(), AppError> {
     // QRT-376: the first-run onboarding (the shell) offers flow's (echo's) speech model, so the shell's speech
     // calls reach echo's models only, exactly like echo's own view.
+    // The onboarding offers a download only: the shell never deletes models.
+    if sub_app == "shell" && channel == "speech:delete" {
+        return Err(
+            AppError::new(ErrorCode::Forbidden, "the shell can't delete speech models").retryable(false),
+        );
+    }
     let Some(m) = (if sub_app == "shell" {
         Some("echo")
     } else {
@@ -468,8 +474,15 @@ mod tests {
             for b in &bad {
                 assert!(check_view_speech_call(&on, "settings", ch, b).is_ok(), "{ch} {b}");
             }
-            // QRT-376: the shell (onboarding) reaches echo's models only, like echo's view.
+            // QRT-376: the shell (onboarding) reaches echo's models only, like echo's view, and never deletes.
             for cfg in [&on, &off] {
+                if ch == "speech:delete" {
+                    for b in bad.iter().chain([&own]) {
+                        let e = check_view_speech_call(cfg, "shell", ch, b).unwrap_err();
+                        assert_eq!(e.code, ErrorCode::Forbidden, "shell {ch} {b}");
+                    }
+                    continue;
+                }
                 assert!(check_view_speech_call(cfg, "shell", ch, &own).is_ok(), "{ch}");
                 for b in &bad {
                     let e = check_view_speech_call(cfg, "shell", ch, b).unwrap_err();
