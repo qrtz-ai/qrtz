@@ -40,7 +40,7 @@ export const ONBOARDING_PERMISSIONS: readonly {
     pane: 'microphone',
     icon: 'mic',
     label: 'microphone',
-    reason: 'echo hears you while you hold the key',
+    reason: 'flow hears you while you hold the key',
   },
   {
     id: 'screen-recording',
@@ -55,7 +55,7 @@ export const ONBOARDING_PERMISSIONS: readonly {
     pane: 'accessibility',
     icon: 'accessibility',
     label: 'accessibility',
-    reason: 'echo types where your cursor is; snap moves your windows',
+    reason: 'flow types where your cursor is; snap moves your windows',
   },
 ];
 

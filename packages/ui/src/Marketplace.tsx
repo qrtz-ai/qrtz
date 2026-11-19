@@ -78,12 +78,15 @@ export function ExtensionGlyph({
 /** A detail page's header: big glyph, name, publisher line, the main action. */
 export function ExtensionHeader({
   name,
+  label,
   icon,
   description,
   status,
   action,
 }: {
   name: string;
+  /** What the user sees it called, when that differs from `name` (QRT-374: echo shows as flow). */
+  label?: string;
   icon: IconName;
   description: string;
   status: ExtensionStatus;
@@ -100,7 +103,7 @@ export function ExtensionHeader({
         style={{ flex: 1, minWidth: 0, display: 'grid', gap: tokens.space[1] }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: t.space[2] }}>
-          <Text variant="h2">{lowerTitle(name)}</Text>
+          <Text variant="h2">{lowerTitle(label ?? name)}</Text>
           <ExtensionStatusBadge status={status} />
         </div>
         <Text muted>{description.toLowerCase()}</Text>
@@ -281,6 +284,7 @@ export function AppList({
  */
 export function AppRow({
   name,
+  label,
   icon,
   description,
   meta,
@@ -290,6 +294,8 @@ export function AppRow({
   onOpen,
 }: {
   name: string;
+  /** What the user sees it called, when that differs from `name` (QRT-374: echo shows as flow). */
+  label?: string;
   icon: IconName;
   description: string;
   /** Already formatted (`v0.3.0 · 628 mb with dependencies`, `v0.2.0 · built in`). */
@@ -365,7 +371,7 @@ export function AppRow({
                 minWidth: 0,
               }}
             >
-              <Text truncate>{lowerTitle(name)}</Text>
+              <Text truncate>{lowerTitle(label ?? name)}</Text>
               <Text
                 variant="caption"
                 muted

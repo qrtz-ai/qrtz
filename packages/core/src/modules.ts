@@ -184,6 +184,14 @@ export function isBundledModule(id: string): boolean {
   return (BUNDLED_MODULES as readonly string[]).includes(id);
 }
 
+/**
+ * QRT-374: the name the user sees for an app. Ids, package names, config keys, routes and IPC stay as they are
+ * (`echo` is still `modules.echo`, `qrtz-echo`, `/talk`); only the label changes.
+ */
+const APP_LABELS: Readonly<Record<string, string>> = { echo: 'flow' };
+export const appLabel = (id: string): string =>
+  Object.hasOwn(APP_LABELS, id) ? APP_LABELS[id]! : id;
+
 /** Apps still being built (nano, ctrl). QRT-375: hidden from every surface of a packaged build. */
 export const EXPERIMENTAL_MODULES: readonly ModuleId[] = ['nano', 'ctrl'];
 

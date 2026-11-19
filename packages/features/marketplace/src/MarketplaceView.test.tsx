@@ -479,7 +479,7 @@ describe('installed apps: a three-dots menu', () => {
       }).client,
     );
     const b = q('app-menu-echo')!;
-    expect(b.getAttribute('aria-label')).toBe('more actions for echo');
+    expect(b.getAttribute('aria-label')).toBe('more actions for flow');
     expect(b.getAttribute('aria-haspopup')).toBe('menu');
     expect(b.hasAttribute('data-badge')).toBe(false);
     expect(await menuItems('echo')).toEqual(['open', 'settings']);

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Feature: echo is now called flow, in the app and on qrtz.ai. Your settings, dictation history, dictionary and downloaded speech model stay as they are.
 - Breaking: nano and ctrl are gone from qrtz: no sidebar row, apps page entry, palette command, menu bar rows, shortcuts or experimental apps switch, and they stay off even if you had experimental apps on. Your notes and settings stay on disk. Dev builds still show them behind experimental apps.
 
 ## 0.4.6 (2026-11-06)

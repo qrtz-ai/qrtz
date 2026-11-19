@@ -57,13 +57,13 @@ function useEcho() {
     );
   }, [qrtz]);
   const err = useUserError();
-  const fail = err.fail('change echo');
+  const fail = err.fail('change flow');
   // The host reports echo is running the copy inside qrtz.app (its store version couldn't start). Stub: the
   // host doesn't write `modules.echo.bundledFallback` yet, so this stays hidden until the self-update work does.
   const notice =
     cfg && isOnBundledFallback(cfg, 'echo') ? (
       <Text variant="caption" muted data-testid="echo-bundled-notice">
-        echo is using the copy built into qrtz: its update couldn't start
+        flow is using the copy built into qrtz: its update couldn't start
       </Text>
     ) : null;
   return {
@@ -89,7 +89,7 @@ export default function TalkView() {
   if (echo.loaded && !echo.on)
     return (
       <Page data-testid="talk-off">
-        <SettingRow description="echo is off: turn it on in apps to dictate with fn" />
+        <SettingRow description="flow is off: turn it on in apps to dictate with fn" />
         {echo.notice}
       </Page>
     );
@@ -155,7 +155,7 @@ function TalkOn({
   const optsModal = (
     <ModuleSettingsModal
       open={settingsOpen}
-      module="echo"
+      module="flow"
       onClose={closeSettings}
       data-testid="talk-settings"
     >
@@ -171,7 +171,7 @@ function TalkOn({
       {/* ADR 0175: echo can't dictate without its speech model, so until it's here the page shows only the
           download (with the consent note) over the blurred page. */}
       <SpeechRequired
-        app="echo"
+        app="flow"
         status={speechSetup.speech}
         note={CONSENT_NOTE}
         onDownload={onDownload}

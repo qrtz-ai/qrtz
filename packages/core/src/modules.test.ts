@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigSchema, defaultConfig } from './config';
 import {
+  appLabel,
   GLOBAL_CONFIG_KEYS,
   GLOBAL_CONFIG_SECTIONS,
   isModuleOn,
@@ -29,6 +30,14 @@ const read = (rel: string): unknown =>
 const bundled = MODULE_IDS.map(
   (id) => [id, read(`modules/${id}/module.json`)] as const,
 );
+
+describe('app labels (QRT-374)', () => {
+  it('shows echo as flow and every other id as itself', () => {
+    expect(appLabel('echo')).toBe('flow');
+    for (const id of ['nano', 'ctrl', 'snap', 'demo', 'toString', '__proto__'])
+      expect(appLabel(id)).toBe(id);
+  });
+});
 
 describe('module manifests (ADR 0146)', () => {
   it('hides nano and ctrl, and only them, until experimental apps is on (dev builds)', () => {

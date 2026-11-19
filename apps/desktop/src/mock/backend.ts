@@ -866,8 +866,8 @@ export function createMockBridge(): TauriBridge {
       {
         id: 't2',
         at: Date.UTC(2026, 9, 21, 17, 42),
-        raw: 'i think we should ship qrtz echo on friday',
-        text: 'I think we should ship qrtz echo on Friday.',
+        raw: 'i think we should ship qrtz flow on friday',
+        text: 'I think we should ship qrtz flow on Friday.',
         cleanup: 'rules' as const,
         engine: 'on-device' as const,
         failover: false,

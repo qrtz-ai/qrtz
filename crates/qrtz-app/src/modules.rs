@@ -63,8 +63,21 @@ pub fn modules_using(capability: &str) -> Vec<&'static str> {
         .collect()
 }
 
+/// QRT-374: the name the user sees for a module (`packages/core` `appLabel`): echo is shown as flow. Ids, config
+/// keys and channels keep `echo`.
+pub fn label(id: &str) -> &str {
+    match id {
+        "echo" => "flow",
+        other => other,
+    }
+}
+
 fn off(id: &str) -> AppError {
-    AppError::new(ErrorCode::Unavailable, format!("{id} is switched off in qrtz")).retryable(false)
+    AppError::new(
+        ErrorCode::Unavailable,
+        format!("{} is switched off in qrtz", label(id)),
+    )
+    .retryable(false)
 }
 
 /// The IPC gate: a switched-off module's view can't call anything but config and app info (so the switch can be
@@ -114,7 +127,7 @@ pub fn check_view_config_patch(sub_app: &str, channel: &str, payload: &Value) ->
     } else {
         Err(AppError::new(
             ErrorCode::Validation,
-            format!("{m}'s view can only switch {m} on or off"),
+            format!("{l}'s view can only switch {l} on or off", l = label(m)),
         )
         .retryable(false))
     }

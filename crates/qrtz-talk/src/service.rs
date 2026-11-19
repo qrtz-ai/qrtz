@@ -484,7 +484,7 @@ pub const MSG_SPEECH_MISSING: &str = crate::speech::MSG_NOT_INSTALLED;
 /// ADR 0225: the helper's `insert.result` error when the focused field is a password field (or secure input is on).
 pub const INSERT_REFUSED_SECURE: &str = "secure-field";
 /// ADR 0225: the pill's notice for that refusal.
-pub const MSG_SECURE_FIELD: &str = "echo won't type into password fields";
+pub const MSG_SECURE_FIELD: &str = "flow won't type into password fields";
 /// N202 (ADR 0227): `error{dictation.mic, reason: "failed"}`: permission is granted but the mic wouldn't open.
 pub const MSG_MIC_FAILED: &str = "the microphone couldn't start";
 pub const MSG_CTRL_CUT_SHORT: &str = "didn't catch it all, so ctrl didn't run it. try again";

@@ -38,6 +38,7 @@ import {
   type UserError,
 } from '@qrtz/ui';
 import {
+  appLabel,
   MODULE_IDS,
   defaultConfig,
   isHiddenExperiment,
@@ -253,7 +254,7 @@ export default function MarketplaceView() {
       })
       .then(
         () => {
-          toast(`${p.name} ${PAST[p.verb]}`, 'success');
+          toast(`${appLabel(p.name)} ${PAST[p.verb]}`, 'success');
           return load();
         },
         (e: Error) => {
@@ -368,11 +369,11 @@ export default function MarketplaceView() {
     const s = statusFor(name);
     if (s === 'working')
       return working?.verb === 'remove' ? (
-        <Spinner label={`removing ${name}`} />
+        <Spinner label={`removing ${appLabel(name)}`} />
       ) : (
         <RowProgress
           value={pct}
-          label={`${ING[working?.verb ?? 'install']} ${name}`}
+          label={`${ING[working?.verb ?? 'install']} ${appLabel(name)}`}
           data-testid={`app-progress-${name}`}
         />
       );
@@ -381,7 +382,7 @@ export default function MarketplaceView() {
         <IconButton
           icon="refresh"
           tone="danger"
-          label={`retry downloading ${name}`}
+          label={`retry downloading ${appLabel(name)}`}
           disabled={busy}
           onClick={() => propose(name, 'install')}
           data-testid={`app-retry-${name}`}
@@ -389,7 +390,7 @@ export default function MarketplaceView() {
       ) : (
         <IconButton
           icon="download"
-          label={`download ${name}`}
+          label={`download ${appLabel(name)}`}
           disabled={busy}
           onClick={() => propose(name, 'install')}
           data-testid={`app-download-${name}`}
@@ -456,7 +457,7 @@ export default function MarketplaceView() {
     ];
     return (
       <Menu
-        label={`more actions for ${name}`}
+        label={`more actions for ${appLabel(name)}`}
         items={items}
         badge={s === 'update'}
         data-testid={`app-menu-${name}`}
@@ -490,7 +491,7 @@ export default function MarketplaceView() {
     <Dialog
       open
       onClose={() => setPending(null)}
-      title={`${pending.verb} ${pending.name}`}
+      title={`${pending.verb} ${appLabel(pending.name)}`}
     >
       <Stack gap={4} pad={5} data-testid="install-consent">
         {pending.plan.changes.length ? (
@@ -499,7 +500,7 @@ export default function MarketplaceView() {
               <IconLine
                 key={`${c.change}-${c.name}`}
                 icon={c.change === 'add' ? 'download' : 'trash'}
-                title={`${c.change === 'add' ? 'add' : 'remove'} ${c.name}`}
+                title={`${c.change === 'add' ? 'add' : 'remove'} ${appLabel(c.name)}`}
                 meta={`v${c.version}`}
               />
             ))}
@@ -587,7 +588,7 @@ export default function MarketplaceView() {
         </Button>
       }
     >
-      {`${updated.join(', ')} ${updated.length === 1 ? 'keeps' : 'keep'} running the old version until qrtz restarts.`}
+      {`${updated.map(appLabel).join(', ')} ${updated.length === 1 ? 'keeps' : 'keep'} running the old version until qrtz restarts.`}
     </Callout>
   ) : null;
 
@@ -595,11 +596,11 @@ export default function MarketplaceView() {
     working && working.name === name && working.verb !== 'remove' ? (
       <InstallProgress
         value={pct}
-        label={`${ING[working.verb]} ${working.name}`}
+        label={`${ING[working.verb]} ${appLabel(working.name)}`}
         detail={
           progress
-            ? `${ING[working.verb]} ${working.name}: ${formatBytes(progress.doneBytes)} of ${formatBytes(progress.totalBytes)}`
-            : `${ING[working.verb]} ${working.name}…`
+            ? `${ING[working.verb]} ${appLabel(working.name)}: ${formatBytes(progress.doneBytes)} of ${formatBytes(progress.totalBytes)}`
+            : `${ING[working.verb]} ${appLabel(working.name)}…`
         }
       />
     ) : null;
@@ -629,6 +630,7 @@ export default function MarketplaceView() {
       <AppRow
         key={name}
         name={name}
+        label={appLabel(name)}
         icon={info.icon}
         description={info.description}
         meta={
@@ -648,8 +650,8 @@ export default function MarketplaceView() {
   const modal = item ? (
     <Modal
       open
-      title={item}
-      closeLabel={`close ${item}`}
+      title={appLabel(item)}
+      closeLabel={`close ${appLabel(item)}`}
       onClose={() => go({ page: 'list' })}
       data-testid="app-modal"
     >
@@ -665,9 +667,9 @@ export default function MarketplaceView() {
         />
         {isModuleId(item) && hostInstalled(item) ? (
           <SettingsSection title="on this mac" data-testid="extension-switch">
-            <SettingRow label={`${item} on`}>
+            <SettingRow label={`${appLabel(item)} on`}>
               <Switch
-                label={`${item} on`}
+                label={`${appLabel(item)} on`}
                 checked={enabled(item)}
                 onChange={(v) => setEnabled(item, v)}
                 disabled={!!installedRow(item, rows)?.disabled}
@@ -685,7 +687,7 @@ export default function MarketplaceView() {
               />
             ) : (
               <Text variant="caption" muted>
-                {`${item} is off: no sidebar row, no hotkeys, nothing running.`}
+                {`${appLabel(item)} is off: no sidebar row, no hotkeys, nothing running.`}
               </Text>
             )}
           </SettingsSection>
@@ -869,6 +871,7 @@ function Detail({
     <Stack gap={6}>
       <ExtensionHeader
         name={name}
+        label={appLabel(name)}
         icon={info.icon}
         description={info.description}
         status={status}

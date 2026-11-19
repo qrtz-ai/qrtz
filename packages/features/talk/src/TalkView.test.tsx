@@ -232,7 +232,7 @@ describe('echo on its bundled copy', () => {
       });
       const n = v.q('echo-bundled-notice');
       expect(n?.textContent).toBe(
-        "echo is using the copy built into qrtz: its update couldn't start",
+        "flow is using the copy built into qrtz: its update couldn't start",
       );
       expect(n?.textContent).toBe(n?.textContent?.toLowerCase());
       v.unmount();

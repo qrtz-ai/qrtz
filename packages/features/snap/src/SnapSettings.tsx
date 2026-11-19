@@ -298,11 +298,11 @@ export function SummonSection({
           {status?.summonClash ? (
             <Callout
               tone="warning"
-              title="summon is paused: right ⌘ is echo's dictation key"
+              title="summon is paused: right ⌘ is flow's dictation key"
               data-testid="snap-summon-clash"
             >
-              summon stays off while echo uses right ⌘ to dictate, so a chord
-              can't also start dictation. pick another key in echo's settings to
+              summon stays off while flow uses right ⌘ to dictate, so a chord
+              can't also start dictation. pick another key in flow's settings to
               use summon.
             </Callout>
           ) : null}

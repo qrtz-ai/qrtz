@@ -15,8 +15,11 @@ More screenshots are in [`docs/screenshots/`](docs/screenshots/).
 Modules are switched on and off in marketplace → installed. Each one lists the macOS permissions it needs next to its
 switch, and nothing downloads until you turn a module on or press download in settings → speech.
 
-- **echo:** dictation. Hold fn, speak, release, and the text is typed where your cursor is. Fully offline, using
-  Parakeet TDT v2. Needs Microphone and Accessibility.
+- **flow** (module id `echo`): dictation. Hold fn, speak, release, and the text is typed where your cursor is. Fully
+  offline, using Parakeet TDT v2. Needs Microphone and Accessibility. Its speech model downloads during onboarding.
+  Since 0.5.0, nano and ctrl are hidden in packaged builds and stay off there; dev builds (`bun run dev:local`) still
+  show them behind settings → app → experimental apps.
+
 - **nano:** meeting and voice notes. Detects Zoom and Google Meet through the Accessibility tree, records, transcribes
   (Nemotron ASR), labels speakers (Nemotron diarizer) and writes a summary and action items on this Mac with Apple
   Intelligence (macOS 26+), falling back to a transcript-based summary. Notes are stored locally in SQLite with
@@ -37,7 +40,7 @@ bun install
 bun run dev:local
 ```
 
-`bun run dev:local` builds every module (nano, snap, ctrl, echo) and the app from this checkout in debug mode and runs
+`bun run dev:local` builds every module (nano, snap, ctrl, echo/flow) and the app from this checkout in debug mode and runs
 it against a separate data directory. Flags (pass them after `--`):
 
 ```sh

@@ -15,7 +15,8 @@ describe('manifests', () => {
       .filter((m) => m.order !== undefined)
       .toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map((m) => m.name);
-    expect(order.slice(0, 4)).toEqual(['echo', 'nano', 'ctrl', 'snap']);
+    // QRT-374: echo's view is labelled flow.
+    expect(order.slice(0, 4)).toEqual(['flow', 'nano', 'ctrl', 'snap']);
   });
 
   it('the sidebar is echo, nano, ctrl, snap, then apps (plus icon, last of the list) and qrtz opts pinned to the bottom', () => {
@@ -27,7 +28,7 @@ describe('manifests', () => {
       .map((manifest) => ({ manifest }));
     const items = sidebarItems(sorted);
     expect(items.map((i) => i.label)).toEqual([
-      'echo',
+      'flow',
       'nano',
       'ctrl',
       'snap',

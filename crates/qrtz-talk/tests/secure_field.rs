@@ -55,7 +55,7 @@ async fn a_secure_refusal_keeps_nothing_and_says_so() {
 
 #[test]
 fn the_notice_is_lowercase() {
-    assert_eq!(MSG_SECURE_FIELD, "echo won't type into password fields");
+    assert_eq!(MSG_SECURE_FIELD, "flow won't type into password fields");
     assert_eq!(INSERT_REFUSED_SECURE, "secure-field");
 }
 

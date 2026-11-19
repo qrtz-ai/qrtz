@@ -73,7 +73,7 @@ export default function TalkSettings() {
         </SettingRow>
         {(talk.pushKey ?? 'fn') === 'fn'
           ? toggle(
-              'fn only for echo (no input switch or emoji)',
+              'fn only for flow (no input switch or emoji)',
               'talk-block-globe',
               talk.blockGlobeKey,
               true,

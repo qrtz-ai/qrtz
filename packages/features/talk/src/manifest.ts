@@ -2,7 +2,8 @@ import { SubAppManifest } from '@qrtz/core';
 
 export const manifest = SubAppManifest.parse({
   id: 'talk',
-  name: 'echo',
+  // QRT-374: shown as flow; the module id stays echo.
+  name: 'flow',
   icon: 'mic',
   order: 10,
   capabilities: [

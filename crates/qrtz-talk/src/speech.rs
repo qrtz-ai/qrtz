@@ -191,9 +191,9 @@ pub fn start_error(e: &SpeechError) -> (TalkErrorKind, String) {
     (k, m.into())
 }
 
-/// ADR 0175: echo's own view offers its speech model's download in place, so point there, not at settings.
+/// ADR 0175 (QRT-374: echo is shown as flow): echo's own view offers its speech model's download in place, so point there, not at settings.
 pub const MSG_NOT_INSTALLED: &str =
-    "echo's speech model isn't downloaded yet; open echo to download it (about 464 MB)";
+    "flow's speech model isn't downloaded yet; open flow to download it (about 464 MB)";
 const MSG_REVOKED: &str =
     "this qrtz speech version was withdrawn, so talk is unavailable until qrtz connects to update it";
 const MSG_STALE: &str =
