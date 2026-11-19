@@ -43,7 +43,7 @@ public final class NotchSurface: @unchecked Sendable {
     /// The content row's model opacity now (0 once a secure hide ran).
     var contentOpacity: Float { stage.contentOpacity }
 
-    /// `fontName`: the content's font (echo registers Geist Pixel Square); the system font when nil or unknown.
+    /// `fontName`: the content's font (the dictation pill registers Allo); the system font when nil or unknown.
     public init(fontName: String?) {
         let p = NotchPanel(contentRect: NSRect(x: 0, y: 0, width: 400, height: 80),
                            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)

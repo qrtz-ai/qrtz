@@ -393,7 +393,7 @@ final class PillWaveTests: XCTestCase {
     }
 
     func testTheEmbeddedFontIsTheRenderersFile() throws {
-        let file = try Data(contentsOf: Self.repo.appendingPathComponent("packages/ui/src/fonts/GeistPixel-Square.woff2"))
+        let file = try Data(contentsOf: Self.repo.appendingPathComponent("packages/ui/src/fonts/AlloVariable.woff2"))
         XCTAssertEqual(PillFont.woff2, file, "run native/qrtz-helper/scripts/gen-pill-font.sh")
         XCTAssertEqual(String(decoding: file.prefix(4), as: UTF8.self), "wOF2")
     }
