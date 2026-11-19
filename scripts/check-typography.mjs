@@ -3,15 +3,16 @@
 // <Text variant>, <Heading level>, <Label>, <Code>, <Link> or typeStyle() instead.
 //   bun scripts/check-typography.mjs           → fail on violations
 //   bun scripts/check-typography.mjs --audit   → distinct raw values per property, whole repo (incl. packages/ui)
-// It also holds the one-font rule: Geist Pixel Square is the only font. packages/ui/src/fonts bundles only
-// GeistPixel-Square.woff2 (plus its OFL), tokens.font.family leads with 'Geist Pixel Square', and no file in
-// apps/ or packages/ names another font face (an @font-face, a font file, or another Geist Pixel style).
+// It also holds the one-font rule (QRT-377): Allo is the only UI font. packages/ui/src/fonts bundles
+// AlloVariable.woff2 (plus its OFL) and, for the Swift helper's pill only (native/qrtz-helper/scripts/gen-pill-font.sh),
+// GeistPixel-Square.woff2; tokens.font.family leads with 'Allo', and no file in apps/ or packages/ names another
+// font face (an @font-face, a font file, or Geist Pixel).
 import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
 const SKIP =
-  /(node_modules|[\\/]out[\\/]|[\\/]\.vite[\\/]|\.test\.tsx?$|tokens-doc\.ts$)/;
+  /(node_modules|storybook-static|dist-types|[\\/]out[\\/]|[\\/]\.vite[\\/]|\.test\.tsx?$|tokens-doc\.ts$)/;
 const files = [];
 const walk = (d) => {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
@@ -69,12 +70,13 @@ for (const f of files) {
           );
       }
 }
-// One font: Geist Pixel Square.
-const FONT = 'Geist Pixel Square';
-const FONT_FILE = 'GeistPixel-Square.woff2';
+// One font: Allo. The Geist Pixel file stays only as the source of the native pill's font.
+const FONT = 'Allo';
+const FONT_FILE = 'AlloVariable.woff2';
+const NATIVE_ONLY = 'GeistPixel-Square.woff2';
 const fontDir = path.join(root, 'packages', 'ui', 'src', 'fonts');
 for (const name of fs.readdirSync(fontDir))
-  if (name !== FONT_FILE && !/^OFL-.*\.txt$/.test(name))
+  if (name !== FONT_FILE && name !== NATIVE_ONLY && !/^OFL-.*\.txt$/.test(name))
     violations.push(
       `packages/ui/src/fonts/${name}  only ${FONT_FILE} is bundled`,
     );
@@ -89,7 +91,7 @@ if (!fam.startsWith(`'${FONT}'`))
   violations.push(
     `packages/ui/src/tokens.ts  font.family must lead with '${FONT}' (got ${fam || 'nothing'})`,
   );
-const OTHER_STYLE = /Geist ?Pixel[- ]?(Circle|Grid|Line|Triangle)\b/gi;
+const OTHER_STYLE = /Geist ?Pixel/gi;
 const FONT_FILE_REF = /[\w.-]+\.(?:woff2?|ttf|otf)\b/g;
 const FACE = /@font-face\s*\{\s*font-family\s*:\s*(['"]?)([^;'"}]+)\1/g;
 for (const f of files) {
@@ -121,7 +123,7 @@ if (process.argv.includes('--audit')) {
 }
 if (violations.length) {
   console.error(
-    `Typography violations (${violations.length}). The only font is Geist Pixel Square; outside packages/ui use <Text variant>, <Heading>, <Label>, <Code>, <Link> or typeStyle():\n  ${violations.join('\n  ')}`,
+    `Typography violations (${violations.length}). The only font is Allo; outside packages/ui use <Text variant>, <Heading>, <Label>, <Code>, <Link> or typeStyle():\n  ${violations.join('\n  ')}`,
   );
   process.exit(1);
 }

@@ -91,7 +91,7 @@ export function GridCard({
   );
 }
 
-/** qrtz.ai card: 1px border, rounded-lg, generous padding, no shadow. */
+/** qrtz card: hairline border, soft rounded-lg corners, generous padding, a quiet resting shadow (QRT-378). */
 export function Card({
   children,
   padding = 6,
@@ -115,8 +115,9 @@ export function Card({
         borderRadius: t.radius.lg,
         padding: t.space[padding],
         background: selected ? t.color.surfaceHover : t.color.card,
+        boxShadow: selected ? t.shadow.raised : t.shadow.card,
         cursor: interactive ? 'pointer' : undefined,
-        transition: `background ${t.motion.fast} ${t.motion.easeOut}, border-color ${t.motion.fast} ${t.motion.easeOut}`,
+        transition: `background ${t.motion.fast} ${t.motion.easeOut}, border-color ${t.motion.fast} ${t.motion.easeOut}, box-shadow ${t.motion.fast} ${t.motion.easeOut}`,
         ...style,
       }}
     >

@@ -53,18 +53,20 @@ Dark is the qrtz.ai brand default. Light is an opt-in palette with the same role
 
 | Token | CSS variable | Value |
 |---|---|---|
-| `radius.xs` | `--q-radius-xs` | `2px` |
-| `radius.sm` | `--q-radius-sm` | `4px` |
-| `radius.md` | `--q-radius-md` | `6px` |
-| `radius.lg` | `--q-radius-lg` | `8px` |
+| `radius.xs` | `--q-radius-xs` | `4px` |
+| `radius.sm` | `--q-radius-sm` | `6px` |
+| `radius.md` | `--q-radius-md` | `10px` |
+| `radius.lg` | `--q-radius-lg` | `14px` |
+| `radius.xl` | `--q-radius-xl` | `18px` |
 | `radius.full` | `--q-radius-full` | `9999px` |
 
 ## Typography
 
 | Token | CSS variable | Value |
 |---|---|---|
-| `font.family` | `--q-font-family` | `'Geist Pixel Square', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace` |
-| `font.weight` | `--q-font-weight` | `500` |
+| `font.family` | `--q-font-family` | `'Allo', ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif` |
+| `font.mono` | `--q-font-mono` | `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace` |
+| `font.weight` | `--q-font-weight` | `400` |
 
 ## Motion
 
@@ -72,15 +74,15 @@ Use `transition(prop, "hover" | "enter" | "exit")` instead of raw durations. Red
 
 | Token | CSS variable | Value |
 |---|---|---|
-| `motion.fast` | `--q-motion-fast` | `120ms` |
-| `motion.normal` | `--q-motion-normal` | `180ms` |
-| `motion.slow` | `--q-motion-slow` | `280ms` |
-| `motion.easeOut` | `--q-motion-ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` |
+| `motion.fast` | `--q-motion-fast` | `140ms` |
+| `motion.normal` | `--q-motion-normal` | `200ms` |
+| `motion.slow` | `--q-motion-slow` | `320ms` |
+| `motion.easeOut` | `--q-motion-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)` |
 | `motion.easeInOut` | `--q-motion-ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` |
 | `motion.instant` | `--q-motion-instant` | `0ms` |
-| `motion.hover` | `--q-motion-hover` | `120ms` |
-| `motion.enter` | `--q-motion-enter` | `180ms` |
-| `motion.exit` | `--q-motion-exit` | `120ms` |
+| `motion.hover` | `--q-motion-hover` | `160ms` |
+| `motion.enter` | `--q-motion-enter` | `240ms` |
+| `motion.exit` | `--q-motion-exit` | `160ms` |
 | `motion.pulse` | `--q-motion-pulse` | `1400ms` |
 | `motion.blink` | `--q-motion-blink` | `1100ms` |
 | `motion.spin` | `--q-motion-spin` | `700ms` |
@@ -119,4 +121,4 @@ Feather icons only, through `<Icon name size>` (or `icon=` on `Button`/`IconButt
 | `z.toast` | `--q-z-toast` | `60` |
 | `z.tooltip` | `--q-z-tooltip` | `70` |
 
-_178 CSS variables in total._
+_194 CSS variables in total._

@@ -151,8 +151,9 @@ export function Modal({
           flexDirection: 'column',
           background: t.color.surface,
           border: `${tokens.border.hairline} solid ${t.color.border}`,
-          borderRadius: t.radius.lg,
+          borderRadius: t.radius.xl,
           boxShadow: tokens.shadow.overlay,
+          animation: `q-pop-in ${t.motion.enter} ${t.motion.easeOut}`,
           outline: 'none',
           overflow: 'hidden',
         }}

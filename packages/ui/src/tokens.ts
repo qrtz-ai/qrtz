@@ -1,7 +1,7 @@
 /**
  * qrtz design tokens, derived from qrtz.ai (see docs/design-system.md, reference in docs/design-tokens.md):
- * neutral palette (shadcn "neutral"), geometric sans + mono accents, thin 1px borders instead of shadows,
- * small radii, fast ease-out motion. Dark is the brand default; light is an opt-in palette with the same roles.
+ * neutral palette (shadcn "neutral"), Allo, soft radii, hairline borders with quiet layered shadows, frosted
+ * floating panels and smooth ease-out motion (QRT-378). Dark is the brand default; light is an opt-in palette with the same roles.
  */
 const darkColor = {
   bg: '#0a0a0a', // hsl(0 0% 3.9%)  — background
@@ -78,43 +78,78 @@ export const tokens = {
   mode: 'dark' as ThemeMode,
   color: darkColor as Record<keyof typeof darkColor, string>,
   space,
-  radius: { xs: '2px', sm: '4px', md: '6px', lg: '8px', full: '9999px' },
+  /** Soft, rounded corners (QRT-378): controls md, cards lg, dialogs xl. */
+  radius: {
+    xs: '4px',
+    sm: '6px',
+    md: '10px',
+    lg: '14px',
+    xl: '18px',
+    full: '9999px',
+  },
   /**
-   * One family everywhere: Geist Pixel Square, bundled locally from Vercel's `geist` 1.8.1 release (OFL-1.1).
-   * It ships one weight and draws on a 38/1000 em pixel grid, so sizes are multiples of 13.158px (one font
-   * pixel = 0.5 CSS px = one device pixel on Retina). Hierarchy comes from size and color, never fake bold.
+   * One family everywhere: Allo by Josh Puckett (github.com/joshpuckett/allo, v1.0.3, SIL OFL-1.1; the license
+   * ships next to it as packages/ui/src/fonts/OFL-Allo.txt). It is bundled locally as one variable font (wght
+   * 100-900, opsz 9-32, ROND), so headings get real weights and optical sizes instead of synthesized ones.
+   * Code and mono text use the system monospace; nothing else is loaded.
    */
   font: {
     family:
-      "'Geist Pixel Square', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-    /** The only weight the font has; every type style uses it (font-synthesis is off). */
-    weight: 500,
+      "'Allo', ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    /** Body weight; each type style below names its own. font-synthesis stays off. */
+    weight: 400,
   },
   /** The type scale. Use <Text variant>, <Heading>, <Label>, <Code>, <Mono> or typeStyle(); never raw values. */
   type: {
-    display: { size: '52.632px', lineHeight: '64px', tracking: '0em' },
-    h1: { size: '39.474px', lineHeight: '48px', tracking: '0em' },
-    h2: { size: '26.316px', lineHeight: '32px', tracking: '0em' },
-    h3: { size: '19.737px', lineHeight: '24px', tracking: '0em' },
-    bodyLg: { size: '19.737px', lineHeight: '28px', tracking: '0em' },
-    body: { size: '13.158px', lineHeight: '20px', tracking: '0.019em' },
-    bodySm: { size: '13.158px', lineHeight: '18px', tracking: '0em' },
-    caption: { size: '13.158px', lineHeight: '16px', tracking: '0em' },
-    label: { size: '13.158px', lineHeight: '16px', tracking: '0.038em' },
-    mono: { size: '13.158px', lineHeight: '20px', tracking: '0em' },
-    code: { size: '13.158px', lineHeight: '20px', tracking: '0em' },
+    display: {
+      size: '40px',
+      lineHeight: '48px',
+      tracking: '-0.022em',
+      weight: 650,
+    },
+    h1: { size: '28px', lineHeight: '36px', tracking: '-0.018em', weight: 620 },
+    h2: { size: '20px', lineHeight: '28px', tracking: '-0.012em', weight: 600 },
+    h3: { size: '16px', lineHeight: '24px', tracking: '-0.006em', weight: 590 },
+    bodyLg: {
+      size: '15px',
+      lineHeight: '24px',
+      tracking: '-0.004em',
+      weight: 400,
+    },
+    body: { size: '13px', lineHeight: '20px', tracking: '0em', weight: 400 },
+    bodySm: {
+      size: '12px',
+      lineHeight: '18px',
+      tracking: '0.002em',
+      weight: 400,
+    },
+    caption: {
+      size: '11px',
+      lineHeight: '16px',
+      tracking: '0.006em',
+      weight: 450,
+    },
+    label: {
+      size: '12px',
+      lineHeight: '16px',
+      tracking: '0.004em',
+      weight: 540,
+    },
+    mono: { size: '12px', lineHeight: '20px', tracking: '0em', weight: 400 },
+    code: { size: '12px', lineHeight: '20px', tracking: '0em', weight: 400 },
   },
   motion: {
-    fast: '120ms',
-    normal: '180ms',
-    slow: '280ms',
-    easeOut: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    fast: '140ms',
+    normal: '200ms',
+    slow: '320ms',
+    easeOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
     easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
     /** Durations by intent; components use these instead of raw ms. */
     instant: '0ms',
-    hover: '120ms',
-    enter: '180ms',
-    exit: '120ms',
+    hover: '160ms',
+    enter: '240ms',
+    exit: '160ms',
     pulse: '1400ms',
     blink: '1100ms',
     spin: '700ms',
@@ -126,8 +161,16 @@ export const tokens = {
   },
   /** One focus ring everywhere: keyboard focus shows a 2px ring in `color.ring`, offset 2px. */
   focus: { width: '2px', offset: '2px', style: 'solid' },
-  /** The one shadow, for things that float over content (dialog, menu, toast). Everything else uses 1px borders. */
-  shadow: { overlay: '0 12px 32px rgba(0,0,0,0.35)' },
+  /**
+   * Layered, low-contrast shadows (QRT-378): `card` lifts resting surfaces a hair, `raised` is for hover and
+   * pressed controls, `overlay` for things that float over content (dialog, menu, toast).
+   */
+  shadow: {
+    card: '0 1px 2px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.06)',
+    raised: '0 2px 6px -1px rgba(0,0,0,0.16), 0 1px 2px rgba(0,0,0,0.10)',
+    overlay:
+      '0 24px 48px -12px rgba(0,0,0,0.45), 0 8px 16px -8px rgba(0,0,0,0.25)',
+  },
   /**
    * The notch is always a black hardware surface, in every theme and contrast mode,
    * so it has its own fixed on-black palette instead of following `color`.
@@ -195,7 +238,11 @@ export const tokens = {
     underlineOffset: '3px',
   },
   opacity: { disabled: 0.5, muted: 0.6 },
-  blur: { overlay: 'blur(2px)', blocked: 'blur(6px)' },
+  blur: {
+    overlay: 'blur(8px)',
+    blocked: 'blur(6px)',
+    panel: 'blur(20px) saturate(160%)',
+  },
   /**
    * The opts grid on every page: label left, control in a fixed right column, one row height, and the gaps
    * between a section's heading and its rows and between rows (sections themselves are PAGE.gap apart).
@@ -228,9 +275,9 @@ export function typeStyle(
 } {
   const s = t.type[v];
   return {
-    fontFamily: t.font.family,
+    fontFamily: v === 'mono' || v === 'code' ? t.font.mono : t.font.family,
     fontSize: s.size,
-    fontWeight: t.font.weight,
+    fontWeight: s.weight,
     lineHeight: s.lineHeight,
     letterSpacing: s.tracking,
   };
@@ -284,12 +331,12 @@ export function globalCss(t: Tokens = tokens, fontUrl?: string): string {
     .map(([k, v]) => `${k}:${v};`)
     .join('');
   const face = fontUrl
-    ? `@font-face{font-family:'Geist Pixel Square';src:url(${fontUrl}) format('woff2');font-weight:100 900;font-style:normal;font-display:block;}`
+    ? `@font-face{font-family:'Allo';src:url(${fontUrl}) format('woff2');font-weight:100 900;font-style:normal;font-display:block;}`
     : '';
   return `${face}:root{${vars}color-scheme:${t.mode};}
 *,*::before,*::after{box-sizing:border-box;}
 html,body,#root{height:100%;margin:0;overflow-x:hidden;overscroll-behavior:none;}
-body{overflow-wrap:break-word;background:var(--q-color-bg);color:var(--q-color-text);font-family:var(--q-font-family);font-weight:var(--q-font-weight);font-size:var(--q-type-body-size);line-height:var(--q-type-body-line-height);letter-spacing:var(--q-type-body-tracking);font-synthesis:none;-webkit-font-smoothing:antialiased;}
+body{overflow-wrap:break-word;background:var(--q-color-bg);color:var(--q-color-text);font-family:var(--q-font-family);font-weight:var(--q-font-weight);font-size:var(--q-type-body-size);line-height:var(--q-type-body-line-height);letter-spacing:var(--q-type-body-tracking);font-synthesis:none;font-optical-sizing:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
 button,input,select,textarea,option,code,kbd,pre,samp{font:inherit;letter-spacing:inherit;color:inherit;}
 h1,h2,h3,h4,h5,h6,strong,b,th{font-weight:inherit;}
 :focus-visible{outline:var(--q-focus-width) var(--q-focus-style) var(--q-color-ring)!important;outline-offset:var(--q-focus-offset)!important;}
@@ -300,6 +347,7 @@ h1,h2,h3,h4,h5,h6,strong,b,th{font-weight:inherit;}
 @keyframes q-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes q-spin{to{transform:rotate(360deg)}}
 @keyframes q-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes q-pop-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes q-pulse{0%,100%{opacity:1}50%{opacity:.4}}
 html,body,#root{height:100%;margin:0;}
 .q-drag{position:fixed;inset:0 0 auto 0;height:32px;z-index:1;-webkit-app-region:drag;}

@@ -32,9 +32,9 @@ export const Intro: S = {
           is the one the app ships, from @qrtz/ui.
         </Text>
         <Text muted>
-          one font (geist pixel square), feather icons, thin borders instead of
-          shadows, small radii, fast ease-out motion. dark is the default; use
-          the theme switch in the toolbar to see light.
+          one font (allo, by josh puckett), feather icons, soft radii, quiet
+          layered shadows, smooth ease-out motion. dark is the default; use the
+          theme switch in the toolbar to see light.
         </Text>
         <Text muted>
           all copy is lowercase. the word is opts, never the other one.
@@ -65,7 +65,7 @@ export const Type: S = {
     const t = useTheme();
     return (
       <div style={{ display: 'grid', gap: t.space[3] }}>
-        <Text muted>geist pixel square, the only font.</Text>
+        <Text muted>allo, the only font: one variable file, real weights.</Text>
         {TYPE_VARIANTS.map((v) => (
           <div
             key={v}

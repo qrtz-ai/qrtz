@@ -65,8 +65,9 @@ export function Dialog({
           maxWidth: `calc(100vw - ${tokens.space[8]})`,
           background: t.color.surface,
           border: `${tokens.border.hairline} solid ${t.color.borderStrong}`,
-          borderRadius: t.radius.lg,
+          borderRadius: t.radius.xl,
           boxShadow: tokens.shadow.overlay,
+          animation: `q-pop-in ${t.motion.enter} ${t.motion.easeOut}`,
           outline: 'none',
           overflow: 'hidden',
         }}

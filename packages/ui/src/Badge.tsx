@@ -42,7 +42,7 @@ export function Badge({
         color: c,
         background: `color-mix(in srgb, ${c} 10%, transparent)`,
         border: `${tokens.border.hairline} solid color-mix(in srgb, ${c} 20%, transparent)`,
-        borderRadius: t.radius.sm,
+        borderRadius: t.radius.full,
       }}
     >
       {children}
