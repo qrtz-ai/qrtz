@@ -15,7 +15,7 @@ public enum PillPhase: Equatable, Sendable {
     /// The accessibility label (the pill draws no words outside an error).
     public var accessibilityLabel: String {
         switch self {
-        case .hidden: "echo"
+        case .hidden: "flow"
         case .listening: "listening"
         case .processing: "processing"
         case .error(let m), .info(let m): m

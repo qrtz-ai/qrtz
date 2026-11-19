@@ -270,6 +270,7 @@ final class PillDriverTests: XCTestCase {
     }
 
     func testAccessibilityLabels() {
+        XCTAssertEqual(PillPhase.hidden.accessibilityLabel, "flow")  // QRT-374: VoiceOver says the app's name
         XCTAssertEqual(PillPhase.listening.accessibilityLabel, "listening")
         XCTAssertEqual(PillPhase.processing.accessibilityLabel, "processing")
         XCTAssertEqual(PillPhase.error("mic off").accessibilityLabel, "mic off")
