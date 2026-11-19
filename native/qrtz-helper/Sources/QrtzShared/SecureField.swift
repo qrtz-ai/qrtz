@@ -16,5 +16,5 @@ public enum SecureField {
     public static let insertRefused = "secure-field"
 
     /// The pill's notice for that refusal (qrtz-talk `MSG_SECURE_FIELD`; both tests pin the same words).
-    public static let notice = "echo won't type into password fields"
+    public static let notice = "flow won't type into password fields"
 }

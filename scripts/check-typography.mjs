@@ -4,8 +4,8 @@
 //   bun scripts/check-typography.mjs           → fail on violations
 //   bun scripts/check-typography.mjs --audit   → distinct raw values per property, whole repo (incl. packages/ui)
 // It also holds the one-font rule (QRT-377): Allo is the only UI font. packages/ui/src/fonts bundles
-// AlloVariable.woff2 (plus its OFL) and, for the Swift helper's pill only (native/qrtz-helper/scripts/gen-pill-font.sh),
-// GeistPixel-Square.woff2; tokens.font.family leads with 'Allo', and no file in apps/ or packages/ names another
+// AlloVariable.woff2 (plus its OFL; the Swift pill embeds the same file via native/qrtz-helper/scripts/gen-pill-font.sh);
+// tokens.font.family leads with 'Allo', and no file in apps/ or packages/ names another
 // font face (an @font-face, a font file, or Geist Pixel).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -70,13 +70,12 @@ for (const f of files) {
           );
       }
 }
-// One font: Allo. The Geist Pixel file stays only as the source of the native pill's font.
+// One font: Allo.
 const FONT = 'Allo';
 const FONT_FILE = 'AlloVariable.woff2';
-const NATIVE_ONLY = 'GeistPixel-Square.woff2';
 const fontDir = path.join(root, 'packages', 'ui', 'src', 'fonts');
 for (const name of fs.readdirSync(fontDir))
-  if (name !== FONT_FILE && name !== NATIVE_ONLY && !/^OFL-.*\.txt$/.test(name))
+  if (name !== FONT_FILE && !/^OFL-.*\.txt$/.test(name))
     violations.push(
       `packages/ui/src/fonts/${name}  only ${FONT_FILE} is bundled`,
     );
