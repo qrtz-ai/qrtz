@@ -616,7 +616,11 @@ export default function MarketplaceView() {
   const availableNames = listings(available, installedIds)
     .map((l) => l.name)
     .filter((n) => !installedNames.includes(n) && !hidden(n));
-  const shared = rows.filter((r) => r.kind !== 'extension');
+  // A shared package only a hidden app uses (nano's models, kept on disk) isn't listed either.
+  const shared = rows
+    .filter((r) => r.kind !== 'extension')
+    .filter((r) => !r.usedBy.length || r.usedBy.some((n) => !hidden(n)))
+    .map((r) => ({ ...r, usedBy: r.usedBy.filter((n) => !hidden(n)) }));
   const onIds = MODEL_APPS.filter(
     (id) => !hidden(id) && hostInstalled(id) && enabled(id),
   );

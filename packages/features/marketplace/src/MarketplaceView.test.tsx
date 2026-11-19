@@ -698,6 +698,41 @@ describe('shared models and services', () => {
     expect(q('module-prune')).toBeNull();
     expect(q('module-prune-none')?.textContent).toContain('in use');
   });
+
+  it('QRT-375: a packaged build lists no package only nano uses and never names nano', async () => {
+    history.replaceState(null, '', '/');
+    try {
+      const pinned = (name: string, sizeBytes: number, usedBy: string[]) => ({
+        name,
+        version: '1.0.0',
+        kind: 'model' as const,
+        requested: '=1.0.0',
+        requiredBy: [],
+        usedBy,
+        disabled: null,
+        sizeBytes,
+      });
+      const f = fake({
+        'packages:list': () => ({
+          ...list,
+          packages: [
+            pinned('model.nemotron', 626_000_000, ['nano']),
+            pinned('model.shared', 10_000_000, ['echo', 'nano']),
+            pinned('model.parakeet-tdt-v2-en', 464_000_000, ['echo']),
+          ],
+          reclaimable: { dirs: 0, blobs: 0, bytes: 0 },
+        }),
+      });
+      await render(f.client);
+      const shared = q('module-shared')?.textContent ?? '';
+      expect(shared).toContain('464 mb · used by echo');
+      expect(shared).toContain('10 mb · used by echo');
+      expect(shared).not.toContain('nemotron');
+      expect(shared).not.toContain('nano');
+    } finally {
+      history.replaceState(null, '', '/?dev=1');
+    }
+  });
 });
 
 describe('qrtz ships empty (ADR 0169)', () => {
