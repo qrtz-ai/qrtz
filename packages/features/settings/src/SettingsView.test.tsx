@@ -9,6 +9,9 @@ import { ipcSamples } from '@qrtz/core/ipc/samples';
 import { primaryButtons, ThemeProvider } from '@qrtz/ui';
 import SettingsView from './SettingsView';
 
+// QRT-375: these suites exercise nano and ctrl as a dev build (?dev=1) with experimental apps on shows them.
+history.replaceState(null, '', '/?dev=1');
+
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -150,6 +153,7 @@ describe('permissions note (ADR 0184 amendment)', () => {
       const c = defaultConfig();
       return {
         ...c,
+        app: { ...c.app, experimentalApps: true },
         modules: { ...c.modules, nano: { ...c.modules.nano, installed } },
       };
     };

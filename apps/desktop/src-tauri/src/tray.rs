@@ -46,7 +46,20 @@ fn sep() -> TrayItem {
     }
 }
 
-pub fn tray_state(v: &Value, now: i64) -> TrayState {
+/// `meetings`: nano is on (QRT-375: never in a packaged build). Without it the menu is open and quit only: no
+/// recording status, start, stop or meeting rows.
+pub fn tray_state(v: &Value, now: i64, meetings: bool) -> TrayState {
+    if !meetings && !is_recording(v) {
+        return TrayState {
+            recording: false,
+            title: String::new(),
+            tooltip: UI_APP.to_string(),
+            items: vec![
+                item(UI_OPEN, Some("open"), true),
+                item(UI_QUIT, Some("quit"), true),
+            ],
+        };
+    }
     let phase = v["phase"].as_str().unwrap_or("idle");
     let helper = v["helper"].as_str().unwrap_or("ok");
     let recording = matches!(phase, "starting" | "recording" | "reconnecting");
@@ -117,7 +130,7 @@ mod tests {
 
     #[test]
     fn idle() {
-        let s = tray_state(&json!({"phase": "idle", "helper": "ok", "elapsedMs": 0}), 0);
+        let s = tray_state(&json!({"phase": "idle", "helper": "ok", "elapsedMs": 0}), 0, true);
         assert!(!s.recording);
         assert_eq!(s.title, "");
         assert_eq!(
@@ -132,6 +145,7 @@ mod tests {
         let s = tray_state(
             &json!({"phase": "recording", "startedAt": 1_000, "detected": {"title": "standup"}, "helper": "ok"}),
             1_000 + 65_000,
+            true,
         );
         assert!(s.recording);
         assert_eq!(s.title, "1:05");
@@ -141,7 +155,11 @@ mod tests {
 
     #[test]
     fn detected_offers_record_and_not_now() {
-        let s = tray_state(&json!({"phase": "detected", "detected": {"title": "sync"}}), 0);
+        let s = tray_state(
+            &json!({"phase": "detected", "detected": {"title": "sync"}}),
+            0,
+            true,
+        );
         assert_eq!(
             labels(&s)[..3],
             ["meeting detected · sync", "record this meeting", "not now"]
@@ -150,7 +168,7 @@ mod tests {
 
     #[test]
     fn helper_missing_disables_start() {
-        let s = tray_state(&json!({"phase": "idle", "helper": "missing"}), 0);
+        let s = tray_state(&json!({"phase": "idle", "helper": "missing"}), 0, true);
         assert_eq!(labels(&s)[0], "recording unavailable (helper missing)");
         assert!(
             !s.items
@@ -159,6 +177,16 @@ mod tests {
                 .unwrap()
                 .enabled
         );
+    }
+
+    #[test]
+    fn without_nano_only_open_and_quit() {
+        // QRT-375: nano hidden: no recording status, start or meeting rows.
+        for p in ["idle", "detected", "processing"] {
+            let s = tray_state(&json!({"phase": p, "helper": "ok"}), 0, false);
+            assert_eq!(labels(&s), vec![UI_OPEN, UI_QUIT], "{p}");
+            assert_eq!(s.tooltip, UI_APP);
+        }
     }
 
     #[test]
@@ -247,9 +275,15 @@ fn icon(recording: bool) -> tauri::Result<Image<'static>> {
     Image::from_bytes(if recording { ICON_REC } else { ICON_IDLE })
 }
 
+/// QRT-375: nano is on (installed, switched on, and not a hidden experiment).
+fn meetings(app: &AppHandle) -> bool {
+    app.try_state::<crate::backend::Backend>()
+        .is_some_and(|b| qrtz_app::modules::is_on(&b.service.config(), "nano"))
+}
+
 pub fn create(app: &AppHandle) -> tauri::Result<TrayIcon> {
     app.manage(TrayHandles::default());
-    let s = tray_state(&json_idle(), now_ms());
+    let s = tray_state(&json_idle(), now_ms(), meetings(app));
     let (m, status) = menu(app, &s)?;
     *app.state::<TrayHandles>().0.lock().unwrap() = status;
     TrayIconBuilder::with_id(TRAY_ID)
@@ -271,7 +305,7 @@ pub fn update(app: &AppHandle, session: &Value) {
     let Some(tray) = app.tray_by_id(TRAY_ID) else {
         return;
     };
-    let s = tray_state(session, now_ms());
+    let s = tray_state(session, now_ms(), meetings(app));
     if let Ok((m, status)) = menu(app, &s) {
         let _ = tray.set_menu(Some(m));
         *app.state::<TrayHandles>().0.lock().unwrap() = status;
@@ -289,7 +323,7 @@ pub fn tick(app: &AppHandle, session: &Value) {
     let Some(tray) = app.tray_by_id(TRAY_ID) else {
         return;
     };
-    let s = tray_state(session, now_ms());
+    let s = tray_state(session, now_ms(), meetings(app));
     let _ = tray.set_title(Some(&s.title));
     let _ = tray.set_tooltip(Some(&s.tooltip));
     if let Some(mi) = app.state::<TrayHandles>().0.lock().unwrap().as_ref() {

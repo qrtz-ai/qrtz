@@ -5,6 +5,9 @@ import { createRoot } from 'react-dom/client';
 import { Onboarding, onboardingPermissions, setupState } from './Onboarding';
 import { fakeHost } from './onboarding.fake';
 
+// QRT-375: these suites exercise nano's rows as a dev build (?dev=1) with experimental apps on shows them.
+history.replaceState(null, '', '/?dev=1');
+
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -58,7 +61,10 @@ describe('setupState (ADR 0184)', () => {
 describe('onboardingPermissions (ADR 0184 amendment)', () => {
   const ids = (cfg: unknown) => onboardingPermissions(cfg).map((d) => d.id);
   it('lists system audio only while nano is installed', () => {
-    const nano = (installed: boolean) => ({ modules: { nano: { installed } } });
+    const nano = (installed: boolean) => ({
+      app: { experimentalApps: true },
+      modules: { nano: { installed } },
+    });
     expect(ids(nano(true))).toEqual([
       'microphone',
       'screen-recording',
@@ -67,6 +73,19 @@ describe('onboardingPermissions (ADR 0184 amendment)', () => {
     expect(ids(nano(false))).toEqual(['microphone', 'accessibility']);
     // Before config is read: only what every install needs (no flash of a nano-only row).
     expect(ids(null)).toEqual(['microphone', 'accessibility']);
+  });
+  it('QRT-375: a packaged build never lists nano rows, even installed with experimental apps on', () => {
+    history.replaceState(null, '', '/');
+    try {
+      expect(
+        ids({
+          app: { experimentalApps: true },
+          modules: { nano: { installed: true } },
+        }),
+      ).toEqual(['microphone', 'accessibility']);
+    } finally {
+      history.replaceState(null, '', '/?dev=1');
+    }
   });
   it('never throws on a config without that app entry (modules?.[only]?.installed)', () => {
     for (const cfg of [{}, { modules: {} }, { modules: { nano: null } }])
@@ -109,6 +128,7 @@ describe('permissions onboarding (ADR 0184)', () => {
     await act(async () =>
       host.emit('config:changed', {
         onboarding: { done: false },
+        app: { experimentalApps: true },
         modules: { nano: { installed: true } },
       }),
     );

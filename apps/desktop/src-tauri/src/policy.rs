@@ -26,7 +26,8 @@ pub fn hotkeys(config: &Value) -> Vec<(String, &'static str)> {
             && config["modules"][m]["enabled"].as_bool().unwrap_or(true)
     };
     let mut out = vec![];
-    if on("nano") {
+    // QRT-375: nano's keys also need nano on by the host's rules (installed, not a hidden experiment).
+    if on("nano") && qrtz_app::modules::is_on(config, "nano") {
         out.push((RECORD_TOGGLE_KEY.to_string(), "record"));
         let pause = config["privacy"]["pauseHotkey"].as_str().unwrap_or("");
         if !pause.is_empty() {
@@ -63,7 +64,8 @@ mod tests {
 
     #[test]
     fn hotkeys_from_config() {
-        let c = json!({"privacy": {"pauseHotkey": "Alt+P"}, "talk": {"enabled": true, "toggleHotkey": "Alt+Space"}});
+        let c = json!({"privacy": {"pauseHotkey": "Alt+P"}, "talk": {"enabled": true, "toggleHotkey": "Alt+Space"},
+                       "app": {"experimentalApps": true}});
         assert_eq!(
             hotkeys(&c),
             vec![
@@ -72,15 +74,22 @@ mod tests {
                 ("Alt+Space".to_string(), "talk")
             ]
         );
-        let c =
-            json!({"privacy": {"pauseHotkey": ""}, "talk": {"enabled": false, "toggleHotkey": "Alt+Space"}});
+        let c = json!({"privacy": {"pauseHotkey": ""}, "talk": {"enabled": false, "toggleHotkey": "Alt+Space"},
+                       "app": {"experimentalApps": true}});
         assert_eq!(hotkeys(&c).len(), 1);
+    }
+
+    #[test]
+    fn hidden_nano_binds_no_keys() {
+        // QRT-375: nano held off as an experiment (experimental apps off, or a packaged build) binds nothing.
+        let c = json!({"privacy": {"pauseHotkey": "Alt+P"}, "talk": {"enabled": true, "toggleHotkey": "Alt+Space"}});
+        assert_eq!(hotkeys(&c).iter().map(|h| h.1).collect::<Vec<_>>(), ["talk"]);
     }
 
     #[test]
     fn a_switched_off_module_unbinds_its_hotkeys() {
         let c = json!({"privacy": {"pauseHotkey": "Alt+P"}, "talk": {"enabled": true, "toggleHotkey": "Alt+Space"},
-                       "modules": {"echo": {"enabled": false}}});
+                       "modules": {"echo": {"enabled": false}}, "app": {"experimentalApps": true}});
         assert_eq!(
             hotkeys(&c).iter().map(|h| h.1).collect::<Vec<_>>(),
             ["record", "pause"]

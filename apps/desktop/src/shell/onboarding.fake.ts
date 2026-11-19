@@ -26,6 +26,8 @@ export function fakeHost(
       case 'config:get':
         return {
           onboarding: { done: state.done },
+          // QRT-375: nano rows need a dev build (?dev=1) with experimental apps on.
+          app: { experimentalApps: true },
           modules: { nano: { installed: state.nanoInstalled } },
         };
       case 'permissions:get':

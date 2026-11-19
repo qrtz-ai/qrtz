@@ -184,16 +184,28 @@ export function isBundledModule(id: string): boolean {
   return (BUNDLED_MODULES as readonly string[]).includes(id);
 }
 
-/** Apps still being built: hidden from the sidebar and the apps page until settings → app → experimental apps is on. */
+/** Apps still being built (nano, ctrl). QRT-375: hidden from every surface of a packaged build. */
 export const EXPERIMENTAL_MODULES: readonly ModuleId[] = ['nano', 'ctrl'];
+
+/**
+ * QRT-375: only an unpackaged build (the renderer loaded with `?dev=1`) honours settings → app → experimental apps;
+ * a packaged build hides the experimental apps whatever config says (the host keeps them off too).
+ */
+export const experimentsAllowed = (): boolean =>
+  typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).get('dev') === '1';
+
+/** Whether the experimental apps show: a dev build with settings → app → experimental apps on. */
+export const showsExperiments = (experimentalApps: unknown): boolean =>
+  experimentsAllowed() && experimentalApps === true;
 
 export function isHiddenExperiment(
   cfg: Pick<Config, 'app'>,
   id: string,
 ): boolean {
   return (
-    !cfg.app.experimentalApps &&
-    (EXPERIMENTAL_MODULES as readonly string[]).includes(id)
+    (EXPERIMENTAL_MODULES as readonly string[]).includes(id) &&
+    !showsExperiments(cfg.app.experimentalApps)
   );
 }
 

@@ -557,6 +557,9 @@ fn linger(
 /// Settings that the shell enforces: menu bar icon, open at login, global shortcuts, HUD/pill toggles.
 fn apply_config(app: &AppHandle, cfg: &Value, first: bool) {
     tray::set_visible(app, cfg["app"]["menuBarIcon"].as_bool().unwrap_or(true));
+    // QRT-375: nano switched on or off changes the menu bar item's rows.
+    let session = app.state::<Backend>().session.lock().unwrap().clone();
+    tray::update(app, &session);
 
     // Login item: packaged macOS/Windows builds only (dev and Linux are no-ops, like Electron).
     if !cfg!(debug_assertions) && !cfg!(target_os = "linux") {

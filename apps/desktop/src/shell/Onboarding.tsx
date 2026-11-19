@@ -11,6 +11,7 @@ import {
   type PermissionSetupState,
 } from '@qrtz/ui';
 import {
+  isHiddenExperiment,
   loadConfig,
   type CalendarAccess,
   type ModuleId,
@@ -39,8 +40,7 @@ export const ONBOARDING_PERMISSIONS: readonly {
     pane: 'microphone',
     icon: 'mic',
     label: 'microphone',
-    reason:
-      'echo hears you while you hold the key; nano records your side of a meeting',
+    reason: 'echo hears you while you hold the key',
   },
   {
     id: 'screen-recording',
@@ -55,8 +55,7 @@ export const ONBOARDING_PERMISSIONS: readonly {
     pane: 'accessibility',
     icon: 'accessibility',
     label: 'accessibility',
-    reason:
-      'echo types where your cursor is; snap and ctrl move windows and click for you',
+    reason: 'echo types where your cursor is; snap moves your windows',
   },
 ];
 
@@ -70,9 +69,14 @@ const WATCH_MS = 120_000;
  * (`null`), only the rows every install needs: a nano-only row never flashes in and out.
  */
 export function onboardingPermissions(cfg: unknown) {
-  const modules = cfg == null ? null : loadConfig(cfg).modules;
+  const c = cfg == null ? null : loadConfig(cfg);
+  // QRT-375: a hidden experimental app (nano) lists nothing.
   return ONBOARDING_PERMISSIONS.filter(
-    (d) => !d.only || (modules?.[d.only]?.installed ?? false),
+    (d) =>
+      !d.only ||
+      (!!c &&
+        !isHiddenExperiment(c, d.only) &&
+        (c.modules?.[d.only]?.installed ?? false)),
   );
 }
 
@@ -81,7 +85,11 @@ export function onboardingPermissions(cfg: unknown) {
  * qrtz needs (nothing waits on it, so it never counts toward "open qrtz"), and its allow is nano's connect.
  */
 export function showCalendarRow(cfg: unknown) {
-  return cfg != null && (loadConfig(cfg).modules?.nano?.installed ?? false);
+  if (cfg == null) return false;
+  const c = loadConfig(cfg);
+  return (
+    !isHiddenExperiment(c, 'nano') && (c.modules?.nano?.installed ?? false)
+  );
 }
 
 /** The calendar row's state from the calendar access state (ADR 0217 H1: the shell sees nothing more). */

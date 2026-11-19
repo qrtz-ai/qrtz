@@ -15,6 +15,9 @@ import { primaryButtons, ThemeProvider, ToastProvider } from '@qrtz/ui';
 import { AppError } from '@qrtz/core';
 import MarketplaceView from './MarketplaceView';
 
+// QRT-375: these suites exercise nano and ctrl as a dev build (?dev=1) with experimental apps on shows them.
+history.replaceState(null, '', '/?dev=1');
+
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;

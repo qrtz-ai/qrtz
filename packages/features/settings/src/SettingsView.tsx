@@ -16,7 +16,11 @@ import {
   type UserError,
 } from '@qrtz/ui';
 import type { IpcResponse } from '@qrtz/core';
-import { requestNavigate } from '@qrtz/core';
+import {
+  experimentsAllowed,
+  requestNavigate,
+  showsExperiments,
+} from '@qrtz/core';
 import { useQrtz, useQrtzEvent } from '@qrtz/core/react';
 import AppUpdateRow from './AppUpdateRow';
 
@@ -134,7 +138,11 @@ export default function SettingsView() {
   // ADR 0184 amendment: the host's `modules.nano.installed` (ADR 0169); unknown until config loads.
   const nanoInstalled =
     (cfg?.modules as { nano?: { installed?: boolean } } | undefined)?.nano
-      ?.installed === true;
+      ?.installed === true &&
+    showsExperiments(
+      (cfg?.app as { experimentalApps?: unknown } | undefined)
+        ?.experimentalApps,
+    );
   const appCfg = (cfg?.app ?? {}) as {
     menuBarIcon?: boolean;
     launchAtLogin?: boolean;
@@ -214,17 +222,20 @@ export default function SettingsView() {
           false,
           (v) => void patchApp({ launchAtLogin: v }),
         )}
-        <SettingRow
-          label="experimental apps"
-          description="show apps that are still being built: nano and ctrl"
-        >
-          <Switch
+        {/* QRT-375: dev builds only; a packaged build never shows nano or ctrl. */}
+        {experimentsAllowed() ? (
+          <SettingRow
             label="experimental apps"
-            checked={appCfg.experimentalApps ?? false}
-            onChange={(v) => void patchApp({ experimentalApps: v })}
-            data-testid="experimental-apps"
-          />
-        </SettingRow>
+            description="show apps that are still being built: nano and ctrl"
+          >
+            <Switch
+              label="experimental apps"
+              checked={appCfg.experimentalApps ?? false}
+              onChange={(v) => void patchApp({ experimentalApps: v })}
+              data-testid="experimental-apps"
+            />
+          </SettingRow>
+        ) : null}
         {toggle(
           'update speech automatically',
           'speech-auto-update',
@@ -300,7 +311,7 @@ export default function SettingsView() {
         <>
           <SettingRow
             as="div"
-            description="export your meetings and recordings to one file, or import one."
+            description="export your qrtz data to one file, or import one."
           >
             <Button
               variant="secondary"

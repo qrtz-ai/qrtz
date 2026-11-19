@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ConfigSchema, defaultConfig } from './config';
 import {
   GLOBAL_CONFIG_KEYS,
@@ -31,14 +31,34 @@ const bundled = MODULE_IDS.map(
 );
 
 describe('module manifests (ADR 0146)', () => {
-  it('hides nano and ctrl, and only them, until experimental apps is on', () => {
-    const off = defaultConfig();
+  it('hides nano and ctrl, and only them, until experimental apps is on (dev builds)', () => {
+    vi.stubGlobal('location', { search: '?dev=1' });
+    try {
+      const off = defaultConfig();
+      const on = ConfigSchema.parse({ app: { experimentalApps: true } });
+      expect(MODULE_IDS.filter((id) => isHiddenExperiment(off, id))).toEqual([
+        'nano',
+        'ctrl',
+      ]);
+      expect(MODULE_IDS.filter((id) => isHiddenExperiment(on, id))).toEqual([]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('QRT-375: a packaged build hides nano and ctrl even with experimental apps on', () => {
     const on = ConfigSchema.parse({ app: { experimentalApps: true } });
-    expect(MODULE_IDS.filter((id) => isHiddenExperiment(off, id))).toEqual([
-      'nano',
-      'ctrl',
-    ]);
-    expect(MODULE_IDS.filter((id) => isHiddenExperiment(on, id))).toEqual([]);
+    for (const search of [undefined, { search: '' }, { search: '?dev=0' }]) {
+      if (search) vi.stubGlobal('location', search);
+      try {
+        expect(MODULE_IDS.filter((id) => isHiddenExperiment(on, id))).toEqual([
+          'nano',
+          'ctrl',
+        ]);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    }
   });
 
   it('parses every bundled manifest and agrees on its views', () => {

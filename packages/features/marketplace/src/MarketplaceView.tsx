@@ -604,7 +604,7 @@ export default function MarketplaceView() {
       />
     ) : null;
 
-  // An experimental app isn't listed until settings → app → experimental apps is on.
+  // QRT-375: an experimental app (nano, ctrl) is never listed, opened or counted in a packaged build.
   const hidden = (n: string) => isHiddenExperiment(cfg ?? defaultConfig(), n);
   const installedNames = [
     ...new Set([
@@ -616,7 +616,9 @@ export default function MarketplaceView() {
     .map((l) => l.name)
     .filter((n) => !installedNames.includes(n) && !hidden(n));
   const shared = rows.filter((r) => r.kind !== 'extension');
-  const onIds = MODEL_APPS.filter((id) => hostInstalled(id) && enabled(id));
+  const onIds = MODEL_APPS.filter(
+    (id) => !hidden(id) && hostInstalled(id) && enabled(id),
+  );
 
   const row = (name: string, installed: boolean) => {
     const info = infoFor(name);
@@ -642,7 +644,7 @@ export default function MarketplaceView() {
     );
   };
 
-  const item = at.page === 'item' ? at.name : null;
+  const item = at.page === 'item' && !hidden(at.name) ? at.name : null;
   const modal = item ? (
     <Modal
       open
