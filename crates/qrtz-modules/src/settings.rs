@@ -61,6 +61,10 @@ pub struct GlobalSettings {
 /// settings → app → experimental apps is on, so a switch left on in 0.3.2 or earlier never starts them.
 pub const EXPERIMENTAL_MODULES: &[&str] = &["nano", "ctrl"];
 
+/// QRT-375: only a debug build (dev, tests) honours `app.experimentalApps`; a packaged (release) build keeps the
+/// [`EXPERIMENTAL_MODULES`] off whatever config says, matching the renderer, which never shows them there.
+pub const EXPERIMENTS_ALLOWED: bool = cfg!(debug_assertions);
+
 impl GlobalSettings {
     /// From config.json (missing keys default to on, so M0 changes nothing).
     pub fn from_config(cfg: &Value) -> Self {
@@ -75,7 +79,7 @@ impl GlobalSettings {
                 .iter()
                 .map(|id| ((*id).to_owned(), m[*id]["installed"].as_bool().unwrap_or(true)))
                 .collect(),
-            experimental_apps: cfg["app"]["experimentalApps"].as_bool() == Some(true),
+            experimental_apps: EXPERIMENTS_ALLOWED && cfg["app"]["experimentalApps"].as_bool() == Some(true),
         }
     }
     /// QRT-352: `id` is experimental and experimental apps is off, so it counts as off.
