@@ -61,6 +61,10 @@ export const SHELL_MANIFEST: SubAppManifest = {
     'talk.dictate',
     // ADR 0184: the first-run permissions onboarding (live state, allow, System Settings, restart; finish).
     'os.permissions',
+    // QRT-376: the onboarding downloads flow's (echo's) speech model; the host scopes every shell speech call to
+    // echo's models (`check_view_speech_call`), like echo's own view.
+    'speech.read',
+    'speech.manage',
     // ADR 0083: uncaught errors and player errors from every window go to the local log.
     'log.write',
     // ADR 0181: the sidebar dot when a newer qrtz is waiting (reads only).

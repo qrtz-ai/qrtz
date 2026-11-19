@@ -144,7 +144,13 @@ pub fn check_view_speech_call(
     channel: &str,
     payload: &Value,
 ) -> Result<(), AppError> {
-    let Some(m) = module_of_view(sub_app) else {
+    // QRT-376: the first-run onboarding (the shell) offers flow's (echo's) speech model, so the shell's speech
+    // calls reach echo's models only, exactly like echo's own view.
+    let Some(m) = (if sub_app == "shell" {
+        Some("echo")
+    } else {
+        module_of_view(sub_app)
+    }) else {
         return Ok(());
     };
     let scoped = matches!(
@@ -458,10 +464,17 @@ mod tests {
                     assert_eq!(e.code, ErrorCode::Validation, "{ch} {b}");
                 }
             }
-            // Settings and the shell are not module views: unchanged (settings manages every model).
+            // Settings is not a module view: unchanged (settings manages every model).
             for b in &bad {
                 assert!(check_view_speech_call(&on, "settings", ch, b).is_ok(), "{ch} {b}");
-                assert!(check_view_speech_call(&on, "shell", ch, b).is_ok(), "{ch} {b}");
+            }
+            // QRT-376: the shell (onboarding) reaches echo's models only, like echo's view.
+            for cfg in [&on, &off] {
+                assert!(check_view_speech_call(cfg, "shell", ch, &own).is_ok(), "{ch}");
+                for b in &bad {
+                    let e = check_view_speech_call(cfg, "shell", ch, b).unwrap_err();
+                    assert_eq!(e.code, ErrorCode::Validation, "shell {ch} {b}");
+                }
             }
         }
         // speech:status: while echo is off its view may ask only about echo's models; on, unchanged.

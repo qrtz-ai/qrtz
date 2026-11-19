@@ -69,15 +69,7 @@ export function SpeechRequired({
   if (!status) return <>{children}</>;
   const d = status.download;
   const busy = BUSY.has(d.state);
-  const state: ModelRequirementState = !status.configured
-    ? 'unavailable'
-    : busy
-      ? 'downloading'
-      : d.state === 'error'
-        ? 'error'
-        : status.installed
-          ? 'ready'
-          : 'missing';
+  const state = speechRequirementState(status);
   return (
     <ModelRequired
       app={app}
@@ -96,6 +88,88 @@ export function SpeechRequired({
     >
       {children}
     </ModelRequired>
+  );
+}
+
+/** Where a speech model stands, for ModelRequirement. */
+export function speechRequirementState(
+  status: SpeechSetupView,
+): ModelRequirementState {
+  const d = status.download;
+  return !status.configured
+    ? 'unavailable'
+    : BUSY.has(d.state)
+      ? 'downloading'
+      : d.state === 'error'
+        ? 'error'
+        : status.installed
+          ? 'ready'
+          : 'missing';
+}
+
+/**
+ * QRT-376: the speech model as one row of the first-run onboarding: download (or retry) in place, its live
+ * progress (downloading, then installing), pause, and a check once it's on this mac. `status` null: checking.
+ */
+export function SpeechModelRow({
+  status,
+  note,
+  onDownload,
+  onCancel,
+  'data-testid': testId = 'speech-model-row',
+}: {
+  status: SpeechSetupView | null;
+  note?: ReactNode;
+  onDownload: () => void;
+  onCancel: () => void;
+  'data-testid'?: string;
+}) {
+  if (!status)
+    return (
+      <ModelRequirement
+        layout="row"
+        name="speech model"
+        purpose="turns what you say into text, on this mac"
+        state="downloading"
+        progress={{ done: 0, total: 0, phase: 'checking' }}
+        data-testid={testId}
+      />
+    );
+  const d = status.download;
+  const busy = BUSY.has(d.state);
+  return (
+    <ModelRequirement
+      layout="row"
+      name="speech model"
+      purpose="turns what you say into text, on this mac"
+      sizeBytes={status.latestBytes ?? (d.total || null)}
+      state={speechRequirementState(status)}
+      {...(busy ? { progress: speechProgress(d) } : {})}
+      error={d.error ?? null}
+      {...(note ? { note } : {})}
+      onDownload={onDownload}
+      onRetry={onDownload}
+      {...(busy && d.state !== 'installing' && d.state !== 'paused'
+        ? { onCancel }
+        : {})}
+      cancelLabel="pause"
+      {...(d.state === 'paused'
+        ? {
+            actions: (
+              <Button
+                size="sm"
+                variant="secondary"
+                icon="download"
+                onClick={onDownload}
+                data-testid={`${testId}-resume`}
+              >
+                resume
+              </Button>
+            ),
+          }
+        : {})}
+      data-testid={testId}
+    />
   );
 }
 

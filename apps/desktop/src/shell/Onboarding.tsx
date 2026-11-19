@@ -5,6 +5,8 @@ import {
   OnboardingFrame,
   PermissionSetupList,
   PermissionSetupRow,
+  SettingsSection,
+  SpeechModelRow,
   Stack,
   Text,
   type IconName,
@@ -19,7 +21,12 @@ import {
   type PermissionsStatus,
   type SettingsPane,
 } from '@qrtz/core';
-import { QrtzClientProvider, useQrtz, useQrtzEvent } from '@qrtz/core/react';
+import {
+  QrtzClientProvider,
+  useQrtz,
+  useQrtzEvent,
+  useSpeechSetup,
+} from '@qrtz/core/react';
 import { shellClient } from './shellClient';
 
 /**
@@ -117,10 +124,25 @@ export function setupState(
   return 'checking';
 }
 
+/** QRT-376: what the onboarding says about flow's speech model download (the consent). */
+export const SPEECH_NOTE =
+  "flow's speech model (parakeet) downloads once from hugging face, is checked against the fingerprint built into qrtz, and stays on this mac.";
+
+/** What the primary button says: download first while the model is missing (it is the consent), else open/continue. */
+export function primaryLabel(
+  speech: 'missing' | 'busy' | 'ready' | 'none',
+  allGranted: boolean,
+): string {
+  if (speech === 'missing') return 'download and continue';
+  return allGranted ? 'open qrtz' : 'continue';
+}
+
 /**
- * The first-run permissions onboarding (ADR 0184; shell-owned, sub apps unmounted). It never downloads anything:
- * models stay in each app's detail on the qrtz page. Continue and skip both finish it (`onboarding:finish`, the
- * host writes `onboarding.done`); a permission left off is asked the first time an app needs it.
+ * The first-run onboarding (ADR 0184; shell-owned, sub apps unmounted): flow's speech model (QRT-376: downloaded
+ * here, in the background, with its progress, pause and retry, scoped by the host to echo's models), then the macOS
+ * permissions. "download and continue" starts the download and finishes; skip finishes without it. The download
+ * keeps going after the onboarding closes and flow's page shows it. A permission left off is asked the first time
+ * an app needs it.
  */
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const client = useMemo(shellClient, []);
@@ -147,6 +169,32 @@ function Steps({ onDone }: { onDone: () => void }) {
   const fail = (e: Error) => setError(e.message);
   const [cal, setCal] = useState<CalendarAccess | null>(null);
   const calShown = showCalendarRow(cfg);
+  // QRT-376: flow's speech model, scoped to echo's models (the host refuses anything else from the shell).
+  const speechSetup = useSpeechSetup({ extensions: ['echo'] });
+  const speech = speechSetup.speech;
+  const speechState: 'missing' | 'busy' | 'ready' | 'none' = !speech
+    ? 'none'
+    : !speech.configured
+      ? 'none'
+      : ['checking', 'downloading', 'paused', 'installing'].includes(
+            speech.download.state,
+          )
+        ? 'busy'
+        : speech.installed
+          ? 'ready'
+          : 'missing';
+  const downloadSpeech = () => {
+    setError(null);
+    return qrtz
+      .invoke('speech:download', { extensions: ['echo'] })
+      .then(() => undefined, fail);
+  };
+  const pauseSpeech = () => {
+    setError(null);
+    void qrtz
+      .invoke('speech:pause', { extensions: ['echo'] })
+      .then(() => undefined, fail);
+  };
 
   const read = useCallback(
     () => void qrtz.invoke('permissions:get').then(setPerms, fail),
@@ -215,13 +263,20 @@ function Steps({ onDone }: { onDone: () => void }) {
   };
   const restart = () =>
     void qrtz.invoke('app:restart').then(() => undefined, fail);
-  const finish = () => {
+  const finish = (withSpeech = false) => {
     setError(null);
     setFinishing(true);
-    void qrtz.invoke('onboarding:finish').then(onDone, (e: Error) => {
-      setFinishing(false);
-      fail(e);
-    });
+    // "download and continue": the download starts first (it runs on in the host after this window moves on).
+    const start =
+      withSpeech && speechState === 'missing'
+        ? downloadSpeech()
+        : Promise.resolve();
+    void start
+      .then(() => qrtz.invoke('onboarding:finish'))
+      .then(onDone, (e: Error) => {
+        setFinishing(false);
+        fail(e);
+      });
   };
 
   const rows = shown.map((d) => ({
@@ -240,7 +295,7 @@ function Steps({ onDone }: { onDone: () => void }) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={finish}
+          onClick={() => finish(false)}
           disabled={finishing}
           data-testid="onboarding-skip"
         >
@@ -250,14 +305,27 @@ function Steps({ onDone }: { onDone: () => void }) {
     >
       <Text muted data-testid="onboarding-intro">
         {shown.some((d) => d.id === 'screen-recording')
-          ? 'qrtz needs a few macos permissions to hear you, record calls and type for you.'
-          : 'qrtz needs a few macos permissions to hear you and type for you.'}{' '}
-        allow them now, or skip: each one is asked again the first time an app
-        needs it.
+          ? 'qrtz needs its speech model and a few macos permissions to hear you, record calls and type for you.'
+          : 'qrtz needs its speech model and a few macos permissions to hear you and type for you.'}{' '}
+        the model downloads in the background while you allow them. skip, and
+        each one is asked again the first time an app needs it.
       </Text>
       {error ? (
         <Callout tone="danger" title={error} data-testid="onboarding-error" />
       ) : null}
+      {speechState === 'none' && speech ? null : (
+        <SettingsSection title="speech" data-testid="onboarding-speech">
+          <SpeechModelRow
+            status={speech}
+            onDownload={() => void downloadSpeech()}
+            onCancel={pauseSpeech}
+            data-testid="onboarding-speech-model"
+          />
+          <Text variant="caption" muted data-testid="onboarding-speech-note">
+            {SPEECH_NOTE}
+          </Text>
+        </SettingsSection>
+      )}
       <PermissionSetupList aria-label="permissions">
         {rows.map((r) => (
           <PermissionSetupRow
@@ -298,11 +366,11 @@ function Steps({ onDone }: { onDone: () => void }) {
         {cfg == null ? null : (
           <Button
             variant="primary"
-            onClick={finish}
+            onClick={() => finish(true)}
             disabled={finishing}
             data-testid="onboarding-continue"
           >
-            {allGranted ? 'open qrtz' : 'continue'}
+            {primaryLabel(speechState, allGranted)}
           </Button>
         )}
       </Stack>
