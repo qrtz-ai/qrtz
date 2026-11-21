@@ -14326,6 +14326,8 @@
         "talk.read",
         "talk.dictate",
         "os.permissions",
+        "speech.read",
+        "speech.manage",
         "log.write",
         "app.update.read"
       ]

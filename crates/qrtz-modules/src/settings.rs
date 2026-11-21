@@ -61,6 +61,16 @@ pub struct GlobalSettings {
 /// settings → app → experimental apps is on, so a switch left on in 0.3.2 or earlier never starts them.
 pub const EXPERIMENTAL_MODULES: &[&str] = &["nano", "ctrl"];
 
+/// QRT-375: only a debug build (dev, tests) honours `app.experimentalApps`; a packaged (release) build keeps the
+/// [`EXPERIMENTAL_MODULES`] off whatever config says, matching the renderer, which never shows them there.
+pub const EXPERIMENTS_ALLOWED: bool = cfg!(debug_assertions);
+
+/// QRT-375: a `config:set` patch that would turn experimental apps on. A build that doesn't allow experiments
+/// (`allowed` = [`EXPERIMENTS_ALLOWED`]) refuses it, so a release build never persists `experimentalApps: true`.
+pub fn refuses_experiments_patch(allowed: bool, patch: &Value) -> bool {
+    !allowed && patch["app"]["experimentalApps"] == Value::Bool(true)
+}
+
 impl GlobalSettings {
     /// From config.json (missing keys default to on, so M0 changes nothing).
     pub fn from_config(cfg: &Value) -> Self {
@@ -75,7 +85,7 @@ impl GlobalSettings {
                 .iter()
                 .map(|id| ((*id).to_owned(), m[*id]["installed"].as_bool().unwrap_or(true)))
                 .collect(),
-            experimental_apps: cfg["app"]["experimentalApps"].as_bool() == Some(true),
+            experimental_apps: EXPERIMENTS_ALLOWED && cfg["app"]["experimentalApps"].as_bool() == Some(true),
         }
     }
     /// QRT-352: `id` is experimental and experimental apps is off, so it counts as off.
@@ -285,6 +295,24 @@ fn write_private(path: &Path, bytes: &[u8]) -> Result<(), ModuleError> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn a_release_build_refuses_a_patch_turning_experiments_on() {
+        // QRT-375: release (allowed = false) refuses only a patch that sets experimentalApps to true.
+        let on = json!({"app": {"experimentalApps": true}});
+        assert!(refuses_experiments_patch(false, &on));
+        for p in [
+            json!({"app": {"experimentalApps": false}}),
+            json!({"app": {"experimentalApps": "true"}}),
+            json!({"app": {"theme": "dark"}}),
+            json!({"modules": {"nano": {"enabled": true}}}),
+            json!({}),
+        ] {
+            assert!(!refuses_experiments_patch(false, &p), "{p}");
+        }
+        // A dev build (allowed) keeps the switch.
+        assert!(!refuses_experiments_patch(true, &on));
+    }
 
     #[test]
     fn a_module_is_told_it_is_off_while_it_is_a_hidden_experiment() {

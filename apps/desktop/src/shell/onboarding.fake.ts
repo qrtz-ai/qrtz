@@ -4,7 +4,13 @@ type Perms = Record<string, string>;
 
 /** A fake host for the onboarding tests: config, permissions and the calls it saw. */
 export function fakeHost(
-  opts: { done?: boolean; perms?: Perms; nanoInstalled?: boolean } = {},
+  opts: {
+    done?: boolean;
+    perms?: Perms;
+    nanoInstalled?: boolean;
+    /** QRT-376: flow's speech model is already on this mac (default: yes). */
+    speechInstalled?: boolean;
+  } = {},
 ) {
   const state = {
     done: opts.done ?? false,
@@ -20,6 +26,25 @@ export function fakeHost(
     listeners: new Map<string, Set<(p: unknown) => void>>(),
     /** What the next permissions:request grants (default: the asked one). */
     grantOnRequest: true,
+    /** QRT-376: flow's speech model, as `speech:status` reports it (scoped to echo). */
+    speech: {
+      configured: true,
+      installed:
+        (opts.speechInstalled ?? true) ? '1.0.0' : (null as string | null),
+      bytes: 0,
+      latest: '1.0.0',
+      latestBytes: 464_000_000,
+      waiting: null,
+      listExpired: false,
+      download: { state: 'idle', done: 0, total: 0 } as {
+        state: string;
+        done: number;
+        total: number;
+        error?: string;
+      },
+    },
+    /** What the next speech:download does: start downloading (default) or fail. */
+    speechFails: false,
   };
   const data = (channel: string, payload: unknown): unknown => {
     switch (channel) {
@@ -44,6 +69,20 @@ export function fakeHost(
         };
       case 'app:restart':
         return { restarting: true };
+      case 'speech:status':
+        return structuredClone(state.speech);
+      case 'speech:download':
+        if (state.speechFails)
+          throw new Error("couldn't reach the download server");
+        state.speech.download = {
+          state: 'downloading',
+          done: 0,
+          total: 464_000_000,
+        };
+        return structuredClone(state.speech);
+      case 'speech:pause':
+        state.speech.download = { ...state.speech.download, state: 'paused' };
+        return structuredClone(state.speech);
       case 'onboarding:finish':
         state.done = true;
         return { done: true };

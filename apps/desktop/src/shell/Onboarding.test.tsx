@@ -149,10 +149,12 @@ describe('permissions onboarding (ADR 0184)', () => {
     expect(el.textContent).toBe(el.textContent!.toLowerCase());
     // The shared page layout.
     expect(el.querySelector('[data-page]')).not.toBeNull();
-    // Nothing downloads from onboarding.
-    expect(host.state.calls.some((c) => c.channel.startsWith('speech:'))).toBe(
-      false,
-    );
+    // QRT-376: opening the onboarding only reads flow's model status (scoped to echo); nothing downloads.
+    expect(
+      host.state.calls
+        .filter((c) => c.channel.startsWith('speech:'))
+        .map((c) => [c.channel, c.payload]),
+    ).toEqual([['speech:status', { extensions: ['echo'] }]]);
     act(() => root.unmount());
   });
 
@@ -254,5 +256,97 @@ describe('permissions onboarding (ADR 0184)', () => {
     const { q, root } = await mount(host);
     expect(q('onboarding-continue')!.textContent).toBe('open qrtz');
     act(() => root.unmount());
+  });
+});
+
+describe("flow's speech model in the onboarding (QRT-376)", () => {
+  it('missing: the row offers the download, and "download and continue" starts it (scoped to echo) then finishes', async () => {
+    const host = fakeHost({ speechInstalled: false });
+    const { el, q, click, onDone, root } = await mount(host);
+    expect(q('onboarding-speech-model-status')?.textContent).toContain(
+      'not downloaded',
+    );
+    expect(el.textContent).toContain('hugging face');
+    expect(q('onboarding-continue')!.textContent).toBe('download and continue');
+    await click('onboarding-continue');
+    expect(host.seen('speech:download').map((c) => c.payload)).toEqual([
+      { extensions: ['echo'] },
+    ]);
+    expect(host.seen('onboarding:finish')).toHaveLength(1);
+    expect(onDone).toHaveBeenCalled();
+    act(() => root.unmount());
+  });
+
+  it('downloads in place with live progress, says installing after the last byte, pauses and resumes', async () => {
+    const host = fakeHost({ speechInstalled: false });
+    const { q, click, onDone, root } = await mount(host);
+    await click('onboarding-speech-model-download');
+    expect(host.seen('speech:download')).toHaveLength(1);
+    const status = () => q('onboarding-speech-model-status')?.textContent;
+    const push = async (download: object) => {
+      host.state.speech.download =
+        download as typeof host.state.speech.download;
+      await act(async () =>
+        host.emit('speech:status', structuredClone(host.state.speech)),
+      );
+      await tick();
+    };
+    await push({ state: 'downloading', done: 232_000_000, total: 464_000_000 });
+    expect(status()).toContain('downloading · 50%');
+    // Still downloading: continue finishes without starting it again.
+    expect(q('onboarding-continue')!.textContent).not.toBe(
+      'download and continue',
+    );
+    await push({ state: 'installing', done: 464_000_000, total: 464_000_000 });
+    expect(status()).toBe('installing…');
+    expect(q('onboarding-speech-model-cancel')).toBeNull();
+    await push({ state: 'downloading', done: 300_000_000, total: 464_000_000 });
+    await click('onboarding-speech-model-cancel');
+    expect(host.seen('speech:pause').map((c) => c.payload)).toEqual([
+      { extensions: ['echo'] },
+    ]);
+    await push({ state: 'paused', done: 300_000_000, total: 464_000_000 });
+    await click('onboarding-speech-model-resume');
+    expect(host.seen('speech:download')).toHaveLength(2);
+    host.state.speech.installed = '1.0.0';
+    await push({ state: 'idle', done: 0, total: 0 });
+    expect(status()).toContain('on this mac');
+    await click('onboarding-continue');
+    expect(host.seen('speech:download')).toHaveLength(2);
+    expect(onDone).toHaveBeenCalled();
+    act(() => root.unmount());
+  });
+
+  it('a failed download says why and offers retry; skip never downloads', async () => {
+    const host = fakeHost({ speechInstalled: false });
+    host.state.speechFails = true;
+    const { q, click, onDone, root } = await mount(host);
+    await click('onboarding-speech-model-download');
+    expect(q('onboarding-error')?.textContent).toContain(
+      "couldn't reach the download server",
+    );
+    host.state.speech.download = {
+      state: 'error',
+      done: 0,
+      total: 0,
+      error: "couldn't reach the download server",
+    };
+    await act(async () =>
+      host.emit('speech:status', structuredClone(host.state.speech)),
+    );
+    await tick();
+    expect(q('onboarding-speech-model-retry')).not.toBeNull();
+    host.state.speechFails = false;
+    await click('onboarding-speech-model-retry');
+    expect(host.seen('speech:download')).toHaveLength(2);
+    expect(onDone).not.toHaveBeenCalled();
+    act(() => root.unmount());
+
+    const host2 = fakeHost({ speechInstalled: false });
+    const m2 = await mount(host2);
+    await m2.click('onboarding-skip');
+    expect(host2.seen('speech:download')).toHaveLength(0);
+    expect(m2.onDone).toHaveBeenCalled();
+    act(() => m2.root.unmount());
   });
 });

@@ -17,6 +17,8 @@ semver = { workspace = true }
 ed25519-dalek = { workspace = true }
 async-trait = { workspace = true }
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
+# QRT-376: install::off_the_runtime moves the install's blocking file work off the async worker.
+tokio = { workspace = true }
 
 [features]
 # ADR 0237: the test-only extension `demo` (EXTENSION_NAMES). Enabled by dev-dependencies only, never in a shipped build.
@@ -27,7 +29,6 @@ fixture-extension = []
 rustix = { version = "1", features = ["fs"] }
 
 [dev-dependencies]
-tokio = { workspace = true }
 tempfile = { workspace = true }
 jsonschema = { workspace = true }
 

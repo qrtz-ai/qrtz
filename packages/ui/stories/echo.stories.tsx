@@ -3,6 +3,7 @@ import {
   DictionaryTerm,
   ModelsPanel,
   PlainList,
+  SpeechModelRow,
   SpeechRequired,
   Text,
   TalkHistoryRow,
@@ -106,6 +107,22 @@ export const Speech: S = {
             >
               <Text>echo&apos;s page</Text>
             </SpeechRequired>
+          </Width>
+        </Row>
+      ))}
+    </>
+  ),
+};
+
+/** QRT-376: the onboarding's speech model row in every state. */
+export const OnboardingRow: S = {
+  name: 'speech model row (onboarding)',
+  render: () => (
+    <>
+      {STATES.map(([label, v]) => (
+        <Row key={`row-${label}`} label={`row · ${label}`}>
+          <Width w={560}>
+            <SpeechModelRow status={v} onDownload={noop} onCancel={noop} />
           </Width>
         </Row>
       ))}

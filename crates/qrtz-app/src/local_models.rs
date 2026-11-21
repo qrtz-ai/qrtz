@@ -486,27 +486,31 @@ impl LocalModels {
                 Err(e) => return Err(pm_error(e, ctl)),
             }
         }
-        for s in &self.manifest.sets {
-            if self.reader_of(&s.package).is_none() && self.set_ok(s) {
-                continue;
-            }
-            if self.reader_of(&s.package).is_some() {
-                // An older build's writable view of it goes; ctrl never loads from there.
-                match qrtz_modules::fsutil::remove_tree(&self.root.join(&s.dir)) {
-                    Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.into()),
-                    _ => {}
-                }
-                if self.set_ok(s) {
+        // QRT-376: re-checking and linking each set's files is blocking disk work: off the async worker.
+        qrtz_modules::install::off_the_runtime(|| -> Result<(), SpeechError> {
+            for s in &self.manifest.sets {
+                if self.reader_of(&s.package).is_none() && self.set_ok(s) {
                     continue;
                 }
-                // Installed and re-verified by `apply`; a failing load check here means it changed since.
-                return Err(SpeechError::Checksum(format!(
-                    "{}: not read-only or changed",
-                    s.package
-                )));
+                if self.reader_of(&s.package).is_some() {
+                    // An older build's writable view of it goes; ctrl never loads from there.
+                    match qrtz_modules::fsutil::remove_tree(&self.root.join(&s.dir)) {
+                        Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.into()),
+                        _ => {}
+                    }
+                    if self.set_ok(s) {
+                        continue;
+                    }
+                    // Installed and re-verified by `apply`; a failing load check here means it changed since.
+                    return Err(SpeechError::Checksum(format!(
+                        "{}: not read-only or changed",
+                        s.package
+                    )));
+                }
+                self.link_view(&installer, s)?;
             }
-            self.link_view(&installer, s)?;
-        }
+            Ok(())
+        })?;
         on_progress(Progress { done: total, total });
         Ok(())
     }
